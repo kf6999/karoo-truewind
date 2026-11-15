@@ -82,7 +82,7 @@ fun SettingsScreen(onFinish: () -> Unit) {
 
     var refreshRateSetting by remember { mutableStateOf(RefreshRate.STANDARD) }
 
-    var selectedRoundLocationSetting by remember { mutableStateOf(RoundLocationSetting.KM_3) }
+    var selectedRoundLocationSetting by remember { mutableStateOf(RoundLocationSetting.KM_1) }
     var forecastKmPerHour by remember { mutableStateOf("20") }
     var forecastMilesPerHour by remember { mutableStateOf("12") }
     var showDistanceInForecast by remember { mutableStateOf(true) }
@@ -125,20 +125,21 @@ fun SettingsScreen(onFinish: () -> Unit) {
     suspend fun updateSettings(){
         Log.d(KarooHeadwindExtension.TAG, "Saving settings")
 
-        val newSettings = HeadwindSettings(
-            welcomeDialogAccepted = true,
-            roundLocationTo = selectedRoundLocationSetting,
-            forecastedMilesPerHour = forecastMilesPerHour.toIntOrNull()?.coerceIn(3, 30) ?: 12,
-            forecastedKmPerHour = forecastKmPerHour.toIntOrNull()?.coerceIn(5, 50) ?: 20,
-            showDistanceInForecast = showDistanceInForecast,
-            weatherProvider = selectedWeatherProvider,
-            openWeatherMapApiKey = openWeatherMapApiKey,
-            refreshRate = refreshRateSetting,
-            windUnit = selectedWindUnit,
-            enableUpdateNotifications = enableUpdateNotifications,
-        )
-
-        saveSettings(ctx, newSettings)
+        // Copy onto the stored settings: TrueWind fields (keys, physics, layers) live on another tab.
+        de.timklge.karooheadwind.updateSettings(ctx.applicationContext) { current ->
+            current.copy(
+                welcomeDialogAccepted = true,
+                roundLocationTo = selectedRoundLocationSetting,
+                forecastedMilesPerHour = forecastMilesPerHour.toIntOrNull()?.coerceIn(3, 30) ?: 12,
+                forecastedKmPerHour = forecastKmPerHour.toIntOrNull()?.coerceIn(5, 50) ?: 20,
+                showDistanceInForecast = showDistanceInForecast,
+                weatherProvider = selectedWeatherProvider,
+                openWeatherMapApiKey = openWeatherMapApiKey,
+                refreshRate = refreshRateSetting,
+                windUnit = selectedWindUnit,
+                enableUpdateNotifications = enableUpdateNotifications,
+            )
+        }
     }
 
     DisposableEffect(Unit) {

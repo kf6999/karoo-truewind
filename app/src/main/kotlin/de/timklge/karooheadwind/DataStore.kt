@@ -76,6 +76,20 @@ suspend fun saveSettings(context: Context, settings: HeadwindSettings) {
     }
 }
 
+/** Atomic read-modify-write of the settings, so screens editing different fields never clobber each other. */
+suspend fun updateSettings(context: Context, transform: (HeadwindSettings) -> HeadwindSettings) {
+    context.dataStore.edit { t ->
+        val current = try {
+            jsonWithUnknownKeys.decodeFromString<HeadwindSettings>(t[settingsKey] ?: HeadwindSettings.defaultSettings)
+        } catch (e: Throwable) {
+            Log.e(KarooHeadwindExtension.TAG, "Failed to read preferences", e)
+            jsonWithUnknownKeys.decodeFromString<HeadwindSettings>(HeadwindSettings.defaultSettings)
+        }
+        val next = transform(current)
+        if (next != current) t[settingsKey] = Json.encodeToString(next)
+    }
+}
+
 suspend fun saveWidgetSettings(context: Context, settings: HeadwindWidgetSettings) {
     context.dataStore.edit { t ->
         t[widgetSettingsKey] = Json.encodeToString(settings)

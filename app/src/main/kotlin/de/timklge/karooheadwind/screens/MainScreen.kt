@@ -79,7 +79,8 @@ fun MainScreen(close: () -> Unit) {
 
     var isRefreshing by remember { mutableStateOf(false) }
 
-    val tabs = listOf("Live", "Setup", "Windy")
+    val tabs = listOf("Live", "Setup", "Wind", "Diag", "Windy")
+    val windyTab = tabs.indexOf("Windy")
 
     fun refreshData() {
         coroutineScope.launch {
@@ -167,7 +168,9 @@ fun MainScreen(close: () -> Unit) {
                 when (tabIndex) {
                     0 -> WeatherScreen(::onFinish)
                     1 -> SettingsScreen(::onFinish)
-                    2 -> WindyScreen(::onFinish)
+                    2 -> TrueWindSettingsScreen(::onFinish)
+                    3 -> DiagnosticsScreen(::onFinish)
+                    4 -> WindyScreen(::onFinish)
                 }
             }
         }
@@ -178,7 +181,7 @@ fun MainScreen(close: () -> Unit) {
                 confirmButton = {
                     Button(onClick = {
                         coroutineScope.launch {
-                            saveSettings(ctx, HeadwindSettings(welcomeDialogAccepted = true))
+                            de.timklge.karooheadwind.updateSettings(ctx) { it.copy(welcomeDialogAccepted = true) }
                         }
                     }) { Text("OK") }
                 },
@@ -235,7 +238,7 @@ fun MainScreen(close: () -> Unit) {
         }
 
         // Do not show back button on the Windy tab
-        if (tabIndex != 2) {
+        if (tabIndex != windyTab) {
             Image(
                 painter = painterResource(id = R.drawable.back),
                 contentDescription = "Back",
