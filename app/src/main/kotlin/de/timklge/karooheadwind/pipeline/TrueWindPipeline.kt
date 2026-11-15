@@ -72,7 +72,11 @@ object DebugOverrides {
 /** Handles the app UI and the debug receiver use to reach the running extension (same process). */
 object TrueWindRuntime {
     @Volatile var pipeline: TrueWindPipeline? = null
-    @Volatile var repository: WindRepository? = null
+    /** The running extension's repository (null while the extension service is not running). */
+    val repositoryFlow = MutableStateFlow<WindRepository?>(null)
+    var repository: WindRepository?
+        get() = repositoryFlow.value
+        set(value) { repositoryFlow.value = value }
 }
 
 /** Whether the app's own screen is in the foreground (counts as "visible", SPEC 4.1). */

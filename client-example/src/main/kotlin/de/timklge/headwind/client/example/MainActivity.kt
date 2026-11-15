@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import de.timklge.headwind.client.HeadwindClient
 import de.timklge.headwind.client.HeadwindForecastPoint
 import de.timklge.headwind.client.HeadwindSnapshot
+import de.timklge.headwind.client.TrueWindData
 import kotlinx.coroutines.flow.catch
 import java.time.Instant
 import java.time.ZoneId
@@ -114,6 +115,11 @@ private fun CurrentDataScreen() {
             }
         }
 
+        item { Text("Schema version: ${current.version}") }
+        current.trueWind?.let { tw ->
+            item { TrueWindCard(tw) }
+        }
+
         val points = current.forecast.orEmpty()
         if (points.isEmpty()) {
             item { Text("No weather data cached yet.") }
@@ -121,6 +127,22 @@ private fun CurrentDataScreen() {
         items(points) { point ->
             ForecastPointCard(point)
         }
+    }
+}
+
+@Composable
+private fun TrueWindCard(tw: TrueWindData) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text("TrueWind (${tw.status})", style = MaterialTheme.typography.titleMedium)
+        tw.riderWindSpeed?.let { Text("Rider wind: %.1f m/s from %.0f°".format(it, tw.riderWindDirection ?: 0.0)) }
+        tw.windSpeed10m?.let { Text("10 m wind: %.1f m/s from %.0f°".format(it, tw.windDirection10m ?: 0.0)) }
+        tw.headwind?.let { Text("Headwind: %.1f m/s, crosswind %.1f m/s".format(it, tw.crosswind ?: 0.0)) }
+        Text("Confidence: ${tw.confidence} (${tw.confidenceBand ?: "-"})")
+        Text("Air density: %.3f kg/m³".format(tw.airDensity))
+        tw.measuredHeadwind?.let { Text("Measured headwind: %.1f m/s".format(it)) }
+        if (tw.models.isNotEmpty()) Text("Models: ${tw.models.joinToString { it.substringAfter(':') }}")
+        tw.nearestStationId?.let { Text("Station: $it, %.1f km".format(tw.nearestStationDistanceKm ?: 0.0)) }
+        Text("Last update: ${formatTime(tw.lastUpdateEpochSeconds)}")
     }
 }
 

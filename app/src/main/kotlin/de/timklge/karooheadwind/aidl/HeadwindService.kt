@@ -28,7 +28,14 @@ import de.timklge.karooheadwind.IHeadwindCallback
 import de.timklge.karooheadwind.IHeadwindService
 import de.timklge.karooheadwind.KarooHeadwindExtension
 import de.timklge.karooheadwind.aidl.model.HeadwindSnapshot
+import de.timklge.karooheadwind.aidl.model.TrueWindData
 import de.timklge.karooheadwind.aidl.model.buildHeadwindSnapshot
+import de.timklge.karooheadwind.aidl.model.buildTrueWindData
+import de.timklge.karooheadwind.pipeline.TrueWindRuntime
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import de.timklge.karooheadwind.aidl.model.headwindSnapshotJson
 import de.timklge.karooheadwind.streamForecastRecord
 import de.timklge.karooheadwind.streamSettings
@@ -101,7 +108,7 @@ class HeadwindService : Service() {
             streamSnapshots(system).collect { snapshot ->
                 val json = headwindSnapshotJson.encodeToString(snapshot)
                 latestSnapshotJson = json
-                Log.d(KarooHeadwindExtension.TAG, "Built headwind snapshot: $json")
+                if (de.timklge.karooheadwind.BuildConfig.DEBUG) Log.v(KarooHeadwindExtension.TAG, "Built headwind snapshot (${json.length} chars)")
                 broadcast(json)
             }
         }
@@ -123,14 +130,21 @@ class HeadwindService : Service() {
         Log.i(KarooHeadwindExtension.TAG, "HeadwindService destroyed")
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun streamSnapshots(karooSystem: KarooSystemService): Flow<HeadwindSnapshot> {
+        // v2: the live TrueWind state from the extension running in this process (null when it is not).
+        val trueWind = TrueWindRuntime.repositoryFlow
+            .flatMapLatest { repo -> repo?.snapshot ?: flowOf(null) }
+            .map { buildTrueWindData(it) }
+            .distinctUntilChanged()
         return combine(
             streamForecastRecord(),
             streamSettings(karooSystem),
             karooSystem.streamUserProfile(),
-        ) { record: ForecastRecord, settings: HeadwindSettings, profile: UserProfile ->
+            trueWind,
+        ) { record: ForecastRecord, settings: HeadwindSettings, profile: UserProfile, tw: TrueWindData? ->
             val isImperial = profile.preferredUnit.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL
-            buildHeadwindSnapshot(record.stats, record.response, settings.getWindUnit(isImperial))
+            buildHeadwindSnapshot(record.stats, record.response, settings.getWindUnit(isImperial), tw)
         }.distinctUntilChanged()
             .throttle(1_000L)
             .catch { e ->
@@ -141,7 +155,6 @@ class HeadwindService : Service() {
 
     private fun broadcast(json: String) {
         val count = callbacks.beginBroadcast()
-        Log.d(KarooHeadwindExtension.TAG, "Broadcasting snapshot to $count callback(s)")
         try {
             for (i in 0 until count) {
                 try {

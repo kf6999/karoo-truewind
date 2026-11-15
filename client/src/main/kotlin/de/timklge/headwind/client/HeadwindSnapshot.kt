@@ -37,6 +37,11 @@ data class HeadwindSnapshot(
     val provider: WeatherDataProvider? = null,
     val windUnit: WindUnit? = null,
     val forecast: List<HeadwindForecastPoint>? = null,
+    /**
+     * Live TrueWind state, present from schema [version] 2 when the app runs in TrueWind mode.
+     * Null for version-1 senders, in upstream-compatible mode and before the first update.
+     */
+    val trueWind: TrueWindData? = null,
 ) {
     companion object {
         // Unknown keys and unknown providers are tolerated so that newer karoo-headwind versions stay readable.

@@ -120,8 +120,9 @@ if [[ -n "$FIT_CHECK" ]]; then
   fi
   adb pull "$FIT_CHECK" "$OUT/ride.fit" >/dev/null
   devfields=$(cd "$REPO_ROOT" && ./gradlew ${GRADLE_ARGS:-} -q :core:replay --args="fit-devfields $OUT/ride.fit" 2>/dev/null | tail -1)
-  # TrueWind/Headwind developer fields (fit/HeadwindFitFileWriter.kt); WP10 adds rider_wind_* etc.
-  has=$(python3 -I -c 'import json,sys; n=set(json.loads(sys.argv[1] or "[]")); print(1 if {"wind_speed","headwind_speed"} <= n else 0)' "$devfields")
+  # TrueWind/Headwind developer fields (fit/HeadwindFitFileWriter.kt), including the WP10 ones
+  # (TrueWind mode; wind_sources is a session bitmask).
+  has=$(python3 -I -c 'import json,sys; n=set(json.loads(sys.argv[1] or "[]")); print(1 if {"wind_speed","headwind_speed","rider_wind_speed","rider_wind_direction","wind_confidence","air_density","wind_sources"} <= n else 0)' "$devfields")
   check "FIT developer fields" "$has" "$FIT_CHECK: $devfields"
 else
   warn "FIT developer fields" "skipped (no ride recorded; use --fit-check latest after a manual ride)"

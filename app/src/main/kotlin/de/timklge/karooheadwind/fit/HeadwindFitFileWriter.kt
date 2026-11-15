@@ -21,7 +21,10 @@ import de.timklge.karooheadwind.HeadingResponse
 import de.timklge.karooheadwind.datatypes.WindAggregator
 import de.timklge.karooheadwind.datatypes.WindCategoryStats
 import de.timklge.karooheadwind.datatypes.WindSessionStats
+import de.timklge.karooheadwind.pipeline.Diagnostics
 import de.timklge.karooheadwind.pipeline.WindRepository
+import de.timklge.karooheadwind.pipeline.WindSnapshot
+import io.github.kf6999.truewind.core.model.Status
 import de.timklge.karooheadwind.throttle
 import io.hammerhead.karooext.internal.Emitter
 import io.hammerhead.karooext.models.DeveloperField
@@ -45,7 +48,9 @@ class HeadwindFitFileWriter(
 ) {
     companion object {
         // FIT base types
+        private const val FIT_BASE_TYPE_UINT8: Short = 0x02
         private const val FIT_BASE_TYPE_UINT16: Short = 0x84
+        private const val FIT_BASE_TYPE_UINT32: Short = 0x86
         internal const val FIT_BASE_TYPE_FLOAT32: Short = 0x88
 
         const val SESSION_UPDATE_INTERVAL_MS = 60_000L
@@ -88,6 +93,35 @@ class HeadwindFitFileWriter(
         val WIND_AVG_SPEED = DeveloperField(20, FIT_BASE_TYPE_FLOAT32, "wind_avg_speed", "m/s")
         val WIND_MAX_SPEED = DeveloperField(21, FIT_BASE_TYPE_FLOAT32, "wind_max_speed", "m/s")
 
+        // TrueWind (SPEC 5, WP10). Record fields at <= 1 Hz, TrueWind mode only.
+        val RIDER_WIND_SPEED = DeveloperField(22, FIT_BASE_TYPE_FLOAT32, "rider_wind_speed", "m/s")
+        /** Direction the rider-height wind blows FROM, degrees true. */
+        val RIDER_WIND_DIRECTION = DeveloperField(23, FIT_BASE_TYPE_UINT16, "rider_wind_direction", "degrees")
+        val WIND_CONFIDENCE = DeveloperField(24, FIT_BASE_TYPE_UINT8, "wind_confidence", "%")
+        /** Raw virtual-sensor headwind, + into the rider; omitted when the sample was invalid. */
+        val MEASURED_HEADWIND = DeveloperField(25, FIT_BASE_TYPE_FLOAT32, "measured_headwind", "m/s")
+        val AIR_DENSITY = DeveloperField(26, FIT_BASE_TYPE_FLOAT32, "air_density", "kg/m3")
+        /**
+         * Session: sources that contributed during the ride. karoo-ext [FieldValue] carries only
+         * numbers, so this is a bitmask (see [WindSources]) rather than the string SPEC 5 names.
+         */
+        val WIND_SOURCES = DeveloperField(27, FIT_BASE_TYPE_UINT32, "wind_sources", "bitmask")
+
+        /** TrueWind record values for one snapshot; empty in upstream mode or without data. */
+        fun buildTrueWindRecordValues(snapshot: WindSnapshot): List<FieldValue> {
+            if (snapshot.isPlaceholder || snapshot.extras.upstreamMode) return emptyList()
+            val s = snapshot.state
+            return buildList {
+                s.rider?.let {
+                    add(FieldValue(RIDER_WIND_SPEED, it.speed))
+                    add(FieldValue(RIDER_WIND_DIRECTION, it.directionFromDeg))
+                }
+                if (s.status != Status.NOT_SET_UP) add(FieldValue(WIND_CONFIDENCE, s.confidence.coerceIn(0, 100).toDouble()))
+                snapshot.extras.measuredHeadwind?.let { add(FieldValue(MEASURED_HEADWIND, it)) }
+                add(FieldValue(AIR_DENSITY, s.airDensity))
+            }
+        }
+
         private fun MutableList<FieldValue>.addCategoryValues(fields: CategoryFields, stats: WindCategoryStats) {
             add(FieldValue(fields.timePercent, stats.timePercent))
             stats.avgRideSpeed?.let { add(FieldValue(fields.avgRideSpeed, it)) }
@@ -129,15 +163,17 @@ class HeadwindFitFileWriter(
     }
 
     fun start(emitter: Emitter<FitEffect>): Job {
+        val sources = WindSources()
         return CoroutineScope(Dispatchers.IO).launch {
             launch {
-                windRepository.relativeHeadingAndWeather.map { (heading, weather) ->
+                combine(windRepository.relativeHeadingAndWeather, windRepository.snapshot) { (heading, weather), snapshot ->
+                    sources.add(snapshot)
                     buildRecordValues(
                         relativeAngle = (heading as? HeadingResponse.Value)?.diff,
                         windSpeed = weather?.windSpeed,
                         windDirection = weather?.windDirection,
                         windGust = weather?.windGusts,
-                    )
+                    ) + buildTrueWindRecordValues(snapshot)
                 }
                     .throttle(1_000L)
                     .collect { values ->
@@ -149,9 +185,52 @@ class HeadwindFitFileWriter(
 
             while (isActive) {
                 delay(SESSION_UPDATE_INTERVAL_MS)
-                val values = buildSessionValues(windAggregator.getSessionStats())
+                val values = buildSessionValues(windAggregator.getSessionStats()) +
+                    listOfNotNull(sources.mask.takeIf { it != 0L }?.let { FieldValue(WIND_SOURCES, it.toDouble()) })
                 emitter.onNext(WriteToSessionMesg(values))
             }
         }
+    }
+}
+
+/**
+ * Sources that contributed to the wind during a ride, as the `wind_sources` session bitmask:
+ * bit 0 Open-Meteo, 1 Tomorrow.io, 2 AWC (METAR), 3 NWS, 4 Synoptic, 5 virtual sensor,
+ * 6 any other provider.
+ */
+class WindSources(private val stations: () -> List<Diagnostics.StationSummary> = { Diagnostics.stationsInUse }) {
+    @Volatile var mask: Long = 0L
+        private set
+
+    fun add(snapshot: WindSnapshot) {
+        if (snapshot.isPlaceholder || snapshot.extras.upstreamMode) return
+        var m = mask
+        snapshot.state.sources.models.forEach { m = m or bit(it.substringBefore(':')) }
+        if (snapshot.state.sources.nearestStationId != null) stations().forEach { m = m or bit(it.source) }
+        if (snapshot.state.sources.virtualSensorActive) m = m or (1L shl VIRTUAL_SENSOR)
+        mask = m
+    }
+
+    companion object {
+        const val OPEN_METEO = 0
+        const val TOMORROW = 1
+        const val AWC = 2
+        const val NWS = 3
+        const val SYNOPTIC = 4
+        const val VIRTUAL_SENSOR = 5
+        const val OTHER = 6
+
+        fun bit(providerId: String): Long = 1L shl when (providerId) {
+            "open-meteo" -> OPEN_METEO
+            "tomorrow" -> TOMORROW
+            "awc" -> AWC
+            "nws" -> NWS
+            "synoptic" -> SYNOPTIC
+            else -> OTHER
+        }
+
+        /** Readable form of a mask, e.g. `open-meteo+awc+virtual`. */
+        fun describe(mask: Long): String = listOf("open-meteo", "tomorrow", "awc", "nws", "synoptic", "virtual", "other")
+            .filterIndexed { i, _ -> mask and (1L shl i) != 0L }.joinToString("+")
     }
 }
