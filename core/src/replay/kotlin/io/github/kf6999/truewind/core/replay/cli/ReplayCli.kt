@@ -20,6 +20,7 @@ import io.github.kf6999.truewind.core.model.GeoPoint
 import io.github.kf6999.truewind.core.replay.ReplayConfigs
 import io.github.kf6999.truewind.core.replay.ReplayRunner
 import io.github.kf6999.truewind.core.replay.ReportJson
+import io.github.kf6999.truewind.core.replay.Resolution
 import io.github.kf6999.truewind.core.replay.Ride
 import io.github.kf6999.truewind.core.replay.trackPoints
 import kotlinx.serialization.json.Json
@@ -178,9 +179,13 @@ fun summaryMarkdown(report: Map<String, Any?>): String {
 
 private fun describe(opts: Opts) {
     val dir = File(opts.one("corpus") ?: error("--corpus needed"))
-    val rides = if (File(dir, "rides").isDirectory) CorpusLoader.loadRides(File(dir, "rides")) else CorpusLoader.loadRides(dir)
-    val out = rides.map { r -> describeRide(r) }
-    println(ReportJson.write(out))
+    if (!File(dir, "rides").isDirectory) { println(ReportJson.write(CorpusLoader.loadRides(dir).map { describeRide(it) })); return }
+    val c = CorpusLoader.load(dir)
+    println(ReportJson.write(linkedMapOf(
+        "rides" to c.rides.map { describeRide(it) },
+        "forecast_members" to c.forecasts.members.associateWith { m -> Resolution.entries.filter { c.forecasts.has(m, it) }.map { it.name } },
+        "stations" to c.observations.byStation.mapValues { (_, l) -> l.size },
+    )))
 }
 
 fun describeRide(r: Ride): Map<String, Any?> {
