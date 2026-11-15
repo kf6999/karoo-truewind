@@ -19,21 +19,18 @@ package io.github.kf6999.truewind.core.replay
 import io.github.kf6999.truewind.core.api.ForecastRequest
 import io.github.kf6999.truewind.core.api.ForecastSeries
 import io.github.kf6999.truewind.core.api.Observation
-import io.github.kf6999.truewind.core.math.circularMeanDegrees
-import io.github.kf6999.truewind.core.math.normalizeSignedDegrees
-import io.github.kf6999.truewind.core.math.smoothAngle
+import io.github.kf6999.truewind.core.fusion.ObsQc
 import io.github.kf6999.truewind.core.model.GeoPoint
 import io.github.kf6999.truewind.core.model.WindVector
-import kotlin.math.abs
 import kotlin.math.exp
-import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 /*
- * REFERENCE STAND-INS for the accuracy layers, written straight from SPEC 4.1–4.5 so the harness
- * has something to measure before WP2/4/5/6/8 land. They are intentionally plain and are NOT the
- * product: replace them through [LayerSeams] and delete them once production layers are wired.
+ * REFERENCE STAND-IN for the 10 m fusion layers (SPEC 4.1–4.3), so `+ensemble` / `+obs` produce
+ * numbers before the fusion engine (core.engine.WindEngine, core.fusion, core.schedule) lands. It
+ * uses the production ObsQc but is otherwise intentionally plain and is NOT the product: replace it
+ * through [LayerSeams.ensemble] / [LayerSeams.obs] and delete it once the engine is wired.
  */
 
 /**
@@ -113,10 +110,9 @@ class ReferenceEnsembleLayer(
 
     private fun fetch(point: GeoPoint, nowMs: Long) {
         val fetchPoint = GeoPoint(UpstreamPipeline.roundDegrees(point.lat, roundKm), UpstreamPipeline.roundDegrees(point.lon, roundKm))
+        // Production QC (core.fusion.ObsQc, WP3): age, distance, elevation, speed, neighbour outliers, 10 m normalisation.
         val obs: List<Observation> = if (useObservations) {
-            runSync { env.observations.fetch(point, 30.0) }.filter { o ->
-                o.wind != null && (o.speed ?: 0.0) <= 40.0 && nowMs - o.timeMs <= 30 * 60_000L && Geo.distanceKm(point, o.location) <= 30.0
-            }
+            ObsQc.apply(runSync { env.observations.fetch(point, 30.0) }, point, null, nowMs).accepted.filter { it.wind != null }
         } else emptyList()
         val stationPoints = obs.sortedBy { Geo.distanceKm(point, it.location) }.take(3)
         val result = runSync { provider.fetch(ForecastRequest(points = listOf(fetchPoint) + stationPoints.map { it.location }, nowMs = nowMs, members = members)) }
@@ -155,56 +151,5 @@ class ReferenceEnsembleLayer(
             val (b, _) = blendAt(stationSeries, o.timeMs) ?: return@mapNotNull null
             Residual(o.location, o.timeMs, o.wind!! - b)
         }
-    }
-}
-
-/** SPEC 4.4 log law with the "Mixed" default preset: z = 1.2 m, z0 = 0.10 m (ratio 0.54). */
-class ReferenceHeightLayer(zM: Double = 1.2, z0M: Double = 0.10) : HeightLayer {
-    val ratio: Double = (ln(zM / z0M) / ln(10.0 / z0M)).coerceIn(0.30, 1.0)
-    override fun toRider(model10m: WindVector, sample: RideSample): WindVector = model10m * ratio
-}
-
-/** SPEC 4.5 heading fusion, simplified (no route-bearing branch). */
-class ReferenceHeadingLayer : HeadingLayer {
-    private var heading: Double? = null
-    private var lastTimeMs: Long? = null
-    /** Exponentially weighted mean |HEADING - course| while moving, degrees. */
-    private var headingAgreement: Double? = null
-
-    override fun update(sample: RideSample): Double? {
-        val dtS = lastTimeMs?.let { ((sample.timeMs - it) / 1000.0).coerceIn(0.0, 30.0) } ?: 1.0
-        lastTimeMs = sample.timeMs
-        val alpha = 1 - exp(-dtS / 1.5)
-        val v = sample.speedMps ?: 0.0
-        val course = sample.gpsBearingDeg
-        val compass = sample.headingDeg
-        val prev = heading
-        when {
-            v >= 3.0 && course != null -> {
-                val jump = prev?.let { abs(normalizeSignedDegrees(course - it)) } ?: 0.0
-                if (!(jump > 60.0 && (sample.gpsAccuracyM ?: 0.0) > 20.0)) {
-                    heading = if (prev == null) course else smoothAngle(prev, course, alpha)
-                }
-                if (compass != null) {
-                    val d = abs(normalizeSignedDegrees(compass - course))
-                    val a = 1 - exp(-dtS / 120.0)
-                    headingAgreement = headingAgreement?.let { it + a * (d - it) } ?: d
-                }
-            }
-            v >= 1.0 && course != null -> {
-                val target = if (compass != null) {
-                    val wCompass = ((3.0 - v) / 2.0).coerceIn(0.0, 1.0)
-                    circularMeanDegrees(listOf(course, compass), listOf(1 - wCompass, wCompass)) ?: course
-                } else course
-                heading = if (prev == null) target else smoothAngle(prev, target, alpha)
-            }
-            else -> {
-                if (compass != null && (headingAgreement ?: 180.0) < 20.0) {
-                    heading = if (prev == null) compass else smoothAngle(prev, compass, alpha)
-                }
-                // otherwise hold the last moving heading
-            }
-        }
-        return heading
     }
 }

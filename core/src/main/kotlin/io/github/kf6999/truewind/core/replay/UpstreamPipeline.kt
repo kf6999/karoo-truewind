@@ -91,6 +91,8 @@ class UpstreamPipeline(
         fun upstreamWindAt(series: ForecastSeries, timeMs: Long): WindVector? {
             val steps = series.steps.filter { it.wind10m != null }
             if (steps.isEmpty()) return null
+            // Outside the archive the real app would have had fresh data; report nothing rather than stale values.
+            if (timeMs < steps.first().timeMs - 3_600_000L || timeMs > steps.last().timeMs + 3_600_000L) return null
             val after = steps.indexOfFirst { it.timeMs > timeMs }
             if (after == 0) return steps.first().wind10m
             if (after < 0) return steps.last().wind10m

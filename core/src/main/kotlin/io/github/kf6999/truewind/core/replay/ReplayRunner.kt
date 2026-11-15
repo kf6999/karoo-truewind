@@ -162,6 +162,13 @@ class ReplayRunner(
             rideResult["headwind_forward_rmse_ms"] = fwd
             rideResult["fit_cda"] = prep.model.cdA
             rideResult["fit_crr"] = prep.model.crr
+            // Synthetic rides: the floor this metric can reach (truth wind, truth CdA/Crr).
+            ride.truth?.let { t ->
+                var lastCourse = 0.0
+                val hwTruth = DoubleArray(outputs.size) { i -> lastCourse = prep.course[i] ?: lastCourse; t.riderWind[i].headwind(lastCourse) }
+                val dhTruth = VirtualElevation.increments(ride.samples, hwTruth, PowerModel(mass, t.cdA, t.crr), prep.rho, prep.accel)
+                rideResult["ve_rmse_truth_floor_m"] = VirtualElevation.windowRmse(ride.samples, dhTruth)
+            }
         }
 
         // Metric C

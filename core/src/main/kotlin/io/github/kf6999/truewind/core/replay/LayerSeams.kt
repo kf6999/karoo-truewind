@@ -18,26 +18,26 @@ package io.github.kf6999.truewind.core.replay
 
 import io.github.kf6999.truewind.core.model.GeoPoint
 import io.github.kf6999.truewind.core.model.WindVector
+import io.github.kf6999.truewind.core.virtualwind.RiderWindConfig
+import io.github.kf6999.truewind.core.virtualwind.RiderWindEstimator
+import io.github.kf6999.truewind.core.virtualwind.RiderWindInputs
 
 /*
- * ADAPTER SEAMS — where the accuracy layers built in other work packages plug into the harness.
+ * ADAPTER SEAMS — where the accuracy layers plug into the harness (TESTING 3.5).
  *
- * Each layer of TESTING 3.5 is one small interface below. [LayerSeams] holds a factory per layer.
- * Until the production implementation lands, a factory points at a *reference* stand-in in
- * `ReferenceLayers.kt` (deliberately simple, written from the SPEC text) so every configuration
- * produces numbers in CI. The report labels which implementation ran.
- *
- * To plug in a production layer, add an adapter class next to this file and assign the factory,
- * e.g. in `LayerSeams.installProduction()`:
- *
- *   SEAM(WP2+WP4+WP8) ensemble / obs : wrap the Open-Meteo ensemble ForecastProvider usage, the
- *       fusion engine (core.fusion) and the FetchScheduler policy as a [TenMeterWindLayer]. Feed it
- *       env.minutely15 (implements core.api.ForecastProvider) and env.observations (implements
- *       core.api.ObservationProvider) instead of the HTTP-backed providers; drive time with env.clock.
- *   SEAM(WP5) height : core.physics log law + exposure preset as a [HeightLayer].
- *   SEAM(WP6) heading : core.heading.HeadingEstimator as a [HeadingLayer].
- *   SEAM(WP7) virtual : the RiderWindEstimator tick facade (core.virtualwind) as a [VirtualWindLayer].
- *       No reference implementation exists: `+virtual` reports "unavailable" until this is filled.
+ *  - 10 m wind (SPEC 4.1–4.3), [TenMeterWindLayer]:
+ *      SEAM(WP4/WP8 fusion engine: core.engine.WindEngine + core.fusion + core.schedule) — NOT YET
+ *      AVAILABLE. Until it lands, [LayerSeams.ensemble] / [LayerSeams.obs] point at
+ *      [ReferenceEnsembleLayer] (SPEC-text stand-in that already uses the production ObsQc).
+ *      To plug the engine in: write `WindEngineLayer(env)` implementing [TenMeterWindLayer] that
+ *      feeds the engine `env.minutely15` (a core.api.ForecastProvider serving archived 15-min
+ *      forecasts) and `env.observations` (a core.api.ObservationProvider that hides the held-out
+ *      station and anything newer than `env.clock`), drives time with `env.clock`, and returns the
+ *      engine's model10m + confidence. Then assign it to `LayerSeams.ensemble` (observations
+ *      disabled) and `LayerSeams.obs`, and set `implementations["ensemble"/"obs"] = "production"`.
+ *  - Rider height, heading, virtual sensor (SPEC 4.4–4.6), [RiderLayer]: PRODUCTION —
+ *      [RiderWindEstimatorLayer] wraps core.virtualwind.RiderWindEstimator (LogLaw, AirDensity,
+ *      HeadingEstimator, VirtualWindSensor).
  */
 
 /** A 10 m wind estimate at a point (fusion output). */
@@ -45,6 +45,7 @@ data class TenMeterEstimate(
     val wind: WindVector,
     val confidence: Int? = null,
     val members: List<String> = emptyList(),
+    val gust: Double? = null,
 )
 
 /** SPEC 4.1–4.3: decides when to fetch, blends members, applies observation correction. */
@@ -53,46 +54,91 @@ interface TenMeterWindLayer {
     fun estimate(point: GeoPoint, nowMs: Long): TenMeterEstimate?
 }
 
-/** SPEC 4.4: 10 m wind to rider height. */
-interface HeightLayer {
-    fun toRider(model10m: WindVector, sample: RideSample): WindVector
+/** What the rider-side layers produce for one tick. */
+data class RiderResult(val rider: WindVector?, val headingDeg: Double?)
+
+/** SPEC 4.4–4.6: 10 m wind and sensors to rider-height wind and displayed heading. */
+interface RiderLayer {
+    fun update(sample: RideSample, estimate: TenMeterEstimate?): RiderResult
 }
 
-/** SPEC 4.5: displayed heading from GPS course, HEADING, speed. */
-interface HeadingLayer {
-    fun update(sample: RideSample): Double?
-}
+/**
+ * Production rider layers through the `RiderWindEstimator` tick façade. Layers not enabled behave
+ * as upstream (10 m wind as rider wind, raw GPS course), so each configuration adds exactly one.
+ */
+class RiderWindEstimatorLayer(
+    env: ReplayEnvironment,
+    private val height: Boolean,
+    private val heading: Boolean,
+    virtual: Boolean,
+) : RiderLayer {
+    private val estimator = RiderWindEstimator(
+        RiderWindConfig(
+            riderMassKg = env.systemMassKg - RiderWindConfig().bikeMassKg,
+            virtualSensorEnabled = virtual,
+        )
+    )
+    private val recent = ArrayDeque<RideSample>()
 
-/** SPEC 4.6: virtual wind sensor. Returns the filtered rider-height wind. */
-interface VirtualWindLayer {
-    fun update(sample: RideSample, riderPrior: WindVector, headingDeg: Double?, confidence: Int?): WindVector
+    override fun update(sample: RideSample, estimate: TenMeterEstimate?): RiderResult {
+        recent.addLast(sample)
+        while (recent.size > 1 && sample.timeMs - recent.first().timeMs > 5_000) recent.removeFirst()
+        val power3s = recent.filter { sample.timeMs - it.timeMs < 3_000 }.mapNotNull { it.powerW }.takeIf { it.isNotEmpty() }?.average()
+        val out = estimator.update(
+            RiderWindInputs(
+                timeMs = sample.timeMs,
+                model10m = estimate?.wind,
+                gust10m = estimate?.gust,
+                confidence = estimate?.confidence ?: 0,
+                gpsCourseDeg = sample.gpsBearingDeg,
+                speedMps = sample.speedMps ?: 0.0,
+                gpsAccuracyM = sample.gpsAccuracyM,
+                karooHeadingDeg = sample.headingDeg,
+                temperatureC = sample.temperatureC,
+                riderElevationM = sample.altitudeM,
+                power3sW = power3s,
+                powerInstantW = sample.powerW,
+                cadenceRpm = sample.cadenceRpm,
+                gradePercent = sample.gradePct ?: grade(),
+            )
+        )
+        return RiderResult(
+            rider = if (height) out.rider else estimate?.wind,
+            headingDeg = if (heading) out.headingDeg else sample.gpsBearingDeg,
+        )
+    }
+
+    /** Karoo-like ELEVATION_GRADE from the last ~5 s of altitude and distance, percent. */
+    private fun grade(): Double? {
+        val a = recent.first(); val b = recent.last()
+        val za = a.altitudeM ?: return null; val zb = b.altitudeM ?: return null
+        val d = Geo.distanceKm(a.point, b.point) * 1000
+        return if (d < 10) 0.0 else ((zb - za) / d * 100).coerceIn(-30.0, 30.0)
+    }
 }
 
 /** Factories for each seam. Reassign to plug in production code; [implementations] feeds the report. */
 object LayerSeams {
     var ensemble: (ReplayEnvironment) -> TenMeterWindLayer = { ReferenceEnsembleLayer(it, useObservations = false) }
     var obs: (ReplayEnvironment) -> TenMeterWindLayer = { ReferenceEnsembleLayer(it, useObservations = true) }
-    var height: (ReplayEnvironment) -> HeightLayer = { ReferenceHeightLayer() }
-    var heading: (ReplayEnvironment) -> HeadingLayer = { ReferenceHeadingLayer() }
-    /** Null until WP7 provides the filter. */
-    var virtual: ((ReplayEnvironment) -> VirtualWindLayer)? = null
+    var rider: (ReplayEnvironment, Boolean, Boolean, Boolean) -> RiderLayer = { env, h, hd, v -> RiderWindEstimatorLayer(env, h, hd, v) }
 
-    val implementations: MutableMap<String, String> = mutableMapOf(
-        "ensemble" to "reference",
-        "obs" to "reference",
-        "height" to "reference",
-        "heading" to "reference",
-        "virtual" to "missing",
+    val implementations: MutableMap<String, String> = defaults()
+
+    private fun defaults() = mutableMapOf(
+        "ensemble" to "reference (fusion engine seam open)",
+        "obs" to "reference+ObsQc (fusion engine seam open)",
+        "height" to "production RiderWindEstimator",
+        "heading" to "production RiderWindEstimator",
+        "virtual" to "production RiderWindEstimator",
     )
 
-    /** Restores the reference stand-ins (tests). */
+    /** Restores the defaults (tests). */
     fun reset() {
         ensemble = { ReferenceEnsembleLayer(it, useObservations = false) }
         obs = { ReferenceEnsembleLayer(it, useObservations = true) }
-        height = { ReferenceHeightLayer() }
-        heading = { ReferenceHeadingLayer() }
-        virtual = null
-        implementations.putAll(mapOf("ensemble" to "reference", "obs" to "reference", "height" to "reference", "heading" to "reference", "virtual" to "missing"))
+        rider = { env, h, hd, v -> RiderWindEstimatorLayer(env, h, hd, v) }
+        implementations.clear(); implementations.putAll(defaults())
     }
 }
 
@@ -109,43 +155,34 @@ class LayeredConfig(
 ) : ReplayConfig {
     override val implementation: Map<String, String>
         get() = buildMap {
-            put(if (obs) "obs" else "ensemble", LayerSeams.implementations[if (obs) "obs" else "ensemble"]!!)
+            val k = if (obs) "obs" else "ensemble"
+            put(k, LayerSeams.implementations[k]!!)
             if (height) put("height", LayerSeams.implementations["height"]!!)
             if (heading) put("heading", LayerSeams.implementations["heading"]!!)
             if (virtual) put("virtual", LayerSeams.implementations["virtual"]!!)
         }
 
-    override val unavailableReason: String?
-        get() = if (virtual && LayerSeams.virtual == null) "virtual wind layer not implemented yet (SEAM WP7)" else null
-
-    override fun create(env: ReplayEnvironment): ReplayPipeline? {
-        if (unavailableReason != null) return null
+    override fun create(env: ReplayEnvironment): ReplayPipeline {
         val windLayer = if (obs) LayerSeams.obs(env) else LayerSeams.ensemble(env)
-        val heightLayer = if (height) LayerSeams.height(env) else null
-        val headingLayer = if (heading) LayerSeams.heading(env) else null
-        val virtualLayer = if (virtual) LayerSeams.virtual!!(env) else null
-        return LayeredPipeline(env, windLayer, heightLayer, headingLayer, virtualLayer)
+        val riderLayer = if (height || heading || virtual) LayerSeams.rider(env, height, heading, virtual) else null
+        return LayeredPipeline(env, windLayer, riderLayer)
     }
 }
 
 class LayeredPipeline(
     private val env: ReplayEnvironment,
     private val wind: TenMeterWindLayer,
-    private val height: HeightLayer?,
-    private val heading: HeadingLayer?,
-    private val virtual: VirtualWindLayer?,
+    private val riderLayer: RiderLayer?,
 ) : ReplayPipeline {
     override fun tick(sample: RideSample): ReplayOutput {
         val now = env.clock.nowMs()
         val est = wind.estimate(sample.point, now)
-        val headingDeg = if (heading != null) heading.update(sample) else sample.gpsBearingDeg
-        var rider = est?.wind?.let { w -> height?.toRider(w, sample) ?: w }
-        if (virtual != null && rider != null) rider = virtual.update(sample, rider, headingDeg, est?.confidence)
+        val r = riderLayer?.update(sample, est) ?: RiderResult(est?.wind, sample.gpsBearingDeg)
         return ReplayOutput(
             timeMs = now,
             model10m = est?.wind,
-            rider = rider,
-            headingDeg = headingDeg,
+            rider = r.rider,
+            headingDeg = r.headingDeg,
             confidence = est?.confidence,
             members = est?.members.orEmpty(),
         )

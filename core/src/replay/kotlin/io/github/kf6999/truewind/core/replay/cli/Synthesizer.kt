@@ -66,7 +66,10 @@ class Synthesizer(private val seed: Long = 42L) {
         val pre = WindVector.fromSpeedDirection(4.5 + 0.8 * sin(2 * PI * tMin / 45.0), 200.0 + 8 * sin(2 * PI * tMin / 70.0))
         val post = WindVector.fromSpeedDirection(8.5, 300.0)
         val w = pre * (1 - f) + post * f
-        return w * (1.0 + 0.08 * sin(yM / 6000.0))
+        // Near-calm first 45 min (ramping up by 55 min) so every ride has a calm stretch for the
+        // TESTING 3.3 CdA/Crr fit; without one that fit absorbs the wind and Metric B is meaningless.
+        val calm = ((tMin - 45.0) / 10.0).coerceIn(0.12, 1.0)
+        return w * calm * (1.0 + 0.08 * sin(yM / 6000.0))
     }
 
     data class Member(val id: String, val lagMin: Double, val scale: Double, val rotDeg: Double, val smoothSteps: Int)
@@ -195,7 +198,7 @@ class Synthesizer(private val seed: Long = 42L) {
             val target = when {
                 stopLeft > 0 -> 0.0
                 b.slow || a.slow -> 1.5
-                stopHere && remaining < 40 -> max(0.0, remaining / 8.0)
+                stopHere && remaining < 40 -> max(1.0, remaining / 8.0)
                 remaining < 25 -> 4.5
                 else -> (8.5 - 40 * grade).coerceIn(4.5, 11.0)
             }
