@@ -35,7 +35,7 @@ TrueWind replay harness (docs/TESTING.md section 3)
 
   run (default)   --corpus DIR [--corpus DIR ...] --out metrics.json [--configs upstream,+ensemble,...]
                   [--summary summary.md] [--baseline docs/accuracy-baseline.json --max-regression 0.02]
-                  [--obs-lag-min N] [--set fusion.residualDistanceScaleKm=25,...] (configs also: member:<model>)
+                  [--obs-lag-min N] [--cda-fit calm20|ride] [--set fusion.residualDistanceScaleKm=25,...] (configs also: member:<model>)
   synthesize DIR  write the deterministic synthetic fixture corpus to DIR
   synthesize-ride DIR --center LAT,LON --start ISO8601 --minutes N --id NAME
                   add a ride to a downloaded corpus whose truth wind is its station observations
@@ -103,7 +103,9 @@ private fun run(opts: Opts): Int {
     val corpora = CorpusLoader.loadEach(corpusDirs)
     val obsLagMs = ((opts.one("obs-lag-min")?.toDouble() ?: 0.0) * 60_000).toLong()
     System.err.println("replay: ${corpora.size} corpora, ${corpora.sumOf { it.rides.size }} rides, members ${corpora.flatMap { it.forecasts.members }.distinct()}, obs lag ${obsLagMs / 60_000} min")
-    val report = ReplayRunner(corpora, configs, obsLagMs = obsLagMs).run().toMutableMap()
+    val cdaFit = opts.one("cda-fit") ?: "calm20"
+    require(cdaFit == "calm20" || cdaFit == "ride") { "--cda-fit calm20|ride" }
+    val report = ReplayRunner(corpora, configs, obsLagMs = obsLagMs, cdaFit = cdaFit).run().toMutableMap()
     report["generated_at"] = Instant.now().toString()
     if (opts.all("set").isNotEmpty()) report["settings"] = opts.all("set")
     out.absoluteFile.parentFile.mkdirs()
@@ -170,6 +172,11 @@ private fun applySetting(kv: String) {
     LayerSeams.riderConfig = when (key) {
         "rider.exposure" -> r.copy(exposure = io.github.kf6999.truewind.core.physics.Exposure.valueOf(value))
         "rider.heightM" -> r.copy(riderHeightM = d())
+        "rider.cda" -> r.copy(cda = d())
+        "rider.crr" -> r.copy(crr = d())
+        "virtual.measurementSigma" -> r.copy(virtualWind = r.virtualWind.copy(measurementVariance = d() * d()))
+        "virtual.windProcessPerMin" -> r.copy(virtualWind = r.virtualWind.copy(windProcessVariancePerMin = d()))
+        "virtual.priorSigmaFull" -> r.copy(virtualWind = r.virtualWind.copy(priorSigmaAtFullConfidence = d()))
         else -> r
     }
     require(key in KNOWN_SETTINGS || before != (LayerSeams.engineConfig to LayerSeams.riderConfig)) { "unknown or no-op setting $kv" }

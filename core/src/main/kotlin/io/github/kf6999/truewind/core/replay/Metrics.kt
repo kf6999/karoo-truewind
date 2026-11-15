@@ -239,6 +239,25 @@ object VirtualElevation {
     }
 
     /**
+     * Alternative to [fitCdaCrr] (diagnostic): Crr fixed at [crr], CdA fitted over the whole ride
+     * on the same windowed virtual-elevation objective as Metric B, assuming still air. Over a
+     * whole ride head- and tailwind stretches largely cancel, where a 20-minute "calm" window often
+     * does not; with Crr fixed the fit is no longer ill-conditioned (CdA and Crr trade off unless
+     * the speed varies a lot). Still identical for every configuration.
+     */
+    fun fitCdaWholeRide(samples: List<RideSample>, massKg: Double, rho: DoubleArray, accel: DoubleArray, crr: Double = 0.005): Pair<Double, Double> {
+        val zero = DoubleArray(samples.size)
+        var best = 0.32 to Double.MAX_VALUE
+        var cda = 0.15
+        while (cda <= 0.60 + 1e-9) {
+            val r = windowRmse(samples, increments(samples, zero, PowerModel(massKg, cda, crr), rho, accel)) ?: Double.MAX_VALUE
+            if (r < best.second) best = cda to r
+            cda += 0.005
+        }
+        return best.first to crr
+    }
+
+    /**
      * Headwind measured from the power balance (SPEC 4.6), m/s, null for invalid samples
      * (P < 80 W or no cadence, v < 4 m/s, |a| >= 0.5 m/s^2, |grade| >= 8%).
      */

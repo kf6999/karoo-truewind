@@ -47,6 +47,11 @@ class ReplayRunner(
      * (METAR / NWS / Synoptic feeds are 5–20 min behind). 0 = the archive is visible immediately.
      */
     private val obsLagMs: Long = 0L,
+    /**
+     * Metric B physics: `calm20` (TESTING 3.3: CdA and Crr on the calmest 20 min) or `ride`
+     * (Crr fixed 0.005, CdA over the whole ride; see [VirtualElevation.fitCdaWholeRide]).
+     */
+    private val cdaFit: String = "calm20",
 ) {
     constructor(
         corpus: ReplayCorpus,
@@ -54,7 +59,8 @@ class ReplayRunner(
         stationRadiusKm: Double = 30.0,
         calmFitWindowS: Int = 20 * 60,
         obsLagMs: Long = 0L,
-    ) : this(listOf(corpus), configs, stationRadiusKm, calmFitWindowS, obsLagMs)
+        cdaFit: String = "calm20",
+    ) : this(listOf(corpus), configs, stationRadiusKm, calmFitWindowS, obsLagMs, cdaFit)
 
     private class RidePrep(
         val corpus: ReplayCorpus,
@@ -119,6 +125,9 @@ class ReplayRunner(
                     }
                 },
                 "obs_lag_min" to obsLagMs / 60_000.0,
+                "metric_b_fit" to cdaFit,
+                // Fits on the edge of the search grid (CdA 0.15/0.60, Crr 0.002/0.012) are not physical.
+                "metric_b_fits_at_grid_edge" to preps.count { p -> p.model?.let { it.cdA <= 0.1501 || it.cdA >= 0.5949 || it.crr <= 0.00201 || it.crr >= 0.01199 } == true },
             ),
             "configs" to results,
             "comparison_vs_upstream" to compare(summaries),
@@ -134,7 +143,8 @@ class ReplayRunner(
         val mass = ride.systemMassKg ?: Ride.DEFAULT_SYSTEM_MASS_KG
         val hasAltitude = s.count { it.altitudeM != null } > s.size / 2
         val model = if (ride.hasPower && hasAltitude) {
-            val (cda, crr) = VirtualElevation.fitCdaCrr(s, calmestWindowStart(corpus, ride), calmFitWindowS, mass, rho, accel)
+            val (cda, crr) = if (cdaFit == "ride") VirtualElevation.fitCdaWholeRide(s, mass, rho, accel)
+            else VirtualElevation.fitCdaCrr(s, calmestWindowStart(corpus, ride), calmFitWindowS, mass, rho, accel)
             PowerModel(mass, cda, crr)
         } else null
         val measured = model?.let { VirtualElevation.measuredHeadwind(s, it, rho, accel) }
