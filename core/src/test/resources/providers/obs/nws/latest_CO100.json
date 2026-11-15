@@ -1,0 +1,96 @@
+{
+ "id": "https://api.weather.gov/stations/CO100/observations/2026-11-15T09:33:00+00:00",
+ "type": "Feature",
+ "geometry": {
+  "type": "Point",
+  "coordinates": [
+   -106.84,
+   39.2
+  ]
+ },
+ "properties": {
+  "@id": "https://api.weather.gov/stations/CO100/observations/2026-11-15T09:33:00+00:00",
+  "@type": "wx:ObservationStation",
+  "elevation": {
+   "unitCode": "wmoUnit:m",
+   "value": 2418.9
+  },
+  "station": "https://api.weather.gov/stations/CO100",
+  "stationId": "CO100",
+  "stationName": "082W04010RWS1RHS at Cemetry Ln Aspen",
+  "timestamp": "2026-11-15T09:33:00+00:00",
+  "rawMessage": "",
+  "textDescription": "",
+  "icon": null,
+  "presentWeather": [],
+  "temperature": {
+   "unitCode": "wmoUnit:degC",
+   "value": 2.4,
+   "qualityControl": "V"
+  },
+  "dewpoint": {
+   "unitCode": "wmoUnit:degC",
+   "value": 1.97,
+   "qualityControl": "V"
+  },
+  "windDirection": {
+   "unitCode": "wmoUnit:degree_(angle)",
+   "value": 135,
+   "qualityControl": "V"
+  },
+  "windSpeed": {
+   "unitCode": "wmoUnit:km_h-1",
+   "value": 2.16,
+   "qualityControl": "V"
+  },
+  "windGust": {
+   "unitCode": "wmoUnit:km_h-1",
+   "value": 3.24,
+   "qualityControl": "S"
+  },
+  "barometricPressure": {
+   "unitCode": "wmoUnit:Pa",
+   "value": null,
+   "qualityControl": "Z"
+  },
+  "seaLevelPressure": {
+   "unitCode": "wmoUnit:Pa",
+   "value": null,
+   "qualityControl": "Z"
+  },
+  "visibility": {
+   "unitCode": "wmoUnit:m",
+   "value": 20000,
+   "qualityControl": "C"
+  },
+  "maxTemperatureLast24Hours": {
+   "unitCode": "wmoUnit:degC",
+   "value": null
+  },
+  "minTemperatureLast24Hours": {
+   "unitCode": "wmoUnit:degC",
+   "value": null
+  },
+  "precipitationLast3Hours": {
+   "unitCode": "wmoUnit:mm",
+   "value": null,
+   "qualityControl": "Z"
+  },
+  "relativeHumidity": {
+   "unitCode": "wmoUnit:percent",
+   "value": 96.983440092227,
+   "qualityControl": "V"
+  },
+  "windChill": {
+   "unitCode": "wmoUnit:degC",
+   "value": null,
+   "qualityControl": "V"
+  },
+  "heatIndex": {
+   "unitCode": "wmoUnit:degC",
+   "value": null,
+   "qualityControl": "V"
+  },
+  "cloudLayers": []
+ }
+}

@@ -50,10 +50,12 @@ sourceSets.test {
 configurations.testImplementation { extendsFrom(replayImplementation) }
 
 dependencies {
-    replayImplementation(libs.kotlinx.serialization.json)
+    // JSON tree parsing for provider responses (WP2/WP3); no serialization compiler plugin needed.
+    implementation(libs.kotlinx.serialization.json)
     replayImplementation(libs.garmin.fit)
     testImplementation(kotlin("test"))
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.core)
 }
 
 tasks.test {
