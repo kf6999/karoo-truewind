@@ -75,7 +75,7 @@ object PipelineFixtures {
     /** 2026-11-14 12:00:00 UTC */
     const val T0_SEC = 1_794_657_600L
 
-    val settings = HeadwindSettings(welcomeDialogAccepted = true, roundLocationTo = RoundLocationSetting.KM_2)
+    val settings = HeadwindSettings(welcomeDialogAccepted = true, roundLocationTo = RoundLocationSetting.KM_2, upstreamCompatibleMode = true)
 
     val metricProfile = UserProfile(
         weight = 75f,

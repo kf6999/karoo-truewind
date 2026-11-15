@@ -16,6 +16,7 @@
 
 package de.timklge.karooheadwind.pipeline
 
+import de.timklge.karooheadwind.BuildConfig
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.ConcurrentHashMap
@@ -23,7 +24,8 @@ import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Process-wide counters for the diagnostics page, the diagnostics JSON and the TESTING 5.1
- * budgets. A plain singleton with atomic counters: cheap to bump from any thread, never blocks.
+ * budgets. HTTP, emit, view-update and tick counts are also forwarded to
+ * [DebugHooks.counters] in debug builds (the debug diagnostics JSON reads those). A plain singleton with atomic counters: cheap to bump from any thread, never blocks.
  *
  * Counters are cumulative since process start unless named otherwise; [httpRequestsToday] resets
  * at local midnight.
@@ -112,6 +114,7 @@ object Diagnostics {
     )
 
     fun recordHttp(host: String, bytes: Long, error: Boolean) {
+        if (BuildConfig.DEBUG) DebugHooks.counters.httpRequest(bytes, !error)
         httpRequests.incrementAndGet()
         httpBytes.addAndGet(bytes)
         if (error) httpErrors.incrementAndGet()
@@ -131,14 +134,17 @@ object Diagnostics {
     }
 
     fun countEmit(dataTypeId: String) {
+        if (BuildConfig.DEBUG) DebugHooks.counters.emit(dataTypeId)
         emits.getOrPut(dataTypeId) { AtomicLong() }.incrementAndGet()
     }
 
     fun countViewUpdate(dataTypeId: String) {
+        if (BuildConfig.DEBUG) DebugHooks.counters.viewUpdate(dataTypeId)
         viewUpdates.getOrPut(dataTypeId) { AtomicLong() }.incrementAndGet()
     }
 
     fun recordTick(nanos: Long) {
+        if (BuildConfig.DEBUG) DebugHooks.counters.tick(nanos)
         ticks.incrementAndGet()
         tickNanosTotal.addAndGet(nanos)
         while (true) {

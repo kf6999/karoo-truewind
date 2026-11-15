@@ -20,5 +20,12 @@
             android:name="de.timklge.karooheadwind.debug.DebugReceiver"
             android:exported="true"
             tools:ignore="ExportedReceiver" />
+
+        <!-- TrueWind key/position provisioning over adb; DUMP is held by the adb shell only. -->
+        <receiver
+            android:name="de.timklge.karooheadwind.debug.TrueWindProvisionReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            tools:ignore="ExportedReceiver" />
     </application>
 </manifest>

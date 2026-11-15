@@ -118,8 +118,8 @@ class WindRepository(
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(SensorHub.STOP_TIMEOUT_MS), WindSnapshot.PLACEHOLDER)
 
-    val state: StateFlow<WindState> = snapshot.map { it.state }
-        .stateIn(scope, SharingStarted.WhileSubscribed(SensorHub.STOP_TIMEOUT_MS), WindState.PLACEHOLDER)
+    /** The core state of [snapshot] (a view, no extra subscription). */
+    val state: StateFlow<WindState> = MappedStateFlow(snapshot) { it.state }
 
     private fun compute(inputs: Inputs) = WindStateCalculator.compute(
         response = inputs.response,
@@ -169,5 +169,16 @@ class WindRepository(
     suspend fun refreshRateMs(): Long {
         val refreshRate = settings.first().refreshRate
         return if (isK2()) refreshRate.k2Ms else refreshRate.k3Ms
+    }
+}
+
+/** A read-only [StateFlow] view of [source] through [transform]; shares the source's subscription. */
+@OptIn(kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi::class)
+private class MappedStateFlow<T, R>(private val source: StateFlow<T>, private val transform: (T) -> R) : StateFlow<R> {
+    override val value: R get() = transform(source.value)
+    override val replayCache: List<R> get() = listOf(value)
+    override suspend fun collect(collector: kotlinx.coroutines.flow.FlowCollector<R>): Nothing {
+        source.map(transform).distinctUntilChanged().collect(collector)
+        kotlinx.coroutines.awaitCancellation()
     }
 }
