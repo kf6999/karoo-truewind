@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.github.kf6999.truewind.core.wind.RelativeWindTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-15T06:21:30.470Z" hostname="MacBookPro.verizon.net" time="0.0">
-  <properties/>
-  <testcase name="components" classname="io.github.kf6999.truewind.core.wind.RelativeWindTest" time="0.0"/>
-  <testcase name="relativeBearing_convention" classname="io.github.kf6999.truewind.core.wind.RelativeWindTest" time="0.0"/>
-  <testcase name="relativeDirectionFrom_zeroIsDeadAhead" classname="io.github.kf6999.truewind.core.wind.RelativeWindTest" time="0.0"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
