@@ -3,7 +3,7 @@
 ## Extension Developers: Headwind Data Type
 
 If the user has installed the headwind extension on his karoo, you can stream the headwind data type from other extensions via `karoo-ext`.
-Use data type id `TYPE_EXT::karoo-headwind::TYPE_ID` with `TYPE_ID` being one of `headwind`, `windDirection`, `headwindSpeed`, `windSpeed` etc.
+Use data type id `TYPE_EXT::truewind::TYPE_ID` with `TYPE_ID` being one of `headwind`, `windDirection`, `headwindSpeed`, `windSpeed` etc.
 
 - The `headwind` datatype contains a single field that either represents an error code or the *relative* wind direction. A `-1.0` indicates missing gps reception, `-2.0` no weather data, `-3.0` that the headwind extension
 has not been set up. Otherwise, the value is the headwind direction in degrees.
@@ -15,7 +15,7 @@ has not been set up. Otherwise, the value is the headwind direction in degrees.
 ## Extension Developers: Current Weather Service (AIDL)
 
 Other apps can bind to `HeadwindService` to receive the current weather as a stream, without going through `karoo-ext`.
-Bind with action `de.timklge.karooheadwind.HEADWIND_SERVICE` and package `de.timklge.karooheadwind`, then register an `IHeadwindCallback` through `IHeadwindService.registerCallback`. The AIDL files are in [app/src/main/aidl](https://github.com/timklge/karoo-headwind/tree/master/app/src/main/aidl/de/timklge/karooheadwind).
+Bind with action `io.github.kf6999.truewind.HEADWIND_SERVICE` and package `io.github.kf6999.truewind`, then register an `IHeadwindCallback` through `IHeadwindService.registerCallback`. The AIDL files are in [app/src/main/aidl](https://github.com/timklge/karoo-headwind/tree/master/app/src/main/aidl/de/timklge/karooheadwind).
 
 Each callback receives a JSON string, the `HeadwindSnapshot`. All fields are always present, with `null` for unset values.
 

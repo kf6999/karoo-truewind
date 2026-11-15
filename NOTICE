@@ -1,0 +1,24 @@
+TrueWind
+Copyright 2026 TrueWind contributors
+
+This product is a modified fork of karoo-headwind
+(https://github.com/timklge/karoo-headwind), Copyright 2024-2026
+karoo-headwind contributors, licensed under the Apache License,
+Version 2.0. The original LICENSE and all upstream copyright headers are
+retained. Files changed by this fork are listed in the git history of
+https://github.com/kf6999/karoo-truewind; new files carry their own headers.
+
+Summary of changes relative to karoo-headwind (commit c9be073):
+
+- Renamed so it installs alongside upstream Headwind: application id
+  io.github.kf6999.truewind, Karoo extension id "truewind", app label
+  "TrueWind", AIDL service action io.github.kf6999.truewind.HEADWIND_SERVICE.
+  Data type ids (typeId) are unchanged.
+- Update manifest, generateManifest task and CI release URLs point at
+  https://github.com/kf6999/karoo-truewind/releases.
+- Design documents in docs/SPEC.md and docs/TESTING.md describe further
+  planned accuracy work (multi-model forecasts, observation anchoring,
+  rider-height wind, heading fusion, virtual wind sensor).
+
+Weather data: Open-Meteo (https://open-meteo.com) data is licensed under
+CC BY 4.0; its free API is for non-commercial use only.

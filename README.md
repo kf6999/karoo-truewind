@@ -1,3 +1,5 @@
+> **TrueWind** is a modified fork of [karoo-headwind](https://github.com/timklge/karoo-headwind) by timklge (Apache-2.0) aimed at higher wind accuracy. It installs alongside Headwind (application id `io.github.kf6999.truewind`, extension id `truewind`). See [NOTICE](NOTICE) and [docs/SPEC.md](docs/SPEC.md). The text below is the upstream README.
+
 # Karoo Headwind Extension
 
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/timklge/karoo-headwind/android.yml)](https://github.com/timklge/karoo-headwind/actions/workflows/android.yml)
