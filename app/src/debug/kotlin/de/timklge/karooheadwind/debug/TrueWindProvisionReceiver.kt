@@ -65,6 +65,19 @@ class TrueWindProvisionReceiver : BroadcastReceiver() {
                 val lat = intent.getStringExtra("lat")?.toDoubleOrNull()
                 val lon = intent.getStringExtra("lon")?.toDoubleOrNull()
                 if (lat != null && lon != null) { DebugOverrides.position = GeoPoint(lat, lon); done += "position override" }
+                if (intent.hasExtra("alerts_while_idle")) {
+                    val v = intent.getBooleanExtra("alerts_while_idle", false)
+                    de.timklge.karooheadwind.pipeline.ParityRuntime.hub?.alertsWhileIdle?.value = v
+                    done += "alerts_while_idle=$v"
+                }
+                if (intent.getBooleanExtra("test_alert", false)) {
+                    val hub = de.timklge.karooheadwind.pipeline.ParityRuntime.hub
+                    val a = io.github.kf6999.truewind.core.alerts.RideAlert(
+                        id = "test-${System.currentTimeMillis()}", title = "TrueWind test alert", detail = "Alert dispatch works",
+                        priority = io.github.kf6999.truewind.core.alerts.AlertPriority.NORMAL, rule = io.github.kf6999.truewind.core.alerts.AlertRule.RIDE_SUMMARY,
+                    )
+                    done += if (hub != null) { hub.dispatcher.dispatch(listOf(a), s); "test_alert" } else "test_alert(no hub)"
+                }
                 if (intent.getBooleanExtra("clear_position", false)) { DebugOverrides.position = null; done += "position cleared" }
                 if (intent.getBooleanExtra("force_cycle", false)) {
                     TrueWindRuntime.pipeline?.forceCycle()

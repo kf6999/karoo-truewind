@@ -142,6 +142,20 @@ fun TrueWindSettingsScreen(onFinish: () -> Unit) {
             onSave = { v -> edit { it.copy(tomorrowApiKey = v) } },
             test = { key -> KeyTester.testTomorrow(http, key) }, connected = connected)
 
+        Section("In-ride alerts")
+        Toggle("Start-of-ride 6 h summary", settings.alertRideSummary) { v -> edit { it.copy(alertRideSummary = v) } }
+        Toggle("Rain starting / stopping", settings.alertRain) { v -> edit { it.copy(alertRain = v) } }
+        Toggle("Strong gusts", settings.alertGust) { v -> edit { it.copy(alertGust = v) } }
+        NumberField("Gust threshold", settings.alertGustKmh.toDouble(), "km/h", 15.0..120.0) { v -> edit { it.copy(alertGustKmh = v.toInt()) } }
+        Toggle("Wind shift", settings.alertWindShift) { v -> edit { it.copy(alertWindShift = v) } }
+        Toggle("NWS severe weather (US)", settings.alertNws) { v -> edit { it.copy(alertNws = v) } }
+        Toggle("Storm nearby (estimate)", settings.alertStorm) { v -> edit { it.copy(alertStorm = v) } }
+        NumberField("Storm distance", settings.alertStormKm.toDouble(), "km", 2.0..100.0) { v -> edit { it.copy(alertStormKm = v.toInt()) } }
+        Toggle("Wildfire nearby (US)", settings.alertWildfire) { v -> edit { it.copy(alertWildfire = v) } }
+        NumberField("Wildfire distance", settings.alertWildfireKm.toDouble(), "km", 2.0..100.0) { v -> edit { it.copy(alertWildfireKm = v.toInt()) } }
+        Toggle("Air quality", settings.alertAqi) { v -> edit { it.copy(alertAqi = v) } }
+        NumberField("AQI category (1 moderate .. 5 hazardous)", settings.alertAqiCategory.toDouble(), "", 1.0..5.0) { v -> edit { it.copy(alertAqiCategory = v.toInt()) } }
+
         FilledTonalButton(modifier = Modifier.fillMaxWidth().height(40.dp), onClick = { TrueWindRuntime.pipeline?.forceCycle() }) {
             Text("Refresh wind now")
         }
