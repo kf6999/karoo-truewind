@@ -119,7 +119,7 @@ object LiveSmoke {
         } else results["synoptic"] = mapOf("skipped" to "SYNOPTIC_TOKEN not set")
         val tomorrow = System.getenv("TOMORROW_API_KEY")
         if (!tomorrow.isNullOrBlank()) probe("tomorrow-io", false) { http ->
-            val resp = runSync { http.request(TomorrowRequests.get(TomorrowRequests.realtimeUrl(point, tomorrow))) }
+            val resp = runSync { http.request(TomorrowRequests.get(TomorrowRequests.realtimeUrl(point), tomorrow)) }
             val text = resp.body?.toString(Charsets.UTF_8)
             val v = TomorrowParser.parseRealtime(text)
             mapOf("ok" to (resp.isSuccessful && v?.windSpeed != null), "status" to resp.statusCode, "bytes" to (resp.body?.size ?: 0),

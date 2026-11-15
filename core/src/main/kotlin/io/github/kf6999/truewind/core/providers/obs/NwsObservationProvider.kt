@@ -32,7 +32,7 @@ import kotlin.math.floor
 /** User-Agent the NWS API requires (SPEC 2.4). Shared with the alerts client. */
 const val NWS_USER_AGENT = "TrueWind (github.com/kf6999/karoo-truewind)"
 
-internal val NWS_HEADERS = mapOf("User-Agent" to NWS_USER_AGENT, "Accept" to "application/geo+json")
+internal val NWS_HEADERS = mapOf("User-Agent" to NWS_USER_AGENT, "Accept" to "application/geo+json", "Accept-Encoding" to "gzip")
 
 /** One entry of a `gridpoints/{wfo}/{x},{y}/stations` list. */
 data class NwsStation(

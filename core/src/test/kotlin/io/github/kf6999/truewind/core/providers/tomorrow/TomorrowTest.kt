@@ -40,16 +40,19 @@ class TomorrowTest {
     private val t0 = Instant.parse("2026-11-15T10:14:00Z").toEpochMilli()
 
     @Test
-    fun urlsCarryTheKeyAndRedactRemovesIt() {
-        val url = TomorrowRequests.timelineUrl(sf, key)
+    fun keyTravelsInHeaderNotUrl() {
+        val url = TomorrowRequests.timelineUrl(sf)
         assertTrue(url.startsWith("https://api.tomorrow.io/v4/timelines?location=37.77,-122.42&timesteps=1m&startTime=now&endTime=nowPlus60m"))
         assertTrue(url.contains("fields=windSpeed,windDirection,windGust,temperature,humidity,precipitationIntensity,precipitationProbability,pressureSurfaceLevel"))
         assertTrue(url.contains("units=metric"))
-        assertTrue(url.contains("apikey=$key"))
-        assertFalse(TomorrowRequests.redact(url).contains(key))
-        assertTrue(TomorrowRequests.redact(url).endsWith("apikey=REDACTED"))
-        val rt = TomorrowRequests.realtimeUrl(sf, "a&b")
-        assertTrue(rt.endsWith("apikey=a%26b"))
+        val req = TomorrowRequests.get(url, key)
+        assertFalse(req.url.contains(key))
+        assertFalse(req.url.contains("apikey"))
+        assertEquals(key, req.headers["apikey"])
+        assertEquals("gzip", req.headers["Accept-Encoding"])
+        val rt = TomorrowRequests.get(TomorrowRequests.realtimeUrl(sf), "a&b")
+        assertFalse(rt.url.contains("a&b"))
+        assertEquals("a&b", rt.headers["apikey"])
         assertEquals("https://x/?location=1,2&apikey=REDACTED&units=metric", TomorrowRequests.redact("https://x/?location=1,2&apikey=a%26b&units=metric"))
     }
 

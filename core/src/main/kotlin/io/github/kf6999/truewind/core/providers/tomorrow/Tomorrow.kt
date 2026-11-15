@@ -52,7 +52,9 @@ import java.time.format.DateTimeParseException
  *   humidity %, precipitationIntensity mm/h, pressure* hPa, visibility km (not m), cloudBase km.
  * - Errors: `{"code":401001,"type":"Invalid Key","message":...}`; 429 when over 25/hour or 500/day.
  * - `weatherCode` uses Tomorrow.io's own codes (1000 clear … 8000 thunderstorm), mapped by [toWmoCode].
- * The key is a URL parameter, so never log raw URLs: use [TomorrowRequests.redact].
+ * The key travels in the `apikey` **request header**, not the URL: the Karoo system logs full request
+ * URLs to logcat, so a query parameter would leak it. Verified live 2026-11-15 (`apikey:` header ->
+ * 200, no key -> 401). [TomorrowRequests.redact] still strips a legacy `apikey=` parameter.
  */
 
 /** One Tomorrow.io interval, metric units as returned. */
@@ -114,22 +116,26 @@ object TomorrowRequests {
         "precipitationIntensity", "precipitationProbability", "pressureSurfaceLevel",
     )
 
-    fun realtimeUrl(point: GeoPoint, apiKey: String, base: String = BASE): String =
-        "$base/v4/weather/realtime?location=${loc(point)}&units=metric&apikey=${urlEncode(apiKey)}"
+    const val KEY_HEADER = "apikey"
+
+    /** Realtime URL; carries no key (see [get]). */
+    fun realtimeUrl(point: GeoPoint, base: String = BASE): String =
+        "$base/v4/weather/realtime?location=${loc(point)}&units=metric"
 
     /** Timeline from now to now + [horizonMin] minutes in [timestep] steps (`1m`, `5m`, `15m`, `1h`). */
     fun timelineUrl(
         point: GeoPoint,
-        apiKey: String,
         horizonMin: Int = 60,
         timestep: String = "1m",
         fields: List<String> = TIMELINE_FIELDS,
         base: String = BASE,
     ): String =
         "$base/v4/timelines?location=${loc(point)}&timesteps=$timestep&startTime=now&endTime=nowPlus${horizonMin.coerceIn(1, 360)}m" +
-            "&fields=${fields.joinToString(",")}&units=metric&apikey=${urlEncode(apiKey)}"
+            "&fields=${fields.joinToString(",")}&units=metric"
 
-    fun get(url: String): HttpRequest = HttpRequest("GET", url, OpenMeteoRequests.ACCEPT_GZIP)
+    /** GET with gzip and the key in the `apikey` header (never in the URL). */
+    fun get(url: String, apiKey: String): HttpRequest =
+        HttpRequest("GET", url, OpenMeteoRequests.ACCEPT_GZIP + (KEY_HEADER to apiKey))
 
     /** Replaces the `apikey` parameter value, for logs and diagnostics. */
     fun redact(url: String): String = url.replace(Regex("""([?&]apikey=)[^&]*"""), "$1REDACTED")
@@ -285,7 +291,7 @@ class TomorrowForecastProvider(
         lastNowcast?.let { if (now - it.fetchedAtMs < minIntervalMs) return ForecastResult(listOf(it.toSeries(MEMBER_ID))) }
         if (now < blockedUntilMs) return ForecastResult(emptyList(), failedMembers = listOf(MEMBER_ID))
 
-        val response = http.request(TomorrowRequests.get(TomorrowRequests.timelineUrl(point, apiKey, horizonMin)))
+        val response = http.request(TomorrowRequests.get(TomorrowRequests.timelineUrl(point, horizonMin), apiKey))
         val size = (response.body?.size ?: 0).toLong()
         val text = decodeBody(response.body)
         if (!response.isSuccessful) {
@@ -308,7 +314,7 @@ class TomorrowForecastProvider(
 
     /** One realtime call (for the settings screen "Test" button); does not touch the cache. */
     suspend fun fetchRealtime(point: GeoPoint): Pair<TomorrowValues?, TomorrowError?> {
-        val response = http.request(TomorrowRequests.get(TomorrowRequests.realtimeUrl(point, apiKey)))
+        val response = http.request(TomorrowRequests.get(TomorrowRequests.realtimeUrl(point), apiKey))
         val text = decodeBody(response.body)
         if (!response.isSuccessful) {
             return null to (TomorrowParser.parseError(text, response.statusCode, retryAfterSec(response))

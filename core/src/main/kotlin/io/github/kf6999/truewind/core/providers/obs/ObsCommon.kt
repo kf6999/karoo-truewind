@@ -57,11 +57,11 @@ data class ObsFetchResult<T>(
 
 internal val lenientJson = Json { ignoreUnknownKeys = true; isLenient = true }
 
-/** Parses [body] into a JSON tree; null for empty or malformed input. Never throws. */
+/** Parses [body] (plain or gzip, see `decodeBody`) into a JSON tree; null for empty or malformed input. Never throws. */
 internal fun parseJsonOrNull(body: ByteArray?): JsonElement? {
     if (body == null || body.isEmpty()) return null
     return try {
-        lenientJson.parseToJsonElement(body.decodeToString())
+        lenientJson.parseToJsonElement(io.github.kf6999.truewind.core.providers.openmeteo.decodeBody(body) ?: return null)
     } catch (e: Exception) {
         null
     }

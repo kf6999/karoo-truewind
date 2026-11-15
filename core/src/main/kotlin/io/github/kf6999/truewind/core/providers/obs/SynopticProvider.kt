@@ -76,7 +76,7 @@ class SynopticProvider(
     suspend fun fetchStations(center: GeoPoint, radiusKm: Double): ObsFetchResult<SynopticStation> {
         if (token.isBlank()) return ObsFetchResult(emptyList(), error = "Synoptic token not set")
         // Compression is the HttpClient implementation's business: it must decompress what it asks for.
-        val response = http.safeGet(buildUrl(center, radiusKm))
+        val response = http.safeGet(buildUrl(center, radiusKm), mapOf("Accept-Encoding" to "gzip"))
         val bytes = response.body?.size?.toLong() ?: 0L
         val root = parseJsonOrNull(response.body).obj()
         if (!response.isSuccessful) {

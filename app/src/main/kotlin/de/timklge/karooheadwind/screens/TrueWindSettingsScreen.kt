@@ -136,7 +136,8 @@ fun TrueWindSettingsScreen(onFinish: () -> Unit) {
         Section("Optional data sources")
         KeyField("Synoptic Data token", settings.synopticToken,
             onSave = { v -> edit { it.copy(synopticToken = v) } },
-            test = { key -> KeyTester.testSynoptic(http, key) }, connected = connected)
+            test = { key -> KeyTester.testSynoptic(http, key) }, connected = connected,
+            warning = "Synoptic only accepts the token in the URL, and the Karoo system logs request URLs to its log. Anyone with adb access to this Karoo could read it.")
         KeyField("Tomorrow.io API key", settings.tomorrowApiKey,
             onSave = { v -> edit { it.copy(tomorrowApiKey = v) } },
             test = { key -> KeyTester.testTomorrow(http, key) }, connected = connected)
@@ -191,7 +192,7 @@ private fun NumberField(label: String, value: Double, suffix: String, range: Clo
 }
 
 @Composable
-private fun KeyField(label: String, stored: String, onSave: (String) -> Unit, test: suspend (String) -> KeyTester.Result, connected: Boolean) {
+private fun KeyField(label: String, stored: String, onSave: (String) -> Unit, test: suspend (String) -> KeyTester.Result, connected: Boolean, warning: String? = null) {
     val scope = rememberCoroutineScope()
     var text by remember { mutableStateOf(stored) }
     var result by remember { mutableStateOf<String?>(null) }
@@ -213,6 +214,7 @@ private fun KeyField(label: String, stored: String, onSave: (String) -> Unit, te
                 focused = f.isFocused
             },
         )
+        warning?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
         FilledTonalButton(
             modifier = Modifier.fillMaxWidth().height(40.dp),
             enabled = !testing && connected && text.isNotBlank(),

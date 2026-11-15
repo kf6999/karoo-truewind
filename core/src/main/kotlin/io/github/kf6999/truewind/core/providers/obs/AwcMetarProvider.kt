@@ -84,7 +84,7 @@ class AwcMetarProvider(
 
     /** Full result: every newest-per-station METAR (including ones without wind) plus counters. */
     suspend fun fetchMetars(center: GeoPoint, radiusKm: Double): ObsFetchResult<AwcMetar> {
-        val response = http.safeGet(buildUrl(center, radiusKm))
+        val response = http.safeGet(buildUrl(center, radiusKm), mapOf("Accept-Encoding" to "gzip"))
         val bytes = response.body?.size?.toLong() ?: 0L
         if (response.statusCode == 204 && response.error == null) {
             return ObsFetchResult(emptyList(), requests = 1, bytesReceived = bytes)

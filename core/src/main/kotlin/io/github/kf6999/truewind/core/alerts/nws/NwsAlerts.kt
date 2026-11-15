@@ -107,7 +107,7 @@ object NwsAlerts {
                 HttpRequest(
                     method = "GET",
                     url = buildUrl(point, baseUrl),
-                    headers = mapOf("User-Agent" to NWS_USER_AGENT, "Accept" to "application/geo+json"),
+                    headers = mapOf("User-Agent" to NWS_USER_AGENT, "Accept" to "application/geo+json", "Accept-Encoding" to "gzip"),
                 ),
             )
         } catch (e: kotlin.coroutines.cancellation.CancellationException) {
@@ -135,7 +135,7 @@ object NwsAlerts {
     fun parse(body: ByteArray?): List<NwsAlert>? {
         if (body == null || body.isEmpty()) return null
         val root = try {
-            json.parseToJsonElement(body.decodeToString())
+            json.parseToJsonElement(io.github.kf6999.truewind.core.providers.openmeteo.decodeBody(body) ?: return null)
         } catch (e: Exception) {
             return null
         } as? JsonObject ?: return null
