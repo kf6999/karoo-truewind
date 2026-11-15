@@ -1,0 +1,3 @@
+# Real rides pulled from a Karoo and the live recorder cache never go into git.
+private/
+cache/

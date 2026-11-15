@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2026 TrueWind contributors
+  ~ SPDX-License-Identifier: Apache-2.0
+  ~
+  ~ Debug-only components (replay mode, diagnostics). Merged into debug builds only.
+  -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <provider
+            android:name="de.timklge.karooheadwind.debug.DebugInitProvider"
+            android:authorities="${applicationId}.debuginit"
+            android:exported="false"
+            android:initOrder="1000" />
+
+        <!-- Exported so `adb shell am broadcast -n ...` can reach it; debug builds only. -->
+        <receiver
+            android:name="de.timklge.karooheadwind.debug.DebugReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver" />
+    </application>
+</manifest>

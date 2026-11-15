@@ -43,6 +43,25 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
 
+    # TrueWind replay gate (TESTING.md 3, 7): unit tests ran in `build` above; this replays the
+    # committed fixture corpus through every config and publishes the metrics.
+    - name: Replay fixture corpus
+      run: |
+        BASELINE=""
+        if [ -f docs/accuracy-baseline.json ]; then BASELINE="--baseline docs/accuracy-baseline.json"; fi
+        ./gradlew :core:replay --args="run --corpus corpus/fixtures --out build/replay/metrics.json --summary build/replay/summary.md $BASELINE"
+    - name: Publish replay metrics summary
+      if: always()
+      run: |
+        if [ -f build/replay/summary.md ]; then cat build/replay/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
+    - name: Upload replay metrics
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: replay-metrics
+        path: build/replay/
+        if-no-files-found: ignore
+
     - name: Create Release
       id: create_release
       uses: softprops/action-gh-release@v2

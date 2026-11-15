@@ -16,6 +16,7 @@
 
 package de.timklge.karooheadwind.pipeline
 
+import de.timklge.karooheadwind.BuildConfig
 import de.timklge.karooheadwind.UpcomingRoute
 import de.timklge.karooheadwind.streamActiveRidePage
 import de.timklge.karooheadwind.streamDataFlow
@@ -62,7 +63,14 @@ class KarooSystemStreamSource(private val karooSystem: KarooSystemService) : Kar
  * [STOP_TIMEOUT_MS] after the last collector leaves; the replay cache is cleared on release so a
  * later subscriber never sees a stale value first.
  */
-class SensorHub(private val source: KarooStreamSource, private val scope: CoroutineScope) {
+class SensorHub(source: KarooStreamSource, private val scope: CoroutineScope) {
+    // TrueWind debug builds: replay mode may substitute recorded streams (TESTING 4, T3).
+    private val source: KarooStreamSource = if (BuildConfig.DEBUG) DebugHooks.wrapStreamSource?.invoke(source) ?: source else source
+
+    init {
+        if (BuildConfig.DEBUG) DebugHooks.onSensorHub?.invoke(this)
+    }
+
     private val sharing = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS, 0)
     private val streams = ConcurrentHashMap<String, SharedFlow<StreamState>>()
 
