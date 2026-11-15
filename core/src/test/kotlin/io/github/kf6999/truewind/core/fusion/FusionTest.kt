@@ -125,9 +125,15 @@ class FusionTest {
 
     @Test
     fun noObservations_weightsEqualPriors() {
-        val w = MemberWeights(FusionConfig()).weightMap(listOf("open-meteo:ncep_hrrr_conus", "open-meteo:gfs_seamless"), T0)
+        val w = MemberWeights(FusionConfig.SPEC_4_3).weightMap(listOf("open-meteo:ncep_hrrr_conus", "open-meteo:gfs_seamless"), T0)
         assertClose(1.2 / 2.2, w.getValue("open-meteo:ncep_hrrr_conus"), 1e-9)
         assertClose(1.0 / 2.2, w.getValue("open-meteo:gfs_seamless"), 1e-9)
+        // Tuned priors: global models are a fallback behind the regional ones, NBM in between.
+        val members = listOf("open-meteo:ncep_hrrr_conus", "open-meteo:ncep_nbm_conus", "open-meteo:ecmwf_ifs", "open-meteo:gfs_global")
+        val t = MemberWeights(FusionConfig()).weightMap(members, T0)
+        assertClose(1.2 / 1.7, t.getValue("open-meteo:ncep_hrrr_conus"), 1e-9)
+        assertClose(0.3 / 1.7, t.getValue("open-meteo:ncep_nbm_conus"), 1e-9)
+        assertClose(0.1 / 1.7, t.getValue("open-meteo:ecmwf_ifs"), 1e-9)
     }
 
     @Test
@@ -227,6 +233,7 @@ class FusionTest {
         val snap = build(
             listOf(series("a", HOME) { WindVector(3.0, 0.0) }, series("a", stn) { WindVector(3.0, 0.0) }),
             listOf(obs("K1", stn, T0 - 30 * MIN, WindVector(7.0, 0.0))),
+            FusionConfig.SPEC_4_3,
         )
         val s = snap.sample(T0, HOME)
         val moved = s.model10m!!.u - 3.0

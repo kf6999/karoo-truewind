@@ -157,6 +157,23 @@ class FusionSnapshot internal constructor(
     /** Residual (obs − blend at the station) of [stations] entry [i]; null for speed-only reports without a blend. */
     fun residual(i: Int): WindVector? = if (hasResidual[i]) WindVector(residualU[i], residualV[i]) else null
 
+    /** A copy whose station residuals are replaced by [residualOf] (null = no residual for that station). */
+    fun withResiduals(residualOf: (Int) -> WindVector?): FusionSnapshot {
+        val ru = DoubleArray(stations.size)
+        val rv = DoubleArray(stations.size)
+        val has = BooleanArray(stations.size)
+        for (i in stations.indices) {
+            val r = residualOf(i) ?: continue
+            ru[i] = r.u
+            rv[i] = r.v
+            has[i] = true
+        }
+        return FusionSnapshot(
+            fetchedAtMs, weights, points, gridStartMs, stepMs, nSteps, u, v, gust, spread, temp, rh, precip, cloud,
+            sfcP, mslP, code, gridElevation, stations, ru, rv, has, config,
+        )
+    }
+
     /** Blend at forecast point [pointIndex], time [t] (no correction). */
     fun blendAt(pointIndex: Int, t: Long): WindVector? {
         val (iu, iv) = interp(u, pointIndex, t) to interp(v, pointIndex, t)
@@ -337,7 +354,7 @@ object Fusion {
             var scored = false
             for (m in members) {
                 val s = SeriesMath.seriesNear(series, m, o.location, config.seriesMatchKm) ?: continue
-                val model = SeriesMath.windAt(s, o.timeMs, config.memberHoldMs) ?: continue
+                val model = SeriesMath.memberWindAt(s, o.timeMs, config) ?: continue
                 val w = o.wind
                 val (e2, weight) = if (w != null) {
                     val du = model.u - w.u
@@ -408,7 +425,7 @@ object Fusion {
                 val idx = pi * n + i
                 var sw = 0.0
                 for ((k, s) in group.withIndex()) {
-                    val w = SeriesMath.windAt(s, t, config.memberHoldMs)
+                    val w = SeriesMath.memberWindAt(s, t, config)
                     if (w == null) {
                         ws[k] = 0.0
                     } else {
@@ -431,9 +448,9 @@ object Fusion {
                     val dv = mv[k] - bv
                     var2 += ws[k] / sw * (du * du + dv * dv)
                 }
+                spread[idx] = sqrt(var2)
                 u[idx] = bu
                 v[idx] = bv
-                spread[idx] = sqrt(var2)
 
                 fun blendScalar(select: (io.github.kf6999.truewind.core.api.ForecastStep) -> Double?): Double {
                     var acc = 0.0

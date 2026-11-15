@@ -120,6 +120,7 @@ object MetricA {
         "by_nearest_remaining_station" to pairs.groupBy { distanceBucket(it.nearestRemainingKm) }.toSortedMap()
             .mapValues { WindErrorStats.of(it.value).toMap() },
         "stations" to pairs.map { it.stationId }.distinct().sorted(),
+        "by_station" to pairs.groupBy { it.stationId }.toSortedMap().mapValues { WindErrorStats.of(it.value).toMap() },
     )
 }
 
@@ -235,6 +236,25 @@ object VirtualElevation {
             cda += 0.005
         }
         return best.first to best.second
+    }
+
+    /**
+     * Alternative to [fitCdaCrr] (diagnostic): Crr fixed at [crr], CdA fitted over the whole ride
+     * on the same windowed virtual-elevation objective as Metric B, assuming still air. Over a
+     * whole ride head- and tailwind stretches largely cancel, where a 20-minute "calm" window often
+     * does not; with Crr fixed the fit is no longer ill-conditioned (CdA and Crr trade off unless
+     * the speed varies a lot). Still identical for every configuration.
+     */
+    fun fitCdaWholeRide(samples: List<RideSample>, massKg: Double, rho: DoubleArray, accel: DoubleArray, crr: Double = 0.005): Pair<Double, Double> {
+        val zero = DoubleArray(samples.size)
+        var best = 0.32 to Double.MAX_VALUE
+        var cda = 0.15
+        while (cda <= 0.60 + 1e-9) {
+            val r = windowRmse(samples, increments(samples, zero, PowerModel(massKg, cda, crr), rho, accel)) ?: Double.MAX_VALUE
+            if (r < best.second) best = cda to r
+            cda += 0.005
+        }
+        return best.first to crr
     }
 
     /**

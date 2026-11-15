@@ -36,11 +36,16 @@ import io.github.kf6999.truewind.core.model.Status
 class WindEngineLayer(
     private val env: ReplayEnvironment,
     useObservations: Boolean,
-    config: WindEngineConfig = WindEngineConfig(),
+    config: WindEngineConfig = LayerSeams.engineConfig,
+    /** Diagnostics: restrict the ensemble to these members (null = all archived members). */
+    onlyMembers: Set<String>? = null,
+    /** Diagnostics: force a resolution (null = 15-min when archived, like the app). */
+    forceResolution: Resolution? = null,
 ) : TenMeterWindLayer {
-    private val resolution =
-        if (env.forecastArchive.members.any { env.forecastArchive.has(it, Resolution.MINUTELY_15) }) Resolution.MINUTELY_15 else Resolution.HOURLY
+    private val resolution = forceResolution
+        ?: if (env.forecastArchive.members.any { env.forecastArchive.has(it, Resolution.MINUTELY_15) }) Resolution.MINUTELY_15 else Resolution.HOURLY
     private val members: List<String> = env.forecastArchive.members.filter { env.forecastArchive.has(it, resolution) }.let { all ->
+        if (onlyMembers != null) return@let all.filter { it in onlyMembers }
         // best_match duplicates the regional model (SPEC 4.2); the app drops it when others exist.
         all.filter { it != UpstreamPipeline.BEST_MATCH }.ifEmpty { all }
     }

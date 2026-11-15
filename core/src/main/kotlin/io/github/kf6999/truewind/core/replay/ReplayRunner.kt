@@ -33,13 +33,37 @@ class ReplayCorpus(
  * library in core.
  */
 class ReplayRunner(
-    private val corpus: ReplayCorpus,
+    /**
+     * One or more corpora. Each ride is replayed against the archives of its own corpus, so
+     * corpora recorded at the same place on different days never mix forecast points.
+     */
+    private val corpora: List<ReplayCorpus>,
     private val configs: List<ReplayConfig> = ReplayConfigs.all,
     private val stationRadiusKm: Double = 30.0,
     /** Length of the calm stretch used to fit CdA/Crr (TESTING 3.3). */
     private val calmFitWindowS: Int = 20 * 60,
+    /**
+     * Observation latency: a report time-stamped t reaches the pipeline at t + [obsLagMs]
+     * (METAR / NWS / Synoptic feeds are 5–20 min behind). 0 = the archive is visible immediately.
+     */
+    private val obsLagMs: Long = 0L,
+    /**
+     * Metric B physics: `calm20` (TESTING 3.3: CdA and Crr on the calmest 20 min) or `ride`
+     * (Crr fixed 0.005, CdA over the whole ride; see [VirtualElevation.fitCdaWholeRide]).
+     */
+    private val cdaFit: String = "calm20",
 ) {
+    constructor(
+        corpus: ReplayCorpus,
+        configs: List<ReplayConfig> = ReplayConfigs.all,
+        stationRadiusKm: Double = 30.0,
+        calmFitWindowS: Int = 20 * 60,
+        obsLagMs: Long = 0L,
+        cdaFit: String = "calm20",
+    ) : this(listOf(corpus), configs, stationRadiusKm, calmFitWindowS, obsLagMs, cdaFit)
+
     private class RidePrep(
+        val corpus: ReplayCorpus,
         val ride: Ride,
         val rho: DoubleArray,
         val accel: DoubleArray,
@@ -64,7 +88,7 @@ class ReplayRunner(
 
     fun run(): Map<String, Any?> {
         val started = System.nanoTime()
-        val preps = corpus.rides.filter { it.samples.size >= 2 }.map { prepare(it) }
+        val preps = corpora.flatMap { c -> c.rides.filter { it.samples.size >= 2 }.map { prepare(c, it) } }
         val results = linkedMapOf<String, Any?>()
         val summaries = linkedMapOf<String, Map<String, Any?>>()
 
@@ -81,14 +105,29 @@ class ReplayRunner(
             results[config.name] = summary
         }
 
+        val rides = corpora.flatMap { it.rides }
         return linkedMapOf(
             "schema" to 1,
             "corpus" to linkedMapOf(
-                "name" to corpus.name,
-                "rides" to corpus.rides.size,
-                "ride_hours" to corpus.rides.sumOf { (it.endMs - it.startMs) / 3_600_000.0 },
-                "forecast_members" to corpus.forecasts.members,
-                "stations" to corpus.observations.stations.size,
+                "name" to corpora.joinToString("+") { it.name }.let { if (it.length > 80) "${corpora.size} corpora" else it },
+                "rides" to rides.size,
+                "ride_hours" to rides.sumOf { (it.endMs - it.startMs) / 3_600_000.0 },
+                "rides_with_power" to preps.count { it.model != null },
+                "forecast_members" to corpora.flatMap { it.forecasts.members }.distinct().sorted(),
+                "stations" to corpora.sumOf { it.observations.stations.size },
+                // Station-hours scored by Metric A: Σ over (ride, station within radius) of the hours
+                // the station reported during the ride.
+                "metric_a_stations" to preps.sumOf { it.stations.size },
+                "metric_a_station_hours" to preps.sumOf { p ->
+                    p.stations.sumOf { st ->
+                        val t = p.corpus.observations.byStation[st.id].orEmpty().filter { it.timeMs in p.ride.startMs..p.ride.endMs && it.wind != null }.map { it.timeMs }
+                        if (t.isEmpty()) 0.0 else (t.last() - t.first()) / 3_600_000.0
+                    }
+                },
+                "obs_lag_min" to obsLagMs / 60_000.0,
+                "metric_b_fit" to cdaFit,
+                // Fits on the edge of the search grid (CdA 0.15/0.60, Crr 0.002/0.012) are not physical.
+                "metric_b_fits_at_grid_edge" to preps.count { p -> p.model?.let { it.cdA <= 0.1501 || it.cdA >= 0.5949 || it.crr <= 0.00201 || it.crr >= 0.01199 } == true },
             ),
             "configs" to results,
             "comparison_vs_upstream" to compare(summaries),
@@ -96,7 +135,7 @@ class ReplayRunner(
         )
     }
 
-    private fun prepare(ride: Ride): RidePrep {
+    private fun prepare(corpus: ReplayCorpus, ride: Ride): RidePrep {
         val s = ride.samples
         val rho = DoubleArray(s.size) { VirtualElevation.airDensity(s[it].altitudeM, s[it].temperatureC) }
         val accel = VirtualElevation.accelerations(s)
@@ -104,7 +143,8 @@ class ReplayRunner(
         val mass = ride.systemMassKg ?: Ride.DEFAULT_SYSTEM_MASS_KG
         val hasAltitude = s.count { it.altitudeM != null } > s.size / 2
         val model = if (ride.hasPower && hasAltitude) {
-            val (cda, crr) = VirtualElevation.fitCdaCrr(s, calmestWindowStart(ride), calmFitWindowS, mass, rho, accel)
+            val (cda, crr) = if (cdaFit == "ride") VirtualElevation.fitCdaWholeRide(s, mass, rho, accel)
+            else VirtualElevation.fitCdaCrr(s, calmestWindowStart(corpus, ride), calmFitWindowS, mass, rho, accel)
             PowerModel(mass, cda, crr)
         } else null
         val measured = model?.let { VirtualElevation.measuredHeadwind(s, it, rho, accel) }
@@ -112,11 +152,11 @@ class ReplayRunner(
         val stations = corpus.observations.stationsNear(track, stationRadiusKm).filter { st ->
             corpus.observations.byStation[st.id].orEmpty().any { it.timeMs in ride.startMs..ride.endMs && it.wind != null }
         }
-        return RidePrep(ride, rho, accel, course, model, measured, stations)
+        return RidePrep(corpus, ride, rho, accel, course, model, measured, stations)
     }
 
     /** Start index of the 20-minute stretch with the lowest archived best_match wind along the track. */
-    private fun calmestWindowStart(ride: Ride): Int {
+    private fun calmestWindowStart(corpus: ReplayCorpus, ride: Ride): Int {
         val s = ride.samples
         val member = corpus.forecasts.members.firstOrNull { it == UpstreamPipeline.BEST_MATCH } ?: corpus.forecasts.members.firstOrNull() ?: return 0
         val res = if (corpus.forecasts.has(member, Resolution.HOURLY)) Resolution.HOURLY else Resolution.MINUTELY_15
@@ -136,7 +176,7 @@ class ReplayRunner(
     private fun runRide(config: ReplayConfig, prep: RidePrep, acc: ConfigAccumulator) {
         val ride = prep.ride
         val mass = ride.systemMassKg ?: Ride.DEFAULT_SYSTEM_MASS_KG
-        val env = ReplayEnvironment.create(corpus.forecasts, corpus.observations, mass, startMs = ride.startMs)
+        val env = ReplayEnvironment.create(prep.corpus.forecasts, prep.corpus.observations, mass, startMs = ride.startMs, obsLagMs = obsLagMs)
         val pipeline = config.create(env) ?: return
         val outputs = ArrayList<ReplayOutput>(ride.samples.size)
         for (sample in ride.samples) {
@@ -196,6 +236,7 @@ class ReplayRunner(
     /** Leave [station] out, put the "rider" on it for the ride's time window, compare with what it reported. */
     private fun runStation(config: ReplayConfig, station: StationInfo, prep: RidePrep, mass: Double): List<WindPair> {
         val ride = prep.ride
+        val corpus = prep.corpus
         val history = corpus.observations.byStation[station.id].orEmpty()
         val flags = MetricA.shiftFlags(history.map { it.timeMs }, history.map { it.wind })
         val inWindow = history.indices.filter { history[it].timeMs in ride.startMs..ride.endMs && history[it].wind != null }
@@ -203,7 +244,9 @@ class ReplayRunner(
         val others = prep.stations.filter { it.id != station.id }
         val nearest = others.minOfOrNull { Geo.distanceKm(it.location, station.location) }
 
-        val env = ReplayEnvironment.create(corpus.forecasts, corpus.observations, mass, heldOutStation = station.id, startMs = history[inWindow.first()].timeMs)
+        val env = ReplayEnvironment.create(
+            corpus.forecasts, corpus.observations, mass, heldOutStation = station.id, startMs = history[inWindow.first()].timeMs, obsLagMs = obsLagMs,
+        )
         val pipeline = config.create(env) ?: return emptyList()
         return inWindow.mapNotNull { i ->
             val o = history[i]

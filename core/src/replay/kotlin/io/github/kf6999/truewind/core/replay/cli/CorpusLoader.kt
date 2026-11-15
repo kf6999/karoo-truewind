@@ -60,12 +60,30 @@ object CorpusLoader {
 
     fun load(root: File): ReplayCorpus = load(listOf(root))
 
-    fun load(roots: List<File>): ReplayCorpus {
-        val dirs = roots.flatMap { root ->
-            if (File(root, "rides").isDirectory) listOf(root) else
-                root.listFiles().orEmpty().filter { it.isDirectory && File(it, "rides").isDirectory }.sortedBy { it.name }
-        }.distinct()
-        require(dirs.isNotEmpty()) { "no corpus (a directory with rides/) found under $roots" }
+    /**
+     * Corpus directories under [roots]: a directory with `rides/` is one; otherwise its
+     * subdirectories are searched (two levels, so `corpus/private/real` finds `heldout/<id>/`).
+     */
+    fun corpusDirs(roots: List<File>): List<File> = roots.flatMap { root ->
+        if (File(root, "rides").isDirectory) listOf(root) else {
+            val subs = root.listFiles().orEmpty().filter { it.isDirectory }.sortedBy { it.name }
+            subs.filter { File(it, "rides").isDirectory } + subs.filter { !File(it, "rides").isDirectory }.flatMap { s ->
+                s.listFiles().orEmpty().filter { it.isDirectory && File(it, "rides").isDirectory }.sortedBy { it.name }
+            }
+        }
+    }.distinct()
+
+    /** Each corpus directory as its own [ReplayCorpus] (archives are not shared between them). */
+    fun loadEach(roots: List<File>): List<ReplayCorpus> {
+        val dirs = corpusDirs(roots)
+        require(dirs.isNotEmpty()) { "no corpus (a directory with rides/) found" }
+        return dirs.map { loadDirs(listOf(it)) }
+    }
+
+    fun load(roots: List<File>): ReplayCorpus = loadDirs(corpusDirs(roots))
+
+    private fun loadDirs(dirs: List<File>): ReplayCorpus {
+        require(dirs.isNotEmpty()) { "no corpus (a directory with rides/) found" }
         val rides = mutableListOf<Ride>()
         val series = mutableMapOf<Pair<String, Resolution>, MutableList<ForecastSeries>>()
         val obs = mutableListOf<Observation>()

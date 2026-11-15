@@ -38,8 +38,11 @@ data class VirtualWindConfig(
     val measurementIntervalMs: Long = 5_000,
     /** Not in SPEC: minimum valid samples in a window (at 1 Hz, 3 of 5). */
     val minSamplesPerWindow: Int = 3,
-    /** Headwind measurement variance, (m/s)^2. */
-    val measurementVariance: Double = 1.5 * 1.5,
+    /**
+     * Headwind measurement variance, (m/s)^2. SPEC: (1.5)^2; (3)^2 on real rides, where 5-s
+     * power-balance headwinds scatter far more (CdA/position changes, drafting, grade noise).
+     */
+    val measurementVariance: Double = 3.0 * 3.0,
     val windProcessVariancePerMin: Double = 0.05,
     val biasProcessVariancePerMin: Double = 0.002,
     val diversityWindowMs: Long = 15 * 60_000L,

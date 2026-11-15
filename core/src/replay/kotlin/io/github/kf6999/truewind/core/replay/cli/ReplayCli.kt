@@ -17,6 +17,7 @@
 package io.github.kf6999.truewind.core.replay.cli
 
 import io.github.kf6999.truewind.core.model.GeoPoint
+import io.github.kf6999.truewind.core.replay.LayerSeams
 import io.github.kf6999.truewind.core.replay.ReplayConfigs
 import io.github.kf6999.truewind.core.replay.ReplayRunner
 import io.github.kf6999.truewind.core.replay.ReportJson
@@ -34,6 +35,7 @@ TrueWind replay harness (docs/TESTING.md section 3)
 
   run (default)   --corpus DIR [--corpus DIR ...] --out metrics.json [--configs upstream,+ensemble,...]
                   [--summary summary.md] [--baseline docs/accuracy-baseline.json --max-regression 0.02]
+                  [--obs-lag-min N] [--cda-fit calm20|ride] [--set fusion.residualDistanceScaleKm=25,...] (configs also: member:<model>)
   synthesize DIR  write the deterministic synthetic fixture corpus to DIR
   synthesize-ride DIR --center LAT,LON --start ISO8601 --minutes N --id NAME
                   add a ride to a downloaded corpus whose truth wind is its station observations
@@ -96,10 +98,16 @@ private fun run(opts: Opts): Int {
     val corpusDirs = opts.all("corpus").ifEmpty { listOf("corpus/fixtures") }.map { File(it) }
     val out = File(opts.one("out") ?: "build/replay/metrics.json")
     val configs = opts.one("configs")?.split(',')?.map { it.trim() }?.let { ReplayConfigs.byName(it) } ?: ReplayConfigs.all
-    val corpus = CorpusLoader.load(corpusDirs)
-    System.err.println("replay: corpus ${corpus.name}: ${corpus.rides.size} rides, members ${corpus.forecasts.members}, ${corpus.observations.stations.size} stations")
-    val report = ReplayRunner(corpus, configs).run().toMutableMap()
+    opts.all("set").flatMap { it.split(',') }.filter { it.isNotBlank() }.forEach { applySetting(it) }
+    // Each corpus directory keeps its own archives (rides on different days share forecast points).
+    val corpora = CorpusLoader.loadEach(corpusDirs)
+    val obsLagMs = ((opts.one("obs-lag-min")?.toDouble() ?: 0.0) * 60_000).toLong()
+    System.err.println("replay: ${corpora.size} corpora, ${corpora.sumOf { it.rides.size }} rides, members ${corpora.flatMap { it.forecasts.members }.distinct()}, obs lag ${obsLagMs / 60_000} min")
+    val cdaFit = opts.one("cda-fit") ?: "calm20"
+    require(cdaFit == "calm20" || cdaFit == "ride") { "--cda-fit calm20|ride" }
+    val report = ReplayRunner(corpora, configs, obsLagMs = obsLagMs, cdaFit = cdaFit).run().toMutableMap()
     report["generated_at"] = Instant.now().toString()
+    if (opts.all("set").isNotEmpty()) report["settings"] = opts.all("set")
     out.absoluteFile.parentFile.mkdirs()
     out.writeText(ReportJson.write(report) + "\n")
     System.err.println("replay: wrote $out (${"%.1f".format(Locale.ROOT, report["wall_time_s"] as Double)} s)")
@@ -121,6 +129,65 @@ private fun run(opts: Opts): Int {
         System.err.println("replay: baseline $baseline not found; skipping regression check")
     }
     return 0
+}
+
+/**
+ * Experiment overrides of the production defaults, `--set key=value[,key=value]` (tuning runs only;
+ * the defaults in core are what ships).
+ */
+private fun applySetting(kv: String) {
+    val key = kv.substringBefore('=').trim()
+    val value = kv.substringAfter('=').trim()
+    fun d() = value.toDouble()
+    fun minutes() = (value.toDouble() * 60_000).toLong()
+    val e = LayerSeams.engineConfig
+    val f = e.fusion
+    val q = e.qc
+    val before = LayerSeams.engineConfig to LayerSeams.riderConfig
+    LayerSeams.engineConfig = when (key) {
+        "fusion.halfLifeMin" -> e.copy(fusion = f.copy(halfLifeMs = minutes()))
+        "fusion.epsilon" -> e.copy(fusion = f.copy(epsilon = d()))
+        "fusion.weightFloor" -> e.copy(fusion = f.copy(weightFloor = d()))
+        "fusion.priorMse" -> e.copy(fusion = f.copy(priorMse = d()))
+        "fusion.priorPseudoWeight" -> e.copy(fusion = f.copy(priorPseudoWeight = d()))
+        "fusion.residualDistanceScaleKm" -> e.copy(fusion = f.copy(residualDistanceScaleKm = d()))
+        "fusion.residualAgeScaleMin" -> e.copy(fusion = f.copy(residualAgeScaleMs = minutes()))
+        "fusion.residualAverageMin" -> e.copy(fusion = f.copy(residualAverageMs = minutes()))
+        "fusion.skillWeighting" -> e.copy(fusion = f.copy(skillWeighting = value.toBoolean()))
+        "fusion.spec" -> e.copy(fusion = io.github.kf6999.truewind.core.fusion.FusionConfig.SPEC_4_3)
+        "fusion.memberAnchorMin" -> e.copy(fusion = f.copy(memberAnchorStepMs = minutes()))
+        "fusion.memberHoldMin" -> e.copy(fusion = f.copy(memberHoldMs = minutes()))
+        "fusion.priors" -> e.copy(fusion = f.copy(priors = parsePriors(value)))
+        "qc.maxAgeMin" -> e.copy(qc = q.copy(maxAgeMs = minutes()))
+        "qc.maxDistanceKm" -> e.copy(qc = q.copy(maxDistanceKm = d()))
+        "qc.maxElevationDiffM" -> e.copy(qc = q.copy(maxElevationDiffM = d()))
+        "qc.outlierSigma" -> e.copy(qc = q.copy(outlierSigma = d()))
+        "qc.minSpread" -> e.copy(qc = q.copy(minSpread = d()))
+        "engine.stationsInForecast" -> e.copy(stationsInForecast = value.toInt())
+        "engine.observationRadiusKm" -> e.copy(observationRadiusKm = d())
+        "planner.refreshMin" -> e.copy(planner = e.planner.copy(refreshIntervalMs = minutes()))
+        else -> e
+    }
+    val r = LayerSeams.riderConfig
+    LayerSeams.riderConfig = when (key) {
+        "rider.exposure" -> r.copy(exposure = io.github.kf6999.truewind.core.physics.Exposure.valueOf(value))
+        "rider.heightM" -> r.copy(riderHeightM = d())
+        "rider.cda" -> r.copy(cda = d())
+        "rider.crr" -> r.copy(crr = d())
+        "virtual.measurementSigma" -> r.copy(virtualWind = r.virtualWind.copy(measurementVariance = d() * d()))
+        "virtual.windProcessPerMin" -> r.copy(virtualWind = r.virtualWind.copy(windProcessVariancePerMin = d()))
+        "virtual.priorSigmaFull" -> r.copy(virtualWind = r.virtualWind.copy(priorSigmaAtFullConfidence = d()))
+        else -> r
+    }
+    require(key in KNOWN_SETTINGS || before != (LayerSeams.engineConfig to LayerSeams.riderConfig)) { "unknown or no-op setting $kv" }
+}
+
+private val KNOWN_SETTINGS = setOf("fusion.priors")
+
+/** `hrrr:1.2;nbm:1.0` → priors by case-insensitive substring of the member id (first match wins, else 1.0). */
+private fun parsePriors(spec: String): io.github.kf6999.truewind.core.fusion.MemberPriors {
+    val rules = spec.split(';').filter { it.contains(':') }.map { it.substringBefore(':').lowercase() to it.substringAfter(':').toDouble() }
+    return io.github.kf6999.truewind.core.fusion.MemberPriors { id -> rules.firstOrNull { id.lowercase().contains(it.first) }?.second ?: 1.0 }
 }
 
 /** Lower-is-better metrics compared against the baseline (TESTING 3.6, last paragraph). */
@@ -155,7 +222,8 @@ fun summaryMarkdown(report: Map<String, Any?>): String {
     val corpus = report["corpus"] as Map<String, Any?>
     val sb = StringBuilder()
     sb.append("## TrueWind replay — ${corpus["name"]}\n\n")
-    sb.append("${corpus["rides"]} rides, ${n(corpus["ride_hours"], 1)} h, members ${corpus["forecast_members"]}, ${corpus["stations"]} stations.\n\n")
+    sb.append("${corpus["rides"]} rides (${corpus["rides_with_power"]} with power), ${n(corpus["ride_hours"], 1)} h, members ${corpus["forecast_members"]}, ")
+    sb.append("${corpus["stations"]} stations, Metric A ${corpus["metric_a_stations"]} ride-stations / ${n(corpus["metric_a_station_hours"], 1)} station-hours, obs lag ${n(corpus["obs_lag_min"], 0)} min.\n\n")
     sb.append("| config | A vec RMSE m/s | A speed MAE | A dir MAE ° | A shift dir MAE ° | B VE RMSE m | B fwd RMSE m/s | C stopped jitter ° | C turn lag s | fetches | impl |\n")
     sb.append("|---|---|---|---|---|---|---|---|---|---|---|\n")
     val configs = report["configs"] as Map<String, Any?>
@@ -167,6 +235,25 @@ fun summaryMarkdown(report: Map<String, Any?>): String {
         sb.append("${n(g(c, "metric_a", "overall", "direction_mae_deg"), 0)} | ${n(g(c, "metric_a", "regimes", "shift", "direction_mae_deg"), 0)} | ")
         sb.append("${n(g(c, "metric_b", "ve_rmse_m"))} | ${n(g(c, "metric_b", "headwind_forward_rmse_ms"))} | ")
         sb.append("${n(g(c, "metric_c", "stopped_jitter_deg"), 1)} | ${n(g(c, "metric_c", "turn_lag_s"), 1)} | ${g(c, "cost", "fetch_requests")} | ${g(c, "implementation")} |\n")
+    }
+    // Metric A breakdowns: vector RMSE (n) per regime and per distance to the nearest remaining station.
+    val available = configs.filter { g(it.value, "available") != false }
+    val regimes = listOf("calm", "moderate", "strong", "shift")
+    sb.append("\nMetric A vector RMSE m/s by regime (n pairs):\n\n| config | ${regimes.joinToString(" | ")} |\n|---|${regimes.joinToString("") { "---|" }}\n")
+    for ((name, c) in available) {
+        sb.append("| $name | ")
+        sb.append(regimes.joinToString(" | ") { r -> "${n(g(c, "metric_a", "regimes", r, "vector_rmse_ms"))} (${g(c, "metric_a", "regimes", r, "n") ?: 0})" })
+        sb.append(" |\n")
+    }
+    val buckets = available.values.flatMap { (g(it, "metric_a", "by_nearest_remaining_station") as? Map<String, Any?>)?.keys.orEmpty() }.distinct().sorted()
+    if (buckets.isNotEmpty()) {
+        sb.append("\nMetric A vector RMSE m/s by distance from the held-out station to the nearest remaining station (n pairs):\n\n")
+        sb.append("| config | ${buckets.joinToString(" | ")} |\n|---|${buckets.joinToString("") { "---|" }}\n")
+        for ((name, c) in available) {
+            sb.append("| $name | ")
+            sb.append(buckets.joinToString(" | ") { b -> "${n(g(c, "metric_a", "by_nearest_remaining_station", b, "vector_rmse_ms"))} (${g(c, "metric_a", "by_nearest_remaining_station", b, "n") ?: 0})" })
+            sb.append(" |\n")
+        }
     }
     val targets = g(cmp, "targets") as? Map<String, Any?>
     if (targets != null) {

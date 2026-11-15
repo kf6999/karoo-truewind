@@ -71,7 +71,7 @@ class RiderWindEstimatorTest {
     /** End to end: synthetic loop with power, prior wrong by 2 m/s, through the façade. */
     @Test fun syntheticLoop_throughFacade_converges() {
         val riderMass = 75.0
-        val cfg = RiderWindConfig(exposure = Exposure.OPEN, riderMassKg = riderMass, bikeMassKg = 9.0)
+        val cfg = RiderWindConfig(exposure = Exposure.OPEN, riderMassKg = riderMass, bikeMassKg = 9.0, virtualSensorEnabled = true)
         val ratio = LogLaw.ratio(Exposure.OPEN)
         val trueRider = WindVector.fromSpeedDirection(4.0, 240.0)
         // The forecast is 2 m/s off at rider height.

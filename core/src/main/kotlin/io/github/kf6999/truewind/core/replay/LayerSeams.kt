@@ -16,6 +16,7 @@
 
 package io.github.kf6999.truewind.core.replay
 
+import io.github.kf6999.truewind.core.engine.WindEngineConfig
 import io.github.kf6999.truewind.core.model.GeoPoint
 import io.github.kf6999.truewind.core.model.WindVector
 import io.github.kf6999.truewind.core.virtualwind.RiderWindConfig
@@ -68,8 +69,8 @@ class RiderWindEstimatorLayer(
     virtual: Boolean,
 ) : RiderLayer {
     private val estimator = RiderWindEstimator(
-        RiderWindConfig(
-            riderMassKg = env.systemMassKg - RiderWindConfig().bikeMassKg,
+        LayerSeams.riderConfig.copy(
+            riderMassKg = env.systemMassKg - LayerSeams.riderConfig.bikeMassKg,
             virtualSensorEnabled = virtual,
         )
     )
@@ -114,6 +115,12 @@ class RiderWindEstimatorLayer(
 
 /** Factories for each seam. Reassign to plug in production code; [implementations] feeds the report. */
 object LayerSeams {
+    /** Engine configuration used by [WindEngineLayer] (production defaults; the CLI can override fields for experiments). */
+    var engineConfig: WindEngineConfig = WindEngineConfig()
+
+    /** Rider-layer configuration (production defaults; mass is set per ride). */
+    var riderConfig: RiderWindConfig = RiderWindConfig()
+
     var ensemble: (ReplayEnvironment) -> TenMeterWindLayer = { WindEngineLayer(it, useObservations = false) }
     var obs: (ReplayEnvironment) -> TenMeterWindLayer = { WindEngineLayer(it, useObservations = true) }
     var rider: (ReplayEnvironment, Boolean, Boolean, Boolean) -> RiderLayer = { env, h, hd, v -> RiderWindEstimatorLayer(env, h, hd, v) }
@@ -130,7 +137,9 @@ object LayerSeams {
 
     /** Restores the defaults (tests). */
     fun reset() {
-        ensemble = { WindEngineLayer(it, useObservations = false) }
+        engineConfig = WindEngineConfig()
+        riderConfig = RiderWindConfig()
+        ensemble ={ WindEngineLayer(it, useObservations = false) }
         obs = { WindEngineLayer(it, useObservations = true) }
         rider = { env, h, hd, v -> RiderWindEstimatorLayer(env, h, hd, v) }
         implementations.clear(); implementations.putAll(defaults())
@@ -194,7 +203,46 @@ object ReplayConfigs {
         LayeredConfig("+virtual", obs = true, height = true, heading = true, virtual = true),
     )
 
+    /**
+     * Configs by name. Besides [all], `member:<model>` runs the production engine on that single
+     * archived member without observations (diagnostics: which member carries skill), and
+     * `member+obs:<model>` adds observation residual correction to it.
+     */
     fun byName(names: List<String>): List<ReplayConfig> = names.map { n ->
-        all.firstOrNull { it.name == n } ?: throw IllegalArgumentException("unknown config '$n'; known: ${all.joinToString { it.name }}")
+        when {
+            n.startsWith("member:") -> MemberOnlyConfig(n.removePrefix("member:"), obs = false)
+            n.startsWith("member+obs:") -> MemberOnlyConfig(n.removePrefix("member+obs:"), obs = true)
+            n.startsWith("member-h:") -> MemberOnlyConfig(n.removePrefix("member-h:"), obs = false, hourly = true)
+            n == NoWindConfig.name -> NoWindConfig
+            n.startsWith("upstream:round") -> object : ReplayConfig {
+                // Diagnostics: upstream with a different rounding grid (km), e.g. upstream:round0.01.
+                override val name = n
+                override val implementation = mapOf("all" to "upstream-emulation, $n")
+                override fun create(env: ReplayEnvironment): ReplayPipeline = UpstreamPipeline(env, roundKm = n.removePrefix("upstream:round").toDouble())
+            }
+            else -> all.firstOrNull { it.name == n } ?: throw IllegalArgumentException("unknown config '$n'; known: ${all.joinToString { it.name }}, member:<model>")
+        }
     }
+}
+
+/**
+ * Metric B reference: the rider assumes still air (wind 0, raw GPS course). A wind estimate that
+ * does not beat this does not explain the rider's power better than ignoring the wind.
+ * Produces no 10 m wind, so it has no Metric A.
+ */
+object NoWindConfig : ReplayConfig {
+    override val name = "nowind"
+    override val implementation = mapOf("all" to "zero wind (Metric B reference)")
+    override fun create(env: ReplayEnvironment): ReplayPipeline = object : ReplayPipeline {
+        override fun tick(sample: RideSample) = ReplayOutput(env.clock.nowMs(), model10m = null, rider = WindVector.ZERO, headingDeg = sample.gpsBearingDeg)
+    }
+}
+
+/** One archived member through the production engine, 10 m wind as rider wind (diagnostics). */
+class MemberOnlyConfig(private val model: String, private val obs: Boolean, private val hourly: Boolean = false) : ReplayConfig {
+    private val memberId = if (model.contains(':')) model else "open-meteo:$model"
+    override val name = (if (hourly) "member-h:" else if (obs) "member+obs:" else "member:") + model
+    override val implementation = mapOf("ensemble" to "production WindEngine, member $memberId only" + if (obs) " + observations" else "")
+    override fun create(env: ReplayEnvironment): ReplayPipeline =
+        LayeredPipeline(env, WindEngineLayer(env, useObservations = obs, onlyMembers = setOf(memberId), forceResolution = if (hourly) Resolution.HOURLY else null), null)
 }

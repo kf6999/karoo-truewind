@@ -26,6 +26,7 @@ import io.github.kf6999.truewind.core.fusion.FusionFixtures.HOME
 import io.github.kf6999.truewind.core.fusion.FusionFixtures.MIN
 import io.github.kf6999.truewind.core.fusion.FusionFixtures.T0
 import io.github.kf6999.truewind.core.fusion.FusionFixtures.offset
+import io.github.kf6999.truewind.core.fusion.FusionConfig
 import io.github.kf6999.truewind.core.fusion.InMemoryKeyValueStore
 import io.github.kf6999.truewind.core.math.haversineKm
 import io.github.kf6999.truewind.core.math.lerp
@@ -124,7 +125,9 @@ class WindEngineTest {
         val ensemble = FakeEnsemble(members)
         val obs = FakeStations()
         val store = InMemoryKeyValueStore()
-        val engine = WindEngine(listOf(ensemble.source()), listOf(obs.source()), store = store)
+        // SPEC 4.3 weighting dynamics (skill weighting is off in the tuned defaults).
+        val spec = WindEngineConfig(fusion = FusionConfig.SPEC_4_3)
+        val engine = WindEngine(listOf(ensemble.source()), listOf(obs.source()), store = store, config = spec)
         val estimator = RiderWindEstimator()
 
         assertEquals(Status.NO_DATA, engine.sample(T0, HOME).status)
@@ -205,7 +208,7 @@ class WindEngineTest {
 
         // Weights persisted per cell: the next ride starts informed, before any observation.
         val obs2 = FakeStations().also { it.failFromMs = 0; it.failUntilMs = Long.MAX_VALUE }
-        val next = WindEngine(listOf(FakeEnsemble(members).source()), listOf(obs2.source()), store = store)
+        val next = WindEngine(listOf(FakeEnsemble(members).source()), listOf(obs2.source()), store = store, config = spec)
         currentMs = T0 + 24 * 60 * MIN
         next.runCycleIfDue(CycleContext(currentMs, offset(HOME, 75.0), recording = true, visible = false))
         val w = next.memberWeights().toMap()

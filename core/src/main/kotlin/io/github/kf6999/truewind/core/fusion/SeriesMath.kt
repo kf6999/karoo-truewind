@@ -46,6 +46,39 @@ internal object SeriesMath {
         }
     }
 
+    /** A member's wind at [t] as fusion uses it (hold, optional anchor grid). */
+    fun memberWindAt(series: ForecastSeries, t: Long, config: FusionConfig): WindVector? =
+        if (config.memberAnchorStepMs > 0L) anchoredWindAt(series, t, config.memberHoldMs, config.memberAnchorStepMs)
+        else windAt(series, t, config.memberHoldMs)
+
+    /**
+     * Interpolates only between steps on the [anchorMs] grid (e.g. the hour), ignoring the
+     * sub-hourly steps in between. When no anchor step precedes [t] in the series (the response
+     * starts 30 min back), the earliest step at or before [t] is used as the left end instead;
+     * with no anchor after [t], plain [windAt].
+     */
+    fun anchoredWindAt(series: ForecastSeries, t: Long, holdMs: Long, anchorMs: Long): WindVector? {
+        var prev: ForecastStep? = null
+        var firstBefore: ForecastStep? = null
+        var next: ForecastStep? = null
+        for (s in series.steps) {
+            if (s.wind10m == null) continue
+            if (s.timeMs <= t) {
+                if (firstBefore == null) firstBefore = s
+                if (s.timeMs % anchorMs == 0L) prev = s
+            } else if (s.timeMs % anchorMs == 0L) {
+                next = s
+                break
+            }
+        }
+        val left = prev ?: firstBefore
+        val n = next
+        if (left == null || n == null) return windAt(series, t, holdMs)
+        if (left.timeMs == t) return left.wind10m
+        return lerp(left.wind10m!!, n.wind10m!!, (t - left.timeMs).toDouble() / (n.timeMs - left.timeMs))
+    }
+
+
     /**
      * A scalar at [t] from the steps where [select] is non-null: interpolated between neighbours,
      * otherwise the nearest value (scalars such as pressure arrive only on the `current` step).

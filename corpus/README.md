@@ -49,6 +49,22 @@ tools/download/openmeteo_archive.py --bbox LAT0,LON0,LAT1,LON1 --step 0.05 \
 ./gradlew :core:replay --args="run --corpus corpus/private/<name> --out build/replay/<name>.json"
 ```
 
+## The real accuracy corpus (many rides)
+
+`tools/download/build_ride_corpus.py` builds one corpus per ride under
+`corpus/private/real/{tuning,heldout}/<ride id>/` (split in `docs/accuracy-split.md`): IEM ASOS stations
+within 60 km, Open-Meteo historical forecasts along the track and at stations, throttled through
+`corpus/cache/openmeteo_ledger.json`. A directory of such corpora replays in one run, each ride with its
+own archives:
+
+```
+./gradlew :core:replay --args="run --corpus corpus/private/real/heldout --obs-lag-min 10 \
+    --out build/replay/heldout.json --summary build/replay/heldout.md"
+#   --configs upstream,+obs,member:ncep_hrrr_conus,nowind   --cda-fit ride   --set fusion.spec=1
+```
+
+Results and method: `docs/accuracy-report.md`.
+
 Live recording (what a client actually saw, including the 15-min data and METARs):
 `tools/recorder/record.py record --name X --bbox ... --every 15`, later
 `tools/recorder/record.py stitch --name X` writes `corpus/private/X-live/`.

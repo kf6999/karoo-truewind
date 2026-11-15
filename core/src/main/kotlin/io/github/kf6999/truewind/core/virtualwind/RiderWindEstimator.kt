@@ -38,7 +38,12 @@ data class RiderWindConfig(
     val cda: Double = RiderParams.DEFAULT_CDA,
     val crr: Double = RiderParams.DEFAULT_CRR,
     val drivetrainEfficiency: Double = RiderParams.DEFAULT_DRIVETRAIN_EFFICIENCY,
-    val virtualSensorEnabled: Boolean = true,
+    /**
+     * Off by default: on the real-corpus tuning set the virtual sensor's forward headwind
+     * prediction was worse than height scaling alone with the default CdA (1.40 vs 1.32 m/s RMSE)
+     * and only about equal with a CdA calibrated on other rides (1.29). See docs/accuracy-report.md.
+     */
+    val virtualSensorEnabled: Boolean = false,
     /** Drafting cannot be detected; this toggle disables the virtual sensor. */
     val groupRide: Boolean = false,
     /** The virtual sensor drives the output only while it has measured within this window. */
