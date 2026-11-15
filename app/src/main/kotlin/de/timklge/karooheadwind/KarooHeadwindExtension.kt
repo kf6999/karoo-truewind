@@ -495,6 +495,6 @@ fun barometerFlow(context: Context): Flow<Double?> = callbackFlow {
 
         override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
     }
-    sm.registerListener(listener, sensor, 1_000_000) // 1 Hz requested
+    sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
     awaitClose { sm.unregisterListener(listener) }
 }

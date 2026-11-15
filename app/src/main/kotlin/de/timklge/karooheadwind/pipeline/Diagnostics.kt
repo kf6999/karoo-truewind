@@ -59,6 +59,8 @@ object Diagnostics {
     val tickNanosMax = AtomicLong()
     val stateEmits = AtomicLong()
     @Volatile var tickRunning: Boolean = false
+    /** Inputs of the start/stop rule at its last evaluation. */
+    @Volatile var activityInputs: String = ""
 
     // --- Engine ---
     val cycles = AtomicLong()
@@ -171,6 +173,7 @@ object Diagnostics {
         "tickMeanUs" to (if (ticks.get() > 0) tickNanosTotal.get() / ticks.get() / 1000 else 0),
         "tickMaxUs" to tickNanosMax.get() / 1000,
         "tickRunning" to tickRunning,
+        "activityInputs" to activityInputs,
         "stateEmits" to stateEmits.get(),
         "cycles" to cycles.get(),
         "cyclesSucceeded" to cyclesSucceeded.get(),

@@ -77,7 +77,12 @@ object TrueWindRuntime {
 
 /** Whether the app's own screen is in the foreground (counts as "visible", SPEC 4.1). */
 object AppVisibility {
+    private val started = java.util.concurrent.atomic.AtomicInteger(0)
     val screenOpen = MutableStateFlow(false)
+
+    /** Ref-counted so a recreated activity's late onStop cannot hide the new instance. */
+    fun onStart() { screenOpen.value = started.incrementAndGet() > 0 }
+    fun onStop() { screenOpen.value = started.updateAndGet { maxOf(0, it - 1) } > 0 }
 }
 
 /**
@@ -212,10 +217,12 @@ class TrueWindPipeline(
         launch { bikeKeyFlow.collect { bikeKey = it } }
 
         combine(startWith<HeadwindSettings?>(null, settingsFlow), visible, startWith(false, screenOpen), rec) { s, v, o, r ->
+            Diagnostics.activityInputs = "settings=${s != null} upstream=${s?.upstreamCompatibleMode} welcome=${s?.welcomeDialogAccepted} fieldVisible=$v screenOpen=$o recording=$r"
             TickPolicy.shouldRun(s, v, o, r)
         }.distinctUntilChanged().collectLatest { run ->
             _running.value = run
             Diagnostics.tickRunning = run
+            Log.i(KarooHeadwindExtension.TAG, "TrueWind pipeline run=$run (${Diagnostics.activityInputs})")
             if (run) runActive()
         }
     }
@@ -315,12 +322,14 @@ class TrueWindPipeline(
                 forceNext = false
                 val report = eng.runCycleIfDue(ctx)
                 val end = clock.nowMs()
-                Diagnostics.nextCheckAtMs = report.plan.nextCheckAtMs
                 if (report.ran) {
                     lastReport = report
                     recordCycle(report, now, end)
                 }
-                val next = report.plan.nextCheckAtMs ?: (end + maxFetchWaitMs)
+                // A plan that ran carries no nextCheckAtMs: the next time-based check is one interval on.
+                val plannedNext = report.plan.nextCheckAtMs ?: (now + report.plan.intervalMs).takeIf { report.ran }
+                Diagnostics.nextCheckAtMs = plannedNext
+                val next = plannedNext ?: (end + maxFetchWaitMs)
                 val waitMs = (next - end).coerceIn(tickIntervalMs, maxFetchWaitMs)
                 withTimeoutOrNull(waitMs) { wake.receive() }
             } else {

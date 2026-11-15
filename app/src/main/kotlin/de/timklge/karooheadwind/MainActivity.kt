@@ -34,4 +34,15 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    // TrueWind: the open app screen counts as "visible" for the fetch/tick policy (SPEC 4.1).
+    override fun onStart() {
+        super.onStart()
+        de.timklge.karooheadwind.pipeline.AppVisibility.onStart()
+    }
+
+    override fun onStop() {
+        de.timklge.karooheadwind.pipeline.AppVisibility.onStop()
+        super.onStop()
+    }
 }

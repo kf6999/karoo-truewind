@@ -87,6 +87,8 @@ fun MainScreen(close: () -> Unit) {
             // Set the lastUpdateRequested value to trigger a weather update in the KarooHeadwindExtension
             val settings = ctx.streamSettings(karooSystem).first()
             saveSettings(ctx, settings.copy(lastUpdateRequested = System.currentTimeMillis()))
+            // TrueWind mode: ask the WindEngine for a cycle now
+            de.timklge.karooheadwind.pipeline.TrueWindRuntime.pipeline?.forceCycle()
             delay(1000) // Give some time to show the refreshing indicator
             isRefreshing = false
         }
