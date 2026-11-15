@@ -56,6 +56,10 @@ object Diagnostics {
     val NUMERIC_FIELDS = listOf(
         "headwindSpeed", "windSpeed", "windGusts", "temperature", "relativeHumidity", "cloudCover",
         "surfacePressure", "sealevelPressure", "precipitation", "uvi",
+        // TrueWind fields (SPEC 5) and the WP13-16 parity fields.
+        "crosswind", "windConfidence", "windSource", "measuredHeadwind", "airDensity", "feelsLike", "rainIn",
+        "lastUpdate", "nextUpdate", "stationDistance", "maxWindRide",
+        "radar", "stormDistance", "rainBar", "aqi", "pm25", "ozone", "dewPoint", "visibility", "solarRadiation", "windChill",
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -199,6 +203,11 @@ object Diagnostics {
             })
             put("memory", JSONObject().put("total_pss_kb", mem.totalPss).put("java_heap_kb", mem.getMemoryStat("summary.java-heap")).put("native_heap_kb", mem.getMemoryStat("summary.native-heap")))
             put("threads", Thread.activeCount())
+            de.timklge.karooheadwind.pipeline.Diagnostics.let { m ->
+                put("hosts", JSONObject().also { o -> m.httpRequestsByHost.forEach { (k, v) -> o.put(k, JSONObject().put("requests", v.get()).put("bytes", m.httpBytesByHost[k]?.get() ?: 0)) } })
+                put("cycles", m.cycles.get())
+            }
+            put("parity", JSONObject().also { o -> de.timklge.karooheadwind.pipeline.Diagnostics.parity.forEach { (k, v) -> o.put(k, v?.toString() ?: JSONObject.NULL) } })
         }
     }
 

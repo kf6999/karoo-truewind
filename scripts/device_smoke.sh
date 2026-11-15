@@ -94,9 +94,18 @@ PID_END=$(app_pid)
 crashes=$(grep -E "FATAL EXCEPTION|ANR in $PKG|Process: $PKG" "$OUT/logcat.txt" | grep -c . || true)
 check "no crash/ANR" "$([[ $crashes -eq 0 && "$PID_END" == "$PID_START" ]] && echo 1 || echo 0)" "crash lines=$crashes, pid $PID_START -> ${PID_END:-none}"
 
+# Fields that are legitimately empty in some weather: no rain coming (rainIn), no storm within 100 km
+# (stormDistance), above 10 C (windChill), no power meter / not riding (measuredHeadwind, maxWindRide).
+CONDITIONAL="rainIn,stormDistance,windChill,measuredHeadwind,maxWindRide"
 fields=$(json_get "$OUT/diagnostics.json" "len(d['fields'])")
 with_data=$(json_get "$OUT/diagnostics.json" "sum(1 for f in d['fields'].values() if f.get('value') is not None)")
-check "fields left no-data" "$([[ $fields -gt 0 && $with_data -eq $fields ]] && echo 1 || echo 0)" "$with_data/$fields fields have a value: $(json_get "$OUT/diagnostics.json" "', '.join('%s=%s' % (k, (round(v['value'],2) if v.get('value') is not None else v.get('state'))) for k,v in sorted(d['fields'].items()))")"
+missing=$(json_get "$OUT/diagnostics.json" "','.join(k for k,f in sorted(d['fields'].items()) if f.get('value') is None and k not in '$CONDITIONAL'.split(','))")
+check "fields left no-data" "$([[ $fields -gt 0 && -z "$missing" ]] && echo 1 || echo 0)" "$with_data/$fields fields have a value (missing non-conditional: ${missing:-none}): $(json_get "$OUT/diagnostics.json" "', '.join('%s=%s' % (k, (round(v['value'],2) if v.get('value') is not None else v.get('state'))) for k,v in sorted(d['fields'].items()))")"
+# Conditional fields must at least have been evaluated (storm estimate ran, rain bars built).
+parity=$(json_get "$OUT/diagnostics.json" "json.dumps(d.get('parity') or {})" 2>/dev/null || echo "{}")
+log "parity diagnostics: $parity"
+log "network: cycles $(json_get "$OUT/diagnostics.json" "d.get('cycles')"), uptime $(json_get "$OUT/diagnostics.json" "d['uptime_s']") s, by host $(json_get "$OUT/diagnostics.json" "json.dumps(d.get('hosts') or {})")"
+
 
 # Upstream-compatible mode logs "Got updated weather info"; TrueWind mode logs one "cycle ok|failed"
 # line per WindEngine cycle with per-provider requests/bytes.
