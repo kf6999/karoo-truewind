@@ -54,6 +54,8 @@ class ReplayEnvironment(
             systemMassKg: Double = Ride.DEFAULT_SYSTEM_MASS_KG,
             heldOutStation: String? = null,
             startMs: Long = 0L,
+            /** Reports become visible this long after their time stamp. */
+            obsLagMs: Long = 0L,
         ): ReplayEnvironment {
             val clock = ManualClock(startMs)
             return ReplayEnvironment(
@@ -62,7 +64,7 @@ class ReplayEnvironment(
                 observationArchive = observationArchive,
                 hourly = ArchiveForecastProvider(forecastArchive, Resolution.HOURLY),
                 minutely15 = ArchiveForecastProvider(forecastArchive, Resolution.MINUTELY_15),
-                observations = ArchiveObservationProvider(observationArchive, clock, exclude = setOfNotNull(heldOutStation)),
+                observations = ArchiveObservationProvider(observationArchive, clock, exclude = setOfNotNull(heldOutStation), lagMs = obsLagMs),
                 systemMassKg = systemMassKg,
                 heldOutStation = heldOutStation,
             )

@@ -155,13 +155,15 @@ class ArchiveObservationProvider(
     private val exclude: Set<String> = emptySet(),
     private val maxAgeMs: Long = 30 * 60_000L,
     override val id: String = "archive-obs",
+    /** Publication latency: only reports time-stamped at or before now − [lagMs] are served. */
+    private val lagMs: Long = 0L,
 ) : ObservationProvider {
     var requests = 0
         private set
 
     override suspend fun fetch(center: GeoPoint, radiusKm: Double): List<Observation> {
         requests++
-        return archive.latest(clock.nowMs(), center, radiusKm, maxAgeMs, exclude)
+        return archive.latest(clock.nowMs() - lagMs, center, radiusKm, maxAgeMs, exclude)
     }
 }
 

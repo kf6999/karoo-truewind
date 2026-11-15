@@ -120,6 +120,7 @@ object MetricA {
         "by_nearest_remaining_station" to pairs.groupBy { distanceBucket(it.nearestRemainingKm) }.toSortedMap()
             .mapValues { WindErrorStats.of(it.value).toMap() },
         "stations" to pairs.map { it.stationId }.distinct().sorted(),
+        "by_station" to pairs.groupBy { it.stationId }.toSortedMap().mapValues { WindErrorStats.of(it.value).toMap() },
     )
 }
 
