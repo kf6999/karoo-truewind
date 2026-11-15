@@ -131,7 +131,8 @@ data class HeadwindSettings(
     val layerObservations: Boolean = true,
     val layerDownscaling: Boolean = true,
     val layerHeadingFusion: Boolean = true,
-    val layerVirtualSensor: Boolean = true,
+    /** Experimental: off by default (did not earn its place on held-out real rides, docs/accuracy-report.md). */
+    val layerVirtualSensor: Boolean = false,
     /** Optional Synoptic Data token (non-commercial Open Access). Never logged. */
     val synopticToken: String = "",
     /** Optional Tomorrow.io API key. Never logged. */

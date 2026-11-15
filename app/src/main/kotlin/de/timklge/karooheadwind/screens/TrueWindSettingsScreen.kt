@@ -131,7 +131,7 @@ fun TrueWindSettingsScreen(onFinish: () -> Unit) {
         Toggle("Station observations", settings.layerObservations) { v -> edit { it.copy(layerObservations = v) } }
         Toggle("Downscaling to rider height", settings.layerDownscaling) { v -> edit { it.copy(layerDownscaling = v) } }
         Toggle("Heading fusion", settings.layerHeadingFusion) { v -> edit { it.copy(layerHeadingFusion = v) } }
-        Toggle("Virtual wind sensor (power based)", settings.layerVirtualSensor) { v -> edit { it.copy(layerVirtualSensor = v) } }
+        Toggle("Virtual wind sensor (power based, experimental)", settings.layerVirtualSensor) { v -> edit { it.copy(layerVirtualSensor = v) } }
 
         Section("Optional data sources")
         KeyField("Synoptic Data token", settings.synopticToken,

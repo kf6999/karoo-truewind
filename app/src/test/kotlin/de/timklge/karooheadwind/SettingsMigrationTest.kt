@@ -44,7 +44,7 @@ class SettingsMigrationTest {
         assertEquals(1.2, s.riderHeightM)
         assertEquals(0.32, s.cda)
         assertEquals(0.005, s.crr)
-        assertTrue(s.layerEnsemble && s.layerObservations && s.layerDownscaling && s.layerHeadingFusion && s.layerVirtualSensor)
+        assertTrue(s.layerEnsemble && s.layerObservations && s.layerDownscaling && s.layerHeadingFusion && !s.layerVirtualSensor)
         assertEquals("", s.synopticToken)
         assertEquals("", s.tomorrowApiKey)
     }
@@ -59,7 +59,7 @@ class SettingsMigrationTest {
     @Test
     fun roundTrip_preservesNewFields() {
         val s = HeadwindSettings(welcomeDialogAccepted = true, refreshIntervalMin = 5, exposure = ExposureSetting.URBAN_FOREST, cda = 0.28,
-            groupRide = true, layerVirtualSensor = false, synopticToken = "tok", tomorrowApiKey = "key")
+            groupRide = true, layerVirtualSensor = true, synopticToken = "tok", tomorrowApiKey = "key")
         val back = jsonWithUnknownKeys.decodeFromString<HeadwindSettings>(Json.encodeToString(s))
         assertEquals(s, back)
     }
