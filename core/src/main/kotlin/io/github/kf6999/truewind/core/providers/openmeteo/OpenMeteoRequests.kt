@@ -80,11 +80,21 @@ object OpenMeteoRequests {
 
     val ACCEPT_GZIP: Map<String, String> = mapOf("Accept-Encoding" to "gzip")
 
+    /** Global model with complete `current` pressure/cloud/weather-code values (see [nowcastUrl]). */
+    const val DEFAULT_CURRENT_SOURCE = "ecmwf_ifs"
+
     /**
      * The per-cycle nowcast: `minutely_15` from −[pastSteps]×15 min to +[forecastSteps]×15 min
      * (default −30 min … +4 h) for each member in [models] at each of [points] (rider first), plus
      * location-level `current` values. Empty [models] means the provider default (`best_match`,
      * unsuffixed keys).
+     *
+     * Live finding (2026-11-15): with several models the unsuffixed `current` block is taken from
+     * the **first** model in `models=` only. AROME France HD, for example, has no surface pressure,
+     * cloud cover or weather code there, so a request led by it returns nulls for them.
+     * [currentFrom] (if present in [models]) is therefore moved to the front of the `models=` list;
+     * member priority is unaffected because the parser orders members itself. `uv_index` is null in
+     * `current` for ECMWF and HRRR; take UV from [hourlyUrl] (`best_match`).
      */
     fun nowcastUrl(
         points: List<GeoPoint>,
@@ -93,6 +103,7 @@ object OpenMeteoRequests {
         forecastSteps: Int = 16,
         minutely15: List<String> = OpenMeteoVars.NOWCAST_MINUTELY_15,
         current: List<String> = OpenMeteoVars.NOWCAST_CURRENT,
+        currentFrom: String? = DEFAULT_CURRENT_SOURCE,
         baseUrl: String = FORECAST_URL,
     ): String {
         require(points.isNotEmpty()) { "at least one point" }
@@ -100,7 +111,10 @@ object OpenMeteoRequests {
         putCoordinates(q, points)
         q["minutely_15"] = minutely15.joinToString(",")
         if (current.isNotEmpty()) q["current"] = current.joinToString(",")
-        if (models.isNotEmpty()) q["models"] = models.joinToString(",")
+        if (models.isNotEmpty()) {
+            val ordered = if (currentFrom != null && currentFrom in models) listOf(currentFrom) + (models - currentFrom) else models
+            q["models"] = ordered.joinToString(",")
+        }
         q["past_minutely_15"] = pastSteps.coerceAtLeast(0).toString()
         q["forecast_minutely_15"] = forecastSteps.coerceAtLeast(1).toString()
         q["wind_speed_unit"] = "ms"
