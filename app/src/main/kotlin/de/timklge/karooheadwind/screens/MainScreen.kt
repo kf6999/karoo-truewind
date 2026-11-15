@@ -79,7 +79,7 @@ fun MainScreen(close: () -> Unit) {
 
     var isRefreshing by remember { mutableStateOf(false) }
 
-    val tabs = listOf("Live", "Setup", "Wind", "Diag", "Windy")
+    val tabs = listOf("Live", "Setup", "Wind", "Route", "Finish", "Diag", "Windy")
     val windyTab = tabs.indexOf("Windy")
 
     fun refreshData() {
@@ -170,8 +170,10 @@ fun MainScreen(close: () -> Unit) {
                     0 -> WeatherScreen(::onFinish)
                     1 -> SettingsScreen(::onFinish)
                     2 -> TrueWindSettingsScreen(::onFinish)
-                    3 -> DiagnosticsScreen(::onFinish)
-                    4 -> WindyScreen(::onFinish)
+                    3 -> RouteWeatherScreen(::onFinish)
+                    4 -> FinishAlertSettingsScreen(::onFinish)
+                    5 -> DiagnosticsScreen(::onFinish)
+                    6 -> WindyScreen(::onFinish)
                 }
             }
         }

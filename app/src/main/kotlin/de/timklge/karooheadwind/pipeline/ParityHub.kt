@@ -338,8 +338,15 @@ class ParityHub(
         val ttd = timeToDestinationMs?.takeIf { pipeline.upcomingRoute != null && it > 0 }
         val req = m.onUpdate(now, rideId ?: "ride", ttd, pos)
         if (req != null) {
-            val ok = try { http.request(req).isSuccessful } catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e } catch (e: Exception) { false }
-            m.onSendResult(ok, clock.nowMs())
+            var ok = false
+            try {
+                ok = http.request(req).isSuccessful
+            } catch (e: Exception) {
+                if (e is kotlin.coroutines.cancellation.CancellationException) throw e
+            } finally {
+                // Always report, even on cancellation: otherwise the machine stays in SENDING and never retries.
+                m.onSendResult(ok, clock.nowMs())
+            }
             Log.i(KarooHeadwindExtension.TAG, "finish alert sent ok=$ok")
         }
         finishState = m.state.name
