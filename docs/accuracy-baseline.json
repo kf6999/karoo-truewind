@@ -1,0 +1,5193 @@
+{
+ "schema": 1,
+ "note": "CI gate: only the top-level 'configs' (fixture corpus, default configs, obs lag 0) are compared by `replay run --baseline` (overall Metric A vector RMSE / speed MAE / direction MAE, Metric B VE RMSE / forward headwind RMSE, Metric C jitter / turn lag; more than 2% worse fails, TESTING 3.6). 'heldout' and 'tuning' are the real-corpus results from the same code (obs lag 10 min, private corpus not in git, informational only; variant_spec = fusion.spec=1, variant_lag0 = obs lag 0, variant_cda05 = whole-ride fit with rider CdA 0.5). See docs/accuracy-report.md.",
+ "corpus": {
+  "name": "recorded-sfbay-front+synthetic-front",
+  "rides": 3,
+  "ride_hours": 7.24917,
+  "rides_with_power": 3,
+  "forecast_members": [
+   "open-meteo:best_match",
+   "open-meteo:ecmwf_ifs",
+   "open-meteo:gfs_seamless",
+   "open-meteo:ncep_hrrr_conus",
+   "open-meteo:ncep_nbm_conus"
+  ],
+  "stations": 15,
+  "metric_a_stations": 21,
+  "metric_a_station_hours": 46.4667,
+  "obs_lag_min": 0,
+  "metric_b_fit": "calm20",
+  "metric_b_fits_at_grid_edge": 1
+ },
+ "configs": {
+  "upstream": {
+   "available": true,
+   "implementation": {
+    "all": "upstream-emulation"
+   },
+   "metric_a": {
+    "overall": {
+     "n": 974,
+     "vector_rmse_ms": 3.89701,
+     "speed_mae_ms": 2.46392,
+     "speed_bias_ms": -2.30865,
+     "direction_mae_deg": 18.6314,
+     "n_direction": 862
+    },
+    "regimes": {
+     "calm": {
+      "n": 112,
+      "vector_rmse_ms": 0.876585,
+      "speed_mae_ms": 0.473054,
+      "speed_bias_ms": -0.413418,
+      "direction_mae_deg": null,
+      "n_direction": 0
+     },
+     "moderate": {
+      "n": 572,
+      "vector_rmse_ms": 2.95754,
+      "speed_mae_ms": 1.69809,
+      "speed_bias_ms": -1.45067,
+      "direction_mae_deg": 18.5269,
+      "n_direction": 572
+     },
+     "strong": {
+      "n": 290,
+      "vector_rmse_ms": 5.78417,
+      "speed_mae_ms": 4.74335,
+      "speed_bias_ms": -4.7329,
+      "direction_mae_deg": 18.8376,
+      "n_direction": 290
+     },
+     "shift": {
+      "n": 203,
+      "vector_rmse_ms": 5.92519,
+      "speed_mae_ms": 4.04315,
+      "speed_bias_ms": -3.95341,
+      "direction_mae_deg": 31.9856,
+      "n_direction": 203
+     }
+    },
+    "by_nearest_remaining_station": {
+     "0-10km": {
+      "n": 105,
+      "vector_rmse_ms": 4.19933,
+      "speed_mae_ms": 2.10196,
+      "speed_bias_ms": -1.93575,
+      "direction_mae_deg": 33.5026,
+      "n_direction": 75
+     },
+     "10-20km": {
+      "n": 869,
+      "vector_rmse_ms": 3.85887,
+      "speed_mae_ms": 2.50766,
+      "speed_bias_ms": -2.35371,
+      "direction_mae_deg": 17.2142,
+      "n_direction": 787
+     }
+    },
+    "stations": [
+     "HAF",
+     "HWD",
+     "NUQ",
+     "OAK",
+     "PAO",
+     "SFO",
+     "SQL",
+     "SYN1",
+     "SYN2",
+     "SYN3",
+     "SYN4",
+     "SYN5",
+     "SYN6",
+     "SYN7"
+    ],
+    "by_station": {
+     "HAF": {
+      "n": 10,
+      "vector_rmse_ms": 3.84631,
+      "speed_mae_ms": 2.08417,
+      "speed_bias_ms": -1.5295,
+      "direction_mae_deg": 13.375,
+      "n_direction": 10
+     },
+     "HWD": {
+      "n": 210,
+      "vector_rmse_ms": 1.5496,
+      "speed_mae_ms": 0.801921,
+      "speed_bias_ms": -0.259653,
+      "direction_mae_deg": 10.7352,
+      "n_direction": 210
+     },
+     "NUQ": {
+      "n": 10,
+      "vector_rmse_ms": 1.84609,
+      "speed_mae_ms": 1.09428,
+      "speed_bias_ms": -0.0291502,
+      "direction_mae_deg": 16.4025,
+      "n_direction": 10
+     },
+     "OAK": {
+      "n": 210,
+      "vector_rmse_ms": 3.76231,
+      "speed_mae_ms": 2.32169,
+      "speed_bias_ms": -2.28351,
+      "direction_mae_deg": 17.6467,
+      "n_direction": 210
+     },
+     "PAO": {
+      "n": 5,
+      "vector_rmse_ms": 1.69704,
+      "speed_mae_ms": 0.983669,
+      "speed_bias_ms": -0.310519,
+      "direction_mae_deg": 15.0228,
+      "n_direction": 5
+     },
+     "SFO": {
+      "n": 210,
+      "vector_rmse_ms": 5.23672,
+      "speed_mae_ms": 4.60181,
+      "speed_bias_ms": -4.60181,
+      "direction_mae_deg": 11.2849,
+      "n_direction": 210
+     },
+     "SQL": {
+      "n": 4,
+      "vector_rmse_ms": 4.48641,
+      "speed_mae_ms": 0.736248,
+      "speed_bias_ms": -0.736248,
+      "direction_mae_deg": 32.6753,
+      "n_direction": 4
+     },
+     "SYN1": {
+      "n": 45,
+      "vector_rmse_ms": 4.3694,
+      "speed_mae_ms": 2.66906,
+      "speed_bias_ms": -2.64237,
+      "direction_mae_deg": 38.3354,
+      "n_direction": 29
+     },
+     "SYN2": {
+      "n": 45,
+      "vector_rmse_ms": 4.73894,
+      "speed_mae_ms": 2.41066,
+      "speed_bias_ms": -2.38747,
+      "direction_mae_deg": 34.6258,
+      "n_direction": 30
+     },
+     "SYN3": {
+      "n": 45,
+      "vector_rmse_ms": 3.12584,
+      "speed_mae_ms": 1.53442,
+      "speed_bias_ms": -1.53384,
+      "direction_mae_deg": 29.532,
+      "n_direction": 29
+     },
+     "SYN4": {
+      "n": 45,
+      "vector_rmse_ms": 4.32776,
+      "speed_mae_ms": 3.03182,
+      "speed_bias_ms": -3.03182,
+      "direction_mae_deg": 37.3339,
+      "n_direction": 27
+     },
+     "SYN5": {
+      "n": 45,
+      "vector_rmse_ms": 4.19667,
+      "speed_mae_ms": 2.14143,
+      "speed_bias_ms": -2.0883,
+      "direction_mae_deg": 41.1594,
+      "n_direction": 30
+     },
+     "SYN6": {
+      "n": 45,
+      "vector_rmse_ms": 3.42038,
+      "speed_mae_ms": 2.00009,
+      "speed_bias_ms": -1.94908,
+      "direction_mae_deg": 20.5062,
+      "n_direction": 29
+     },
+     "SYN7": {
+      "n": 45,
+      "vector_rmse_ms": 4.23728,
+      "speed_mae_ms": 2.6097,
+      "speed_bias_ms": -2.54706,
+      "direction_mae_deg": 47.6636,
+      "n_direction": 29
+     }
+    }
+   },
+   "metric_b": {
+    "rides_with_power": 3,
+    "ve_rmse_m": 6.18728,
+    "headwind_forward_rmse_ms": 2.15396,
+    "forward_points": 550
+   },
+   "metric_c": {
+    "stopped_jitter_deg": 38.889,
+    "stopped_jitter_p95_deg": 120.631,
+    "stopped_windows": 931,
+    "turn_lag_s": 0.368421,
+    "turns": 19
+   },
+   "cost": {
+    "fetch_requests": 56,
+    "ticks": 26100,
+    "mean_tick_us": 0.590746
+   },
+   "rides": [
+    {
+     "ride": "sfbay-loop-front",
+     "ve_rmse_m": 5.77367,
+     "headwind_forward_rmse_ms": 2.03018,
+     "fit_cda": 0.275,
+     "fit_crr": 0.012,
+     "ve_rmse_truth_floor_m": 1.686,
+     "stopped_jitter_deg": 38.5128,
+     "turn_lag_s": 0.0909091,
+     "turns": 11,
+     "metric_a_pairs": 659,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-loop-front",
+     "ve_rmse_m": 7.36375,
+     "headwind_forward_rmse_ms": 2.51931,
+     "fit_cda": 0.275,
+     "fit_crr": 0.0075,
+     "ve_rmse_truth_floor_m": 1.18489,
+     "stopped_jitter_deg": 37.9718,
+     "turn_lag_s": 0.166667,
+     "turns": 6,
+     "metric_a_pairs": 210,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-outback",
+     "ve_rmse_m": 5.22372,
+     "headwind_forward_rmse_ms": 1.82814,
+     "fit_cda": 0.275,
+     "fit_crr": 0.007,
+     "ve_rmse_truth_floor_m": 1.27633,
+     "stopped_jitter_deg": 101.771,
+     "turn_lag_s": 2.5,
+     "turns": 2,
+     "metric_a_pairs": 105,
+     "metric_a_stations": 7
+    }
+   ]
+  },
+  "+ensemble": {
+   "available": true,
+   "implementation": {
+    "ensemble": "production WindEngine (no observations)"
+   },
+   "metric_a": {
+    "overall": {
+     "n": 974,
+     "vector_rmse_ms": 3.305,
+     "speed_mae_ms": 2.03119,
+     "speed_bias_ms": -1.77326,
+     "direction_mae_deg": 15.2026,
+     "n_direction": 862
+    },
+    "regimes": {
+     "calm": {
+      "n": 112,
+      "vector_rmse_ms": 0.912378,
+      "speed_mae_ms": 0.44409,
+      "speed_bias_ms": -0.268792,
+      "direction_mae_deg": null,
+      "n_direction": 0
+     },
+     "moderate": {
+      "n": 572,
+      "vector_rmse_ms": 2.73093,
+      "speed_mae_ms": 1.42496,
+      "speed_bias_ms": -1.02266,
+      "direction_mae_deg": 17.0076,
+      "n_direction": 572
+     },
+     "strong": {
+      "n": 290,
+      "vector_rmse_ms": 4.65344,
+      "speed_mae_ms": 3.83989,
+      "speed_bias_ms": -3.83478,
+      "direction_mae_deg": 11.6422,
+      "n_direction": 290
+     },
+     "shift": {
+      "n": 203,
+      "vector_rmse_ms": 4.96352,
+      "speed_mae_ms": 3.52349,
+      "speed_bias_ms": -3.35748,
+      "direction_mae_deg": 22.3446,
+      "n_direction": 203
+     }
+    },
+    "by_nearest_remaining_station": {
+     "0-10km": {
+      "n": 105,
+      "vector_rmse_ms": 3.57968,
+      "speed_mae_ms": 2.13621,
+      "speed_bias_ms": -1.88856,
+      "direction_mae_deg": 25.5864,
+      "n_direction": 75
+     },
+     "10-20km": {
+      "n": 869,
+      "vector_rmse_ms": 3.27025,
+      "speed_mae_ms": 2.01851,
+      "speed_bias_ms": -1.75933,
+      "direction_mae_deg": 14.213,
+      "n_direction": 787
+     }
+    },
+    "stations": [
+     "HAF",
+     "HWD",
+     "NUQ",
+     "OAK",
+     "PAO",
+     "SFO",
+     "SQL",
+     "SYN1",
+     "SYN2",
+     "SYN3",
+     "SYN4",
+     "SYN5",
+     "SYN6",
+     "SYN7"
+    ],
+    "by_station": {
+     "HAF": {
+      "n": 10,
+      "vector_rmse_ms": 3.25326,
+      "speed_mae_ms": 1.97197,
+      "speed_bias_ms": -1.40293,
+      "direction_mae_deg": 10.7679,
+      "n_direction": 10
+     },
+     "HWD": {
+      "n": 210,
+      "vector_rmse_ms": 1.90073,
+      "speed_mae_ms": 0.751241,
+      "speed_bias_ms": 0.0746264,
+      "direction_mae_deg": 13.8933,
+      "n_direction": 210
+     },
+     "NUQ": {
+      "n": 10,
+      "vector_rmse_ms": 2.18254,
+      "speed_mae_ms": 0.92544,
+      "speed_bias_ms": 0.295208,
+      "direction_mae_deg": 17.6681,
+      "n_direction": 10
+     },
+     "OAK": {
+      "n": 210,
+      "vector_rmse_ms": 3.74044,
+      "speed_mae_ms": 1.97443,
+      "speed_bias_ms": -1.83372,
+      "direction_mae_deg": 19.3115,
+      "n_direction": 210
+     },
+     "PAO": {
+      "n": 5,
+      "vector_rmse_ms": 2.24648,
+      "speed_mae_ms": 1.04174,
+      "speed_bias_ms": 0.124786,
+      "direction_mae_deg": 20.3266,
+      "n_direction": 5
+     },
+     "SFO": {
+      "n": 210,
+      "vector_rmse_ms": 3.78394,
+      "speed_mae_ms": 3.05861,
+      "speed_bias_ms": -3.04917,
+      "direction_mae_deg": 8.34091,
+      "n_direction": 210
+     },
+     "SQL": {
+      "n": 4,
+      "vector_rmse_ms": 4.34474,
+      "speed_mae_ms": 0.543654,
+      "speed_bias_ms": -0.543654,
+      "direction_mae_deg": 35.5641,
+      "n_direction": 4
+     },
+     "SYN1": {
+      "n": 45,
+      "vector_rmse_ms": 3.47274,
+      "speed_mae_ms": 2.47842,
+      "speed_bias_ms": -2.43287,
+      "direction_mae_deg": 9.95847,
+      "n_direction": 29
+     },
+     "SYN2": {
+      "n": 45,
+      "vector_rmse_ms": 4.0628,
+      "speed_mae_ms": 2.49008,
+      "speed_bias_ms": -2.44408,
+      "direction_mae_deg": 27.0287,
+      "n_direction": 30
+     },
+     "SYN3": {
+      "n": 45,
+      "vector_rmse_ms": 2.72559,
+      "speed_mae_ms": 1.67269,
+      "speed_bias_ms": -1.59157,
+      "direction_mae_deg": 24.0848,
+      "n_direction": 29
+     },
+     "SYN4": {
+      "n": 45,
+      "vector_rmse_ms": 3.5363,
+      "speed_mae_ms": 2.71285,
+      "speed_bias_ms": -2.7033,
+      "direction_mae_deg": 14.7733,
+      "n_direction": 27
+     },
+     "SYN5": {
+      "n": 45,
+      "vector_rmse_ms": 3.43132,
+      "speed_mae_ms": 2.17299,
+      "speed_bias_ms": -2.04201,
+      "direction_mae_deg": 27.6601,
+      "n_direction": 30
+     },
+     "SYN6": {
+      "n": 45,
+      "vector_rmse_ms": 3.06611,
+      "speed_mae_ms": 2.06912,
+      "speed_bias_ms": -1.98007,
+      "direction_mae_deg": 15.4291,
+      "n_direction": 29
+     },
+     "SYN7": {
+      "n": 45,
+      "vector_rmse_ms": 3.48267,
+      "speed_mae_ms": 2.56665,
+      "speed_bias_ms": -2.4681,
+      "direction_mae_deg": 13.0177,
+      "n_direction": 29
+     }
+    }
+   },
+   "metric_b": {
+    "rides_with_power": 3,
+    "ve_rmse_m": 5.5748,
+    "headwind_forward_rmse_ms": 1.82353,
+    "forward_points": 550
+   },
+   "metric_c": {
+    "stopped_jitter_deg": 38.8882,
+    "stopped_jitter_p95_deg": 120.649,
+    "stopped_windows": 931,
+    "turn_lag_s": 0.368421,
+    "turns": 19
+   },
+   "cost": {
+    "fetch_requests": 47,
+    "ticks": 26100,
+    "mean_tick_us": 3.22422
+   },
+   "rides": [
+    {
+     "ride": "sfbay-loop-front",
+     "ve_rmse_m": 6.66938,
+     "headwind_forward_rmse_ms": 2.04164,
+     "fit_cda": 0.275,
+     "fit_crr": 0.012,
+     "ve_rmse_truth_floor_m": 1.686,
+     "stopped_jitter_deg": 38.511,
+     "turn_lag_s": 0.0909091,
+     "turns": 11,
+     "metric_a_pairs": 659,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-loop-front",
+     "ve_rmse_m": 5.77722,
+     "headwind_forward_rmse_ms": 1.77933,
+     "fit_cda": 0.275,
+     "fit_crr": 0.0075,
+     "ve_rmse_truth_floor_m": 1.18489,
+     "stopped_jitter_deg": 37.9722,
+     "turn_lag_s": 0.166667,
+     "turns": 6,
+     "metric_a_pairs": 210,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-outback",
+     "ve_rmse_m": 3.92151,
+     "headwind_forward_rmse_ms": 1.43923,
+     "fit_cda": 0.275,
+     "fit_crr": 0.007,
+     "ve_rmse_truth_floor_m": 1.27633,
+     "stopped_jitter_deg": 101.777,
+     "turn_lag_s": 2.5,
+     "turns": 2,
+     "metric_a_pairs": 105,
+     "metric_a_stations": 7
+    }
+   ]
+  },
+  "+obs": {
+   "available": true,
+   "implementation": {
+    "obs": "production WindEngine"
+   },
+   "metric_a": {
+    "overall": {
+     "n": 974,
+     "vector_rmse_ms": 3.18333,
+     "speed_mae_ms": 1.91133,
+     "speed_bias_ms": -1.57218,
+     "direction_mae_deg": 14.5271,
+     "n_direction": 862
+    },
+    "regimes": {
+     "calm": {
+      "n": 112,
+      "vector_rmse_ms": 0.935588,
+      "speed_mae_ms": 0.453652,
+      "speed_bias_ms": -0.236397,
+      "direction_mae_deg": null,
+      "n_direction": 0
+     },
+     "moderate": {
+      "n": 572,
+      "vector_rmse_ms": 2.56007,
+      "speed_mae_ms": 1.29133,
+      "speed_bias_ms": -0.780036,
+      "direction_mae_deg": 15.9631,
+      "n_direction": 572
+     },
+     "strong": {
+      "n": 290,
+      "vector_rmse_ms": 4.55738,
+      "speed_mae_ms": 3.6972,
+      "speed_bias_ms": -3.65051,
+      "direction_mae_deg": 11.6948,
+      "n_direction": 290
+     },
+     "shift": {
+      "n": 203,
+      "vector_rmse_ms": 4.80499,
+      "speed_mae_ms": 3.28405,
+      "speed_bias_ms": -3.07214,
+      "direction_mae_deg": 22.1194,
+      "n_direction": 203
+     }
+    },
+    "by_nearest_remaining_station": {
+     "0-10km": {
+      "n": 105,
+      "vector_rmse_ms": 2.92752,
+      "speed_mae_ms": 1.68194,
+      "speed_bias_ms": -1.35903,
+      "direction_mae_deg": 19.9677,
+      "n_direction": 75
+     },
+     "10-20km": {
+      "n": 869,
+      "vector_rmse_ms": 3.21286,
+      "speed_mae_ms": 1.93905,
+      "speed_bias_ms": -1.59794,
+      "direction_mae_deg": 14.0086,
+      "n_direction": 787
+     }
+    },
+    "stations": [
+     "HAF",
+     "HWD",
+     "NUQ",
+     "OAK",
+     "PAO",
+     "SFO",
+     "SQL",
+     "SYN1",
+     "SYN2",
+     "SYN3",
+     "SYN4",
+     "SYN5",
+     "SYN6",
+     "SYN7"
+    ],
+    "by_station": {
+     "HAF": {
+      "n": 10,
+      "vector_rmse_ms": 3.13056,
+      "speed_mae_ms": 1.79459,
+      "speed_bias_ms": -1.02044,
+      "direction_mae_deg": 10.8589,
+      "n_direction": 10
+     },
+     "HWD": {
+      "n": 210,
+      "vector_rmse_ms": 1.68572,
+      "speed_mae_ms": 0.73514,
+      "speed_bias_ms": 0.255284,
+      "direction_mae_deg": 11.7793,
+      "n_direction": 210
+     },
+     "NUQ": {
+      "n": 10,
+      "vector_rmse_ms": 2.06355,
+      "speed_mae_ms": 0.939959,
+      "speed_bias_ms": 0.53351,
+      "direction_mae_deg": 17.3198,
+      "n_direction": 10
+     },
+     "OAK": {
+      "n": 210,
+      "vector_rmse_ms": 3.76846,
+      "speed_mae_ms": 1.86759,
+      "speed_bias_ms": -1.67844,
+      "direction_mae_deg": 19.9439,
+      "n_direction": 210
+     },
+     "PAO": {
+      "n": 5,
+      "vector_rmse_ms": 2.16907,
+      "speed_mae_ms": 1.0616,
+      "speed_bias_ms": 0.345613,
+      "direction_mae_deg": 17.0951,
+      "n_direction": 5
+     },
+     "SFO": {
+      "n": 210,
+      "vector_rmse_ms": 3.87663,
+      "speed_mae_ms": 3.08664,
+      "speed_bias_ms": -3.07864,
+      "direction_mae_deg": 9.24317,
+      "n_direction": 210
+     },
+     "SQL": {
+      "n": 4,
+      "vector_rmse_ms": 4.38937,
+      "speed_mae_ms": 0.485575,
+      "speed_bias_ms": -0.120766,
+      "direction_mae_deg": 34.6429,
+      "n_direction": 4
+     },
+     "SYN1": {
+      "n": 45,
+      "vector_rmse_ms": 3.42545,
+      "speed_mae_ms": 2.44389,
+      "speed_bias_ms": -2.10004,
+      "direction_mae_deg": 14.6012,
+      "n_direction": 29
+     },
+     "SYN2": {
+      "n": 45,
+      "vector_rmse_ms": 3.28467,
+      "speed_mae_ms": 2.03635,
+      "speed_bias_ms": -1.98324,
+      "direction_mae_deg": 18.7403,
+      "n_direction": 30
+     },
+     "SYN3": {
+      "n": 45,
+      "vector_rmse_ms": 2.14418,
+      "speed_mae_ms": 1.34446,
+      "speed_bias_ms": -1.25039,
+      "direction_mae_deg": 18.0658,
+      "n_direction": 29
+     },
+     "SYN4": {
+      "n": 45,
+      "vector_rmse_ms": 3.34618,
+      "speed_mae_ms": 2.45888,
+      "speed_bias_ms": -2.44957,
+      "direction_mae_deg": 16.031,
+      "n_direction": 27
+     },
+     "SYN5": {
+      "n": 45,
+      "vector_rmse_ms": 2.78199,
+      "speed_mae_ms": 1.56134,
+      "speed_bias_ms": -1.34479,
+      "direction_mae_deg": 22.5565,
+      "n_direction": 30
+     },
+     "SYN6": {
+      "n": 45,
+      "vector_rmse_ms": 2.72081,
+      "speed_mae_ms": 1.86099,
+      "speed_bias_ms": -1.75578,
+      "direction_mae_deg": 11.7223,
+      "n_direction": 29
+     },
+     "SYN7": {
+      "n": 45,
+      "vector_rmse_ms": 3.29409,
+      "speed_mae_ms": 2.34457,
+      "speed_bias_ms": -2.05625,
+      "direction_mae_deg": 15.6747,
+      "n_direction": 29
+     }
+    }
+   },
+   "metric_b": {
+    "rides_with_power": 3,
+    "ve_rmse_m": 5.16464,
+    "headwind_forward_rmse_ms": 1.64398,
+    "forward_points": 550
+   },
+   "metric_c": {
+    "stopped_jitter_deg": 38.8839,
+    "stopped_jitter_p95_deg": 120.598,
+    "stopped_windows": 931,
+    "turn_lag_s": 0.368421,
+    "turns": 19
+   },
+   "cost": {
+    "fetch_requests": 102,
+    "ticks": 26100,
+    "mean_tick_us": 2.70187
+   },
+   "rides": [
+    {
+     "ride": "sfbay-loop-front",
+     "ve_rmse_m": 7.50253,
+     "headwind_forward_rmse_ms": 2.07872,
+     "fit_cda": 0.275,
+     "fit_crr": 0.012,
+     "ve_rmse_truth_floor_m": 1.686,
+     "stopped_jitter_deg": 38.5052,
+     "turn_lag_s": 0.0909091,
+     "turns": 11,
+     "metric_a_pairs": 659,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-loop-front",
+     "ve_rmse_m": 3.8769,
+     "headwind_forward_rmse_ms": 1.22827,
+     "fit_cda": 0.275,
+     "fit_crr": 0.0075,
+     "ve_rmse_truth_floor_m": 1.18489,
+     "stopped_jitter_deg": 37.9701,
+     "turn_lag_s": 0.166667,
+     "turns": 6,
+     "metric_a_pairs": 210,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-outback",
+     "ve_rmse_m": 2.94998,
+     "headwind_forward_rmse_ms": 1.19867,
+     "fit_cda": 0.275,
+     "fit_crr": 0.007,
+     "ve_rmse_truth_floor_m": 1.27633,
+     "stopped_jitter_deg": 101.76,
+     "turn_lag_s": 2.5,
+     "turns": 2,
+     "metric_a_pairs": 105,
+     "metric_a_stations": 7
+    }
+   ]
+  },
+  "+height": {
+   "available": true,
+   "implementation": {
+    "obs": "production WindEngine",
+    "height": "production RiderWindEstimator"
+   },
+   "metric_a": {
+    "overall": {
+     "n": 974,
+     "vector_rmse_ms": 3.18333,
+     "speed_mae_ms": 1.91133,
+     "speed_bias_ms": -1.57218,
+     "direction_mae_deg": 14.5271,
+     "n_direction": 862
+    },
+    "regimes": {
+     "calm": {
+      "n": 112,
+      "vector_rmse_ms": 0.935588,
+      "speed_mae_ms": 0.453652,
+      "speed_bias_ms": -0.236397,
+      "direction_mae_deg": null,
+      "n_direction": 0
+     },
+     "moderate": {
+      "n": 572,
+      "vector_rmse_ms": 2.56007,
+      "speed_mae_ms": 1.29133,
+      "speed_bias_ms": -0.780036,
+      "direction_mae_deg": 15.9631,
+      "n_direction": 572
+     },
+     "strong": {
+      "n": 290,
+      "vector_rmse_ms": 4.55738,
+      "speed_mae_ms": 3.6972,
+      "speed_bias_ms": -3.65051,
+      "direction_mae_deg": 11.6948,
+      "n_direction": 290
+     },
+     "shift": {
+      "n": 203,
+      "vector_rmse_ms": 4.80499,
+      "speed_mae_ms": 3.28405,
+      "speed_bias_ms": -3.07214,
+      "direction_mae_deg": 22.1194,
+      "n_direction": 203
+     }
+    },
+    "by_nearest_remaining_station": {
+     "0-10km": {
+      "n": 105,
+      "vector_rmse_ms": 2.92752,
+      "speed_mae_ms": 1.68194,
+      "speed_bias_ms": -1.35903,
+      "direction_mae_deg": 19.9677,
+      "n_direction": 75
+     },
+     "10-20km": {
+      "n": 869,
+      "vector_rmse_ms": 3.21286,
+      "speed_mae_ms": 1.93905,
+      "speed_bias_ms": -1.59794,
+      "direction_mae_deg": 14.0086,
+      "n_direction": 787
+     }
+    },
+    "stations": [
+     "HAF",
+     "HWD",
+     "NUQ",
+     "OAK",
+     "PAO",
+     "SFO",
+     "SQL",
+     "SYN1",
+     "SYN2",
+     "SYN3",
+     "SYN4",
+     "SYN5",
+     "SYN6",
+     "SYN7"
+    ],
+    "by_station": {
+     "HAF": {
+      "n": 10,
+      "vector_rmse_ms": 3.13056,
+      "speed_mae_ms": 1.79459,
+      "speed_bias_ms": -1.02044,
+      "direction_mae_deg": 10.8589,
+      "n_direction": 10
+     },
+     "HWD": {
+      "n": 210,
+      "vector_rmse_ms": 1.68572,
+      "speed_mae_ms": 0.73514,
+      "speed_bias_ms": 0.255284,
+      "direction_mae_deg": 11.7793,
+      "n_direction": 210
+     },
+     "NUQ": {
+      "n": 10,
+      "vector_rmse_ms": 2.06355,
+      "speed_mae_ms": 0.939959,
+      "speed_bias_ms": 0.53351,
+      "direction_mae_deg": 17.3198,
+      "n_direction": 10
+     },
+     "OAK": {
+      "n": 210,
+      "vector_rmse_ms": 3.76846,
+      "speed_mae_ms": 1.86759,
+      "speed_bias_ms": -1.67844,
+      "direction_mae_deg": 19.9439,
+      "n_direction": 210
+     },
+     "PAO": {
+      "n": 5,
+      "vector_rmse_ms": 2.16907,
+      "speed_mae_ms": 1.0616,
+      "speed_bias_ms": 0.345613,
+      "direction_mae_deg": 17.0951,
+      "n_direction": 5
+     },
+     "SFO": {
+      "n": 210,
+      "vector_rmse_ms": 3.87663,
+      "speed_mae_ms": 3.08664,
+      "speed_bias_ms": -3.07864,
+      "direction_mae_deg": 9.24317,
+      "n_direction": 210
+     },
+     "SQL": {
+      "n": 4,
+      "vector_rmse_ms": 4.38937,
+      "speed_mae_ms": 0.485575,
+      "speed_bias_ms": -0.120766,
+      "direction_mae_deg": 34.6429,
+      "n_direction": 4
+     },
+     "SYN1": {
+      "n": 45,
+      "vector_rmse_ms": 3.42545,
+      "speed_mae_ms": 2.44389,
+      "speed_bias_ms": -2.10004,
+      "direction_mae_deg": 14.6012,
+      "n_direction": 29
+     },
+     "SYN2": {
+      "n": 45,
+      "vector_rmse_ms": 3.28467,
+      "speed_mae_ms": 2.03635,
+      "speed_bias_ms": -1.98324,
+      "direction_mae_deg": 18.7403,
+      "n_direction": 30
+     },
+     "SYN3": {
+      "n": 45,
+      "vector_rmse_ms": 2.14418,
+      "speed_mae_ms": 1.34446,
+      "speed_bias_ms": -1.25039,
+      "direction_mae_deg": 18.0658,
+      "n_direction": 29
+     },
+     "SYN4": {
+      "n": 45,
+      "vector_rmse_ms": 3.34618,
+      "speed_mae_ms": 2.45888,
+      "speed_bias_ms": -2.44957,
+      "direction_mae_deg": 16.031,
+      "n_direction": 27
+     },
+     "SYN5": {
+      "n": 45,
+      "vector_rmse_ms": 2.78199,
+      "speed_mae_ms": 1.56134,
+      "speed_bias_ms": -1.34479,
+      "direction_mae_deg": 22.5565,
+      "n_direction": 30
+     },
+     "SYN6": {
+      "n": 45,
+      "vector_rmse_ms": 2.72081,
+      "speed_mae_ms": 1.86099,
+      "speed_bias_ms": -1.75578,
+      "direction_mae_deg": 11.7223,
+      "n_direction": 29
+     },
+     "SYN7": {
+      "n": 45,
+      "vector_rmse_ms": 3.29409,
+      "speed_mae_ms": 2.34457,
+      "speed_bias_ms": -2.05625,
+      "direction_mae_deg": 15.6747,
+      "n_direction": 29
+     }
+    }
+   },
+   "metric_b": {
+    "rides_with_power": 3,
+    "ve_rmse_m": 4.7363,
+    "headwind_forward_rmse_ms": 1.60715,
+    "forward_points": 550
+   },
+   "metric_c": {
+    "stopped_jitter_deg": 38.8839,
+    "stopped_jitter_p95_deg": 120.598,
+    "stopped_windows": 931,
+    "turn_lag_s": 0.368421,
+    "turns": 19
+   },
+   "cost": {
+    "fetch_requests": 102,
+    "ticks": 26100,
+    "mean_tick_us": 2.61905
+   },
+   "rides": [
+    {
+     "ride": "sfbay-loop-front",
+     "ve_rmse_m": 3.70195,
+     "headwind_forward_rmse_ms": 1.39331,
+     "fit_cda": 0.275,
+     "fit_crr": 0.012,
+     "ve_rmse_truth_floor_m": 1.686,
+     "stopped_jitter_deg": 38.5052,
+     "turn_lag_s": 0.0909091,
+     "turns": 11,
+     "metric_a_pairs": 659,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-loop-front",
+     "ve_rmse_m": 5.50516,
+     "headwind_forward_rmse_ms": 1.78981,
+     "fit_cda": 0.275,
+     "fit_crr": 0.0075,
+     "ve_rmse_truth_floor_m": 1.18489,
+     "stopped_jitter_deg": 37.9701,
+     "turn_lag_s": 0.166667,
+     "turns": 6,
+     "metric_a_pairs": 210,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-outback",
+     "ve_rmse_m": 4.8256,
+     "headwind_forward_rmse_ms": 1.70168,
+     "fit_cda": 0.275,
+     "fit_crr": 0.007,
+     "ve_rmse_truth_floor_m": 1.27633,
+     "stopped_jitter_deg": 101.76,
+     "turn_lag_s": 2.5,
+     "turns": 2,
+     "metric_a_pairs": 105,
+     "metric_a_stations": 7
+    }
+   ]
+  },
+  "+heading": {
+   "available": true,
+   "implementation": {
+    "obs": "production WindEngine",
+    "height": "production RiderWindEstimator",
+    "heading": "production RiderWindEstimator"
+   },
+   "metric_a": {
+    "overall": {
+     "n": 974,
+     "vector_rmse_ms": 3.18333,
+     "speed_mae_ms": 1.91133,
+     "speed_bias_ms": -1.57218,
+     "direction_mae_deg": 14.5271,
+     "n_direction": 862
+    },
+    "regimes": {
+     "calm": {
+      "n": 112,
+      "vector_rmse_ms": 0.935588,
+      "speed_mae_ms": 0.453652,
+      "speed_bias_ms": -0.236397,
+      "direction_mae_deg": null,
+      "n_direction": 0
+     },
+     "moderate": {
+      "n": 572,
+      "vector_rmse_ms": 2.56007,
+      "speed_mae_ms": 1.29133,
+      "speed_bias_ms": -0.780036,
+      "direction_mae_deg": 15.9631,
+      "n_direction": 572
+     },
+     "strong": {
+      "n": 290,
+      "vector_rmse_ms": 4.55738,
+      "speed_mae_ms": 3.6972,
+      "speed_bias_ms": -3.65051,
+      "direction_mae_deg": 11.6948,
+      "n_direction": 290
+     },
+     "shift": {
+      "n": 203,
+      "vector_rmse_ms": 4.80499,
+      "speed_mae_ms": 3.28405,
+      "speed_bias_ms": -3.07214,
+      "direction_mae_deg": 22.1194,
+      "n_direction": 203
+     }
+    },
+    "by_nearest_remaining_station": {
+     "0-10km": {
+      "n": 105,
+      "vector_rmse_ms": 2.92752,
+      "speed_mae_ms": 1.68194,
+      "speed_bias_ms": -1.35903,
+      "direction_mae_deg": 19.9677,
+      "n_direction": 75
+     },
+     "10-20km": {
+      "n": 869,
+      "vector_rmse_ms": 3.21286,
+      "speed_mae_ms": 1.93905,
+      "speed_bias_ms": -1.59794,
+      "direction_mae_deg": 14.0086,
+      "n_direction": 787
+     }
+    },
+    "stations": [
+     "HAF",
+     "HWD",
+     "NUQ",
+     "OAK",
+     "PAO",
+     "SFO",
+     "SQL",
+     "SYN1",
+     "SYN2",
+     "SYN3",
+     "SYN4",
+     "SYN5",
+     "SYN6",
+     "SYN7"
+    ],
+    "by_station": {
+     "HAF": {
+      "n": 10,
+      "vector_rmse_ms": 3.13056,
+      "speed_mae_ms": 1.79459,
+      "speed_bias_ms": -1.02044,
+      "direction_mae_deg": 10.8589,
+      "n_direction": 10
+     },
+     "HWD": {
+      "n": 210,
+      "vector_rmse_ms": 1.68572,
+      "speed_mae_ms": 0.73514,
+      "speed_bias_ms": 0.255284,
+      "direction_mae_deg": 11.7793,
+      "n_direction": 210
+     },
+     "NUQ": {
+      "n": 10,
+      "vector_rmse_ms": 2.06355,
+      "speed_mae_ms": 0.939959,
+      "speed_bias_ms": 0.53351,
+      "direction_mae_deg": 17.3198,
+      "n_direction": 10
+     },
+     "OAK": {
+      "n": 210,
+      "vector_rmse_ms": 3.76846,
+      "speed_mae_ms": 1.86759,
+      "speed_bias_ms": -1.67844,
+      "direction_mae_deg": 19.9439,
+      "n_direction": 210
+     },
+     "PAO": {
+      "n": 5,
+      "vector_rmse_ms": 2.16907,
+      "speed_mae_ms": 1.0616,
+      "speed_bias_ms": 0.345613,
+      "direction_mae_deg": 17.0951,
+      "n_direction": 5
+     },
+     "SFO": {
+      "n": 210,
+      "vector_rmse_ms": 3.87663,
+      "speed_mae_ms": 3.08664,
+      "speed_bias_ms": -3.07864,
+      "direction_mae_deg": 9.24317,
+      "n_direction": 210
+     },
+     "SQL": {
+      "n": 4,
+      "vector_rmse_ms": 4.38937,
+      "speed_mae_ms": 0.485575,
+      "speed_bias_ms": -0.120766,
+      "direction_mae_deg": 34.6429,
+      "n_direction": 4
+     },
+     "SYN1": {
+      "n": 45,
+      "vector_rmse_ms": 3.42545,
+      "speed_mae_ms": 2.44389,
+      "speed_bias_ms": -2.10004,
+      "direction_mae_deg": 14.6012,
+      "n_direction": 29
+     },
+     "SYN2": {
+      "n": 45,
+      "vector_rmse_ms": 3.28467,
+      "speed_mae_ms": 2.03635,
+      "speed_bias_ms": -1.98324,
+      "direction_mae_deg": 18.7403,
+      "n_direction": 30
+     },
+     "SYN3": {
+      "n": 45,
+      "vector_rmse_ms": 2.14418,
+      "speed_mae_ms": 1.34446,
+      "speed_bias_ms": -1.25039,
+      "direction_mae_deg": 18.0658,
+      "n_direction": 29
+     },
+     "SYN4": {
+      "n": 45,
+      "vector_rmse_ms": 3.34618,
+      "speed_mae_ms": 2.45888,
+      "speed_bias_ms": -2.44957,
+      "direction_mae_deg": 16.031,
+      "n_direction": 27
+     },
+     "SYN5": {
+      "n": 45,
+      "vector_rmse_ms": 2.78199,
+      "speed_mae_ms": 1.56134,
+      "speed_bias_ms": -1.34479,
+      "direction_mae_deg": 22.5565,
+      "n_direction": 30
+     },
+     "SYN6": {
+      "n": 45,
+      "vector_rmse_ms": 2.72081,
+      "speed_mae_ms": 1.86099,
+      "speed_bias_ms": -1.75578,
+      "direction_mae_deg": 11.7223,
+      "n_direction": 29
+     },
+     "SYN7": {
+      "n": 45,
+      "vector_rmse_ms": 3.29409,
+      "speed_mae_ms": 2.34457,
+      "speed_bias_ms": -2.05625,
+      "direction_mae_deg": 15.6747,
+      "n_direction": 29
+     }
+    }
+   },
+   "metric_b": {
+    "rides_with_power": 3,
+    "ve_rmse_m": 4.7219,
+    "headwind_forward_rmse_ms": 1.60715,
+    "forward_points": 550
+   },
+   "metric_c": {
+    "stopped_jitter_deg": 2.77976,
+    "stopped_jitter_p95_deg": 4.43464,
+    "stopped_windows": 931,
+    "turn_lag_s": 0,
+    "turns": 19
+   },
+   "cost": {
+    "fetch_requests": 102,
+    "ticks": 26100,
+    "mean_tick_us": 2.12435
+   },
+   "rides": [
+    {
+     "ride": "sfbay-loop-front",
+     "ve_rmse_m": 3.67573,
+     "headwind_forward_rmse_ms": 1.39331,
+     "fit_cda": 0.275,
+     "fit_crr": 0.012,
+     "ve_rmse_truth_floor_m": 1.686,
+     "stopped_jitter_deg": 2.83847,
+     "turn_lag_s": 0,
+     "turns": 11,
+     "metric_a_pairs": 659,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-loop-front",
+     "ve_rmse_m": 5.49345,
+     "headwind_forward_rmse_ms": 1.78981,
+     "fit_cda": 0.275,
+     "fit_crr": 0.0075,
+     "ve_rmse_truth_floor_m": 1.18489,
+     "stopped_jitter_deg": 2.73682,
+     "turn_lag_s": 0,
+     "turns": 6,
+     "metric_a_pairs": 210,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-outback",
+     "ve_rmse_m": 4.81663,
+     "headwind_forward_rmse_ms": 1.70168,
+     "fit_cda": 0.275,
+     "fit_crr": 0.007,
+     "ve_rmse_truth_floor_m": 1.27633,
+     "stopped_jitter_deg": 1.33935,
+     "turn_lag_s": 0,
+     "turns": 2,
+     "metric_a_pairs": 105,
+     "metric_a_stations": 7
+    }
+   ]
+  },
+  "+virtual": {
+   "available": true,
+   "implementation": {
+    "obs": "production WindEngine",
+    "height": "production RiderWindEstimator",
+    "heading": "production RiderWindEstimator",
+    "virtual": "production RiderWindEstimator"
+   },
+   "metric_a": {
+    "overall": {
+     "n": 974,
+     "vector_rmse_ms": 3.18333,
+     "speed_mae_ms": 1.91133,
+     "speed_bias_ms": -1.57218,
+     "direction_mae_deg": 14.5271,
+     "n_direction": 862
+    },
+    "regimes": {
+     "calm": {
+      "n": 112,
+      "vector_rmse_ms": 0.935588,
+      "speed_mae_ms": 0.453652,
+      "speed_bias_ms": -0.236397,
+      "direction_mae_deg": null,
+      "n_direction": 0
+     },
+     "moderate": {
+      "n": 572,
+      "vector_rmse_ms": 2.56007,
+      "speed_mae_ms": 1.29133,
+      "speed_bias_ms": -0.780036,
+      "direction_mae_deg": 15.9631,
+      "n_direction": 572
+     },
+     "strong": {
+      "n": 290,
+      "vector_rmse_ms": 4.55738,
+      "speed_mae_ms": 3.6972,
+      "speed_bias_ms": -3.65051,
+      "direction_mae_deg": 11.6948,
+      "n_direction": 290
+     },
+     "shift": {
+      "n": 203,
+      "vector_rmse_ms": 4.80499,
+      "speed_mae_ms": 3.28405,
+      "speed_bias_ms": -3.07214,
+      "direction_mae_deg": 22.1194,
+      "n_direction": 203
+     }
+    },
+    "by_nearest_remaining_station": {
+     "0-10km": {
+      "n": 105,
+      "vector_rmse_ms": 2.92752,
+      "speed_mae_ms": 1.68194,
+      "speed_bias_ms": -1.35903,
+      "direction_mae_deg": 19.9677,
+      "n_direction": 75
+     },
+     "10-20km": {
+      "n": 869,
+      "vector_rmse_ms": 3.21286,
+      "speed_mae_ms": 1.93905,
+      "speed_bias_ms": -1.59794,
+      "direction_mae_deg": 14.0086,
+      "n_direction": 787
+     }
+    },
+    "stations": [
+     "HAF",
+     "HWD",
+     "NUQ",
+     "OAK",
+     "PAO",
+     "SFO",
+     "SQL",
+     "SYN1",
+     "SYN2",
+     "SYN3",
+     "SYN4",
+     "SYN5",
+     "SYN6",
+     "SYN7"
+    ],
+    "by_station": {
+     "HAF": {
+      "n": 10,
+      "vector_rmse_ms": 3.13056,
+      "speed_mae_ms": 1.79459,
+      "speed_bias_ms": -1.02044,
+      "direction_mae_deg": 10.8589,
+      "n_direction": 10
+     },
+     "HWD": {
+      "n": 210,
+      "vector_rmse_ms": 1.68572,
+      "speed_mae_ms": 0.73514,
+      "speed_bias_ms": 0.255284,
+      "direction_mae_deg": 11.7793,
+      "n_direction": 210
+     },
+     "NUQ": {
+      "n": 10,
+      "vector_rmse_ms": 2.06355,
+      "speed_mae_ms": 0.939959,
+      "speed_bias_ms": 0.53351,
+      "direction_mae_deg": 17.3198,
+      "n_direction": 10
+     },
+     "OAK": {
+      "n": 210,
+      "vector_rmse_ms": 3.76846,
+      "speed_mae_ms": 1.86759,
+      "speed_bias_ms": -1.67844,
+      "direction_mae_deg": 19.9439,
+      "n_direction": 210
+     },
+     "PAO": {
+      "n": 5,
+      "vector_rmse_ms": 2.16907,
+      "speed_mae_ms": 1.0616,
+      "speed_bias_ms": 0.345613,
+      "direction_mae_deg": 17.0951,
+      "n_direction": 5
+     },
+     "SFO": {
+      "n": 210,
+      "vector_rmse_ms": 3.87663,
+      "speed_mae_ms": 3.08664,
+      "speed_bias_ms": -3.07864,
+      "direction_mae_deg": 9.24317,
+      "n_direction": 210
+     },
+     "SQL": {
+      "n": 4,
+      "vector_rmse_ms": 4.38937,
+      "speed_mae_ms": 0.485575,
+      "speed_bias_ms": -0.120766,
+      "direction_mae_deg": 34.6429,
+      "n_direction": 4
+     },
+     "SYN1": {
+      "n": 45,
+      "vector_rmse_ms": 3.42545,
+      "speed_mae_ms": 2.44389,
+      "speed_bias_ms": -2.10004,
+      "direction_mae_deg": 14.6012,
+      "n_direction": 29
+     },
+     "SYN2": {
+      "n": 45,
+      "vector_rmse_ms": 3.28467,
+      "speed_mae_ms": 2.03635,
+      "speed_bias_ms": -1.98324,
+      "direction_mae_deg": 18.7403,
+      "n_direction": 30
+     },
+     "SYN3": {
+      "n": 45,
+      "vector_rmse_ms": 2.14418,
+      "speed_mae_ms": 1.34446,
+      "speed_bias_ms": -1.25039,
+      "direction_mae_deg": 18.0658,
+      "n_direction": 29
+     },
+     "SYN4": {
+      "n": 45,
+      "vector_rmse_ms": 3.34618,
+      "speed_mae_ms": 2.45888,
+      "speed_bias_ms": -2.44957,
+      "direction_mae_deg": 16.031,
+      "n_direction": 27
+     },
+     "SYN5": {
+      "n": 45,
+      "vector_rmse_ms": 2.78199,
+      "speed_mae_ms": 1.56134,
+      "speed_bias_ms": -1.34479,
+      "direction_mae_deg": 22.5565,
+      "n_direction": 30
+     },
+     "SYN6": {
+      "n": 45,
+      "vector_rmse_ms": 2.72081,
+      "speed_mae_ms": 1.86099,
+      "speed_bias_ms": -1.75578,
+      "direction_mae_deg": 11.7223,
+      "n_direction": 29
+     },
+     "SYN7": {
+      "n": 45,
+      "vector_rmse_ms": 3.29409,
+      "speed_mae_ms": 2.34457,
+      "speed_bias_ms": -2.05625,
+      "direction_mae_deg": 15.6747,
+      "n_direction": 29
+     }
+    }
+   },
+   "metric_b": {
+    "rides_with_power": 3,
+    "ve_rmse_m": 2.50655,
+    "headwind_forward_rmse_ms": 1.22404,
+    "forward_points": 550
+   },
+   "metric_c": {
+    "stopped_jitter_deg": 2.78207,
+    "stopped_jitter_p95_deg": 4.45638,
+    "stopped_windows": 931,
+    "turn_lag_s": 0,
+    "turns": 19
+   },
+   "cost": {
+    "fetch_requests": 102,
+    "ticks": 26100,
+    "mean_tick_us": 2.77404
+   },
+   "rides": [
+    {
+     "ride": "sfbay-loop-front",
+     "ve_rmse_m": 2.91748,
+     "headwind_forward_rmse_ms": 1.3665,
+     "fit_cda": 0.275,
+     "fit_crr": 0.012,
+     "ve_rmse_truth_floor_m": 1.686,
+     "stopped_jitter_deg": 2.84096,
+     "turn_lag_s": 0,
+     "turns": 11,
+     "metric_a_pairs": 659,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-loop-front",
+     "ve_rmse_m": 2.32424,
+     "headwind_forward_rmse_ms": 1.2562,
+     "fit_cda": 0.275,
+     "fit_crr": 0.0075,
+     "ve_rmse_truth_floor_m": 1.18489,
+     "stopped_jitter_deg": 2.73913,
+     "turn_lag_s": 0,
+     "turns": 6,
+     "metric_a_pairs": 210,
+     "metric_a_stations": 7
+    },
+    {
+     "ride": "syn-outback",
+     "ve_rmse_m": 2.2214,
+     "headwind_forward_rmse_ms": 0.8703,
+     "fit_cda": 0.275,
+     "fit_crr": 0.007,
+     "ve_rmse_truth_floor_m": 1.27633,
+     "stopped_jitter_deg": 1.33079,
+     "turn_lag_s": 0,
+     "turns": 2,
+     "metric_a_pairs": 105,
+     "metric_a_stations": 7
+    }
+   ]
+  }
+ },
+ "comparison_vs_upstream": {
+  "+ensemble": {
+   "metric_a_vector_rmse_rel": -0.151914,
+   "metric_a_vector_rmse_rel_by_regime": {
+    "calm": 0.0408318,
+    "moderate": -0.0766207,
+    "strong": -0.195488,
+    "shift": -0.162303
+   },
+   "metric_a_shift_direction_mae_rel": -0.301417,
+   "metric_b_ve_rmse_rel": -0.0989908,
+   "metric_c_stopped_jitter_deg": 38.8882,
+   "metric_c_turn_lag_delta_s": 0
+  },
+  "+obs": {
+   "metric_a_vector_rmse_rel": -0.183135,
+   "metric_a_vector_rmse_rel_by_regime": {
+    "calm": 0.0673101,
+    "moderate": -0.134393,
+    "strong": -0.212095,
+    "shift": -0.189058
+   },
+   "metric_a_shift_direction_mae_rel": -0.308457,
+   "metric_b_ve_rmse_rel": -0.165281,
+   "metric_c_stopped_jitter_deg": 38.8839,
+   "metric_c_turn_lag_delta_s": 0
+  },
+  "+height": {
+   "metric_a_vector_rmse_rel": -0.183135,
+   "metric_a_vector_rmse_rel_by_regime": {
+    "calm": 0.0673101,
+    "moderate": -0.134393,
+    "strong": -0.212095,
+    "shift": -0.189058
+   },
+   "metric_a_shift_direction_mae_rel": -0.308457,
+   "metric_b_ve_rmse_rel": -0.23451,
+   "metric_c_stopped_jitter_deg": 38.8839,
+   "metric_c_turn_lag_delta_s": 0
+  },
+  "+heading": {
+   "metric_a_vector_rmse_rel": -0.183135,
+   "metric_a_vector_rmse_rel_by_regime": {
+    "calm": 0.0673101,
+    "moderate": -0.134393,
+    "strong": -0.212095,
+    "shift": -0.189058
+   },
+   "metric_a_shift_direction_mae_rel": -0.308457,
+   "metric_b_ve_rmse_rel": -0.236838,
+   "metric_c_stopped_jitter_deg": 2.77976,
+   "metric_c_turn_lag_delta_s": -0.368421
+  },
+  "+virtual": {
+   "metric_a_vector_rmse_rel": -0.183135,
+   "metric_a_vector_rmse_rel_by_regime": {
+    "calm": 0.0673101,
+    "moderate": -0.134393,
+    "strong": -0.212095,
+    "shift": -0.189058
+   },
+   "metric_a_shift_direction_mae_rel": -0.308457,
+   "metric_b_ve_rmse_rel": -0.594887,
+   "metric_c_stopped_jitter_deg": 2.78207,
+   "metric_c_turn_lag_delta_s": -0.368421
+  },
+  "targets": {
+   "obs_vector_rmse_20pct_lower": false,
+   "obs_no_regime_5pct_worse": false,
+   "obs_shift_direction_30pct_lower": true,
+   "height_ve_rmse_25pct_lower": false,
+   "virtual_forward_15pct_lower_than_height": true,
+   "heading_stopped_jitter_under_5deg": true,
+   "heading_turn_lag_within_1s": true
+  }
+ },
+ "heldout": {
+  "corpus": {
+   "rides": 13,
+   "rides_with_power": 13,
+   "ride_hours": 42.2328,
+   "stations": 160,
+   "metric_a_stations": 50,
+   "metric_a_station_hours": 139.083,
+   "obs_lag_min": 10,
+   "forecast_members": [
+    "open-meteo:best_match",
+    "open-meteo:ecmwf_ifs",
+    "open-meteo:gfs_global",
+    "open-meteo:ncep_hrrr_conus",
+    "open-meteo:ncep_nbm_conus"
+   ],
+   "metric_b_fit": "calm20",
+   "metric_b_fits_at_grid_edge": 8
+  },
+  "configs": {
+   "upstream": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.9165,
+      "speed_mae_ms": 0.992073,
+      "speed_bias_ms": -0.379731,
+      "direction_mae_deg": 14.7564,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 3.04677,
+       "speed_mae_ms": 2.61086,
+       "speed_bias_ms": 2.61086,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.85332,
+       "speed_mae_ms": 0.914778,
+       "speed_bias_ms": -0.406055,
+       "direction_mae_deg": 15.0139,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.38918,
+       "speed_mae_ms": 1.7904,
+       "speed_bias_ms": -1.77685,
+       "direction_mae_deg": 8.40556,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.27114,
+       "speed_mae_ms": 1.01705,
+       "speed_bias_ms": -0.305546,
+       "direction_mae_deg": 24.7614,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.02497,
+       "speed_mae_ms": 0.98614,
+       "speed_bias_ms": -0.525669,
+       "direction_mae_deg": 16.717,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.763,
+       "speed_mae_ms": 1.01134,
+       "speed_bias_ms": -0.363313,
+       "direction_mae_deg": 11.8546,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.5371,
+       "speed_mae_ms": 0.824921,
+       "speed_bias_ms": -0.559479,
+       "direction_mae_deg": 15.4335,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.36118,
+       "speed_mae_ms": 1.08216,
+       "speed_bias_ms": 0.276866,
+       "direction_mae_deg": 18.5993,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 16.6078,
+     "headwind_forward_rmse_ms": 3.02192
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7974,
+     "stopped_jitter_p95_deg": 32.3998,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "nowind": {
+    "metric_a": {
+     "overall": {
+      "n": 0,
+      "vector_rmse_ms": null,
+      "speed_mae_ms": null,
+      "speed_bias_ms": null,
+      "direction_mae_deg": null,
+      "n_direction": 0
+     },
+     "regimes": {
+      "calm": {
+       "n": 0,
+       "vector_rmse_ms": null,
+       "speed_mae_ms": null,
+       "speed_bias_ms": null,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 0,
+       "vector_rmse_ms": null,
+       "speed_mae_ms": null,
+       "speed_bias_ms": null,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "strong": {
+       "n": 0,
+       "vector_rmse_ms": null,
+       "speed_mae_ms": null,
+       "speed_bias_ms": null,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "shift": {
+       "n": 0,
+       "vector_rmse_ms": null,
+       "speed_mae_ms": null,
+       "speed_bias_ms": null,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      }
+     },
+     "by_nearest_remaining_station": {}
+    },
+    "metric_b": {
+     "ve_rmse_m": 12.5692,
+     "headwind_forward_rmse_ms": 2.78719
+    },
+    "metric_c": {
+     "stopped_jitter_deg": null,
+     "stopped_jitter_p95_deg": null,
+     "stopped_windows": 0,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "+ensemble": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.94447,
+      "speed_mae_ms": 1.01489,
+      "speed_bias_ms": -0.428556,
+      "direction_mae_deg": 15.2838,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 3.09193,
+       "speed_mae_ms": 2.55849,
+       "speed_bias_ms": 2.55849,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.88041,
+       "speed_mae_ms": 0.935425,
+       "speed_bias_ms": -0.451033,
+       "direction_mae_deg": 15.5868,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.42247,
+       "speed_mae_ms": 1.9181,
+       "speed_bias_ms": -1.9181,
+       "direction_mae_deg": 7.81228,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.30898,
+       "speed_mae_ms": 1.02519,
+       "speed_bias_ms": -0.238616,
+       "direction_mae_deg": 25.428,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.07621,
+       "speed_mae_ms": 1.00839,
+       "speed_bias_ms": -0.544824,
+       "direction_mae_deg": 17.3869,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.82263,
+       "speed_mae_ms": 1.06878,
+       "speed_bias_ms": -0.414304,
+       "direction_mae_deg": 12.2949,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.57331,
+       "speed_mae_ms": 0.842981,
+       "speed_bias_ms": -0.601935,
+       "direction_mae_deg": 16.8695,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.19856,
+       "speed_mae_ms": 0.964574,
+       "speed_bias_ms": 0.116441,
+       "direction_mae_deg": 18.1241,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 16.5899,
+     "headwind_forward_rmse_ms": 2.95131
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7839,
+     "stopped_jitter_p95_deg": 32.3999,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "+obs": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.91661,
+      "speed_mae_ms": 0.99263,
+      "speed_bias_ms": -0.391685,
+      "direction_mae_deg": 14.9675,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 2.94321,
+       "speed_mae_ms": 2.41515,
+       "speed_bias_ms": 2.41515,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.8574,
+       "speed_mae_ms": 0.921185,
+       "speed_bias_ms": -0.413225,
+       "direction_mae_deg": 15.2383,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.40201,
+       "speed_mae_ms": 1.78101,
+       "speed_bias_ms": -1.78101,
+       "direction_mae_deg": 8.28896,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.3378,
+       "speed_mae_ms": 1.02319,
+       "speed_bias_ms": -0.226196,
+       "direction_mae_deg": 25.9218,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.06876,
+       "speed_mae_ms": 0.99061,
+       "speed_bias_ms": -0.477989,
+       "direction_mae_deg": 17.3145,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.76431,
+       "speed_mae_ms": 1.03139,
+       "speed_bias_ms": -0.385882,
+       "direction_mae_deg": 11.672,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.56681,
+       "speed_mae_ms": 0.846777,
+       "speed_bias_ms": -0.611111,
+       "direction_mae_deg": 16.6817,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.18679,
+       "speed_mae_ms": 0.965919,
+       "speed_bias_ms": 0.113856,
+       "direction_mae_deg": 18.0177,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 16.6976,
+     "headwind_forward_rmse_ms": 2.99149
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.787,
+     "stopped_jitter_p95_deg": 32.4001,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "+height": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.91661,
+      "speed_mae_ms": 0.99263,
+      "speed_bias_ms": -0.391685,
+      "direction_mae_deg": 14.9675,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 2.94321,
+       "speed_mae_ms": 2.41515,
+       "speed_bias_ms": 2.41515,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.8574,
+       "speed_mae_ms": 0.921185,
+       "speed_bias_ms": -0.413225,
+       "direction_mae_deg": 15.2383,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.40201,
+       "speed_mae_ms": 1.78101,
+       "speed_bias_ms": -1.78101,
+       "direction_mae_deg": 8.28896,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.3378,
+       "speed_mae_ms": 1.02319,
+       "speed_bias_ms": -0.226196,
+       "direction_mae_deg": 25.9218,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.06876,
+       "speed_mae_ms": 0.99061,
+       "speed_bias_ms": -0.477989,
+       "direction_mae_deg": 17.3145,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.76431,
+       "speed_mae_ms": 1.03139,
+       "speed_bias_ms": -0.385882,
+       "direction_mae_deg": 11.672,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.56681,
+       "speed_mae_ms": 0.846777,
+       "speed_bias_ms": -0.611111,
+       "direction_mae_deg": 16.6817,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.18679,
+       "speed_mae_ms": 0.965919,
+       "speed_bias_ms": 0.113856,
+       "direction_mae_deg": 18.0177,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 12.8054,
+     "headwind_forward_rmse_ms": 2.54074
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.787,
+     "stopped_jitter_p95_deg": 32.4001,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "+heading": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.91661,
+      "speed_mae_ms": 0.99263,
+      "speed_bias_ms": -0.391685,
+      "direction_mae_deg": 14.9675,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 2.94321,
+       "speed_mae_ms": 2.41515,
+       "speed_bias_ms": 2.41515,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.8574,
+       "speed_mae_ms": 0.921185,
+       "speed_bias_ms": -0.413225,
+       "direction_mae_deg": 15.2383,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.40201,
+       "speed_mae_ms": 1.78101,
+       "speed_bias_ms": -1.78101,
+       "direction_mae_deg": 8.28896,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.3378,
+       "speed_mae_ms": 1.02319,
+       "speed_bias_ms": -0.226196,
+       "direction_mae_deg": 25.9218,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.06876,
+       "speed_mae_ms": 0.99061,
+       "speed_bias_ms": -0.477989,
+       "direction_mae_deg": 17.3145,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.76431,
+       "speed_mae_ms": 1.03139,
+       "speed_bias_ms": -0.385882,
+       "direction_mae_deg": 11.672,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.56681,
+       "speed_mae_ms": 0.846777,
+       "speed_bias_ms": -0.611111,
+       "direction_mae_deg": 16.6817,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.18679,
+       "speed_mae_ms": 0.965919,
+       "speed_bias_ms": 0.113856,
+       "direction_mae_deg": 18.0177,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 12.8585,
+     "headwind_forward_rmse_ms": 2.54074
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 5.17585,
+     "stopped_jitter_p95_deg": 21.3746,
+     "stopped_windows": 185,
+     "turn_lag_s": 1.48214,
+     "turns": 560
+    }
+   },
+   "+virtual": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.91661,
+      "speed_mae_ms": 0.99263,
+      "speed_bias_ms": -0.391685,
+      "direction_mae_deg": 14.9675,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 2.94321,
+       "speed_mae_ms": 2.41515,
+       "speed_bias_ms": 2.41515,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.8574,
+       "speed_mae_ms": 0.921185,
+       "speed_bias_ms": -0.413225,
+       "direction_mae_deg": 15.2383,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.40201,
+       "speed_mae_ms": 1.78101,
+       "speed_bias_ms": -1.78101,
+       "direction_mae_deg": 8.28896,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.3378,
+       "speed_mae_ms": 1.02319,
+       "speed_bias_ms": -0.226196,
+       "direction_mae_deg": 25.9218,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.06876,
+       "speed_mae_ms": 0.99061,
+       "speed_bias_ms": -0.477989,
+       "direction_mae_deg": 17.3145,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.76431,
+       "speed_mae_ms": 1.03139,
+       "speed_bias_ms": -0.385882,
+       "direction_mae_deg": 11.672,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.56681,
+       "speed_mae_ms": 0.846777,
+       "speed_bias_ms": -0.611111,
+       "direction_mae_deg": 16.6817,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.18679,
+       "speed_mae_ms": 0.965919,
+       "speed_bias_ms": 0.113856,
+       "direction_mae_deg": 18.0177,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 13.7805,
+     "headwind_forward_rmse_ms": 2.53384
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 5.18112,
+     "stopped_jitter_p95_deg": 21.3871,
+     "stopped_windows": 185,
+     "turn_lag_s": 1.48214,
+     "turns": 560
+    }
+   },
+   "member:ncep_hrrr_conus": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.92366,
+      "speed_mae_ms": 1.02643,
+      "speed_bias_ms": -0.428013,
+      "direction_mae_deg": 14.7605,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 2.98796,
+       "speed_mae_ms": 2.56076,
+       "speed_bias_ms": 2.56076,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.86329,
+       "speed_mae_ms": 0.951563,
+       "speed_bias_ms": -0.455129,
+       "direction_mae_deg": 15.0206,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.40011,
+       "speed_mae_ms": 1.82259,
+       "speed_bias_ms": -1.80435,
+       "direction_mae_deg": 8.34485,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.25276,
+       "speed_mae_ms": 1.07021,
+       "speed_bias_ms": -0.401486,
+       "direction_mae_deg": 24.8156,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.02518,
+       "speed_mae_ms": 1.02831,
+       "speed_bias_ms": -0.586274,
+       "direction_mae_deg": 16.761,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.77262,
+       "speed_mae_ms": 1.03551,
+       "speed_bias_ms": -0.401635,
+       "direction_mae_deg": 11.8754,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.56079,
+       "speed_mae_ms": 0.876311,
+       "speed_bias_ms": -0.630184,
+       "direction_mae_deg": 15.4788,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.3743,
+       "speed_mae_ms": 1.11418,
+       "speed_bias_ms": 0.254128,
+       "direction_mae_deg": 18.3387,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 16.8102,
+     "headwind_forward_rmse_ms": 3.00212
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7804,
+     "stopped_jitter_p95_deg": 32.3974,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "member:ncep_nbm_conus": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 2.31677,
+      "speed_mae_ms": 1.21872,
+      "speed_bias_ms": -0.0485914,
+      "direction_mae_deg": 16.9025,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 4.00497,
+       "speed_mae_ms": 2.91781,
+       "speed_bias_ms": 2.91781,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 2.24878,
+       "speed_mae_ms": 1.14726,
+       "speed_bias_ms": -0.0591351,
+       "direction_mae_deg": 17.305,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.39137,
+       "speed_mae_ms": 1.81825,
+       "speed_bias_ms": -1.81825,
+       "direction_mae_deg": 6.97786,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.83344,
+       "speed_mae_ms": 1.30478,
+       "speed_bias_ms": 0.590947,
+       "direction_mae_deg": 26.8562,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.42908,
+       "speed_mae_ms": 1.22242,
+       "speed_bias_ms": 0.00286817,
+       "direction_mae_deg": 17.4621,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 2.32269,
+       "speed_mae_ms": 1.3761,
+       "speed_bias_ms": -0.179058,
+       "direction_mae_deg": 14.8926,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.87042,
+       "speed_mae_ms": 0.660763,
+       "speed_bias_ms": -0.0831909,
+       "direction_mae_deg": 22.4319,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.20141,
+       "speed_mae_ms": 1.03366,
+       "speed_bias_ms": 0.335719,
+       "direction_mae_deg": 18.2388,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 17.4296,
+     "headwind_forward_rmse_ms": 3.03483
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7895,
+     "stopped_jitter_p95_deg": 32.4076,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "member:ecmwf_ifs": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 2.66484,
+      "speed_mae_ms": 1.72653,
+      "speed_bias_ms": -1.4656,
+      "direction_mae_deg": 20.2442,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 2.70013,
+       "speed_mae_ms": 2.20747,
+       "speed_bias_ms": 2.20747,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 2.58025,
+       "speed_mae_ms": 1.62268,
+       "speed_bias_ms": -1.46643,
+       "direction_mae_deg": 20.7296,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 4.23227,
+       "speed_mae_ms": 3.95822,
+       "speed_bias_ms": -3.95822,
+       "direction_mae_deg": 8.27624,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.79561,
+       "speed_mae_ms": 1.32827,
+       "speed_bias_ms": -0.958934,
+       "direction_mae_deg": 32.9173,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.97157,
+       "speed_mae_ms": 1.88231,
+       "speed_bias_ms": -1.68501,
+       "direction_mae_deg": 24.7493,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 2.34991,
+       "speed_mae_ms": 1.6233,
+       "speed_bias_ms": -1.23716,
+       "direction_mae_deg": 13.6929,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 2.26667,
+       "speed_mae_ms": 1.76825,
+       "speed_bias_ms": -1.67043,
+       "direction_mae_deg": 19.1782,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.97276,
+       "speed_mae_ms": 1.5227,
+       "speed_bias_ms": -1.40059,
+       "direction_mae_deg": 30.9109,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 14.4485,
+     "headwind_forward_rmse_ms": 2.71483
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7873,
+     "stopped_jitter_p95_deg": 32.4031,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "member:gfs_global": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 2.62551,
+      "speed_mae_ms": 1.16733,
+      "speed_bias_ms": -0.0380687,
+      "direction_mae_deg": 23.1075,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 3.77005,
+       "speed_mae_ms": 3.29706,
+       "speed_bias_ms": 3.29706,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 2.60613,
+       "speed_mae_ms": 1.09847,
+       "speed_bias_ms": -0.0760316,
+       "direction_mae_deg": 23.7286,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.09401,
+       "speed_mae_ms": 1.40828,
+       "speed_bias_ms": -1.38391,
+       "direction_mae_deg": 7.793,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 3.0213,
+       "speed_mae_ms": 1.14856,
+       "speed_bias_ms": 0.613734,
+       "direction_mae_deg": 31.0184,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.6694,
+       "speed_mae_ms": 1.15619,
+       "speed_bias_ms": -0.231353,
+       "direction_mae_deg": 23.1647,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 2.61607,
+       "speed_mae_ms": 1.26711,
+       "speed_bias_ms": 0.0897344,
+       "direction_mae_deg": 20.5736,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 2.62416,
+       "speed_mae_ms": 0.844212,
+       "speed_bias_ms": 0.145798,
+       "direction_mae_deg": 33.9618,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.4915,
+       "speed_mae_ms": 1.07508,
+       "speed_bias_ms": 0.00634883,
+       "direction_mae_deg": 23.9165,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 16.789,
+     "headwind_forward_rmse_ms": 3.14848
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7826,
+     "stopped_jitter_p95_deg": 32.4076,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   }
+  },
+  "metric_b_whole_ride_fit": {
+   "upstream": {
+    "ve_rmse_m": 12.6433,
+    "headwind_forward_rmse_ms": 2.32531
+   },
+   "nowind": {
+    "ve_rmse_m": 6.36336,
+    "headwind_forward_rmse_ms": 1.98441
+   },
+   "+ensemble": {
+    "ve_rmse_m": 12.396,
+    "headwind_forward_rmse_ms": 2.21177
+   },
+   "+obs": {
+    "ve_rmse_m": 12.6399,
+    "headwind_forward_rmse_ms": 2.25919
+   },
+   "+height": {
+    "ve_rmse_m": 6.81674,
+    "headwind_forward_rmse_ms": 1.6177
+   },
+   "+heading": {
+    "ve_rmse_m": 6.91139,
+    "headwind_forward_rmse_ms": 1.6177
+   },
+   "+virtual": {
+    "ve_rmse_m": 8.5028,
+    "headwind_forward_rmse_ms": 1.66152
+   }
+  },
+  "metric_b_whole_ride_fit_corpus": {
+   "rides": 13,
+   "rides_with_power": 13,
+   "ride_hours": 42.2328,
+   "stations": 160,
+   "metric_a_stations": 50,
+   "metric_a_station_hours": 139.083,
+   "obs_lag_min": 10,
+   "forecast_members": [
+    "open-meteo:best_match",
+    "open-meteo:ecmwf_ifs",
+    "open-meteo:gfs_global",
+    "open-meteo:ncep_hrrr_conus",
+    "open-meteo:ncep_nbm_conus"
+   ],
+   "metric_b_fit": "ride",
+   "metric_b_fits_at_grid_edge": 0
+  },
+  "variant_spec": {
+   "upstream": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.9165,
+      "speed_mae_ms": 0.992073,
+      "speed_bias_ms": -0.379731,
+      "direction_mae_deg": 14.7564,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 3.04677,
+       "speed_mae_ms": 2.61086,
+       "speed_bias_ms": 2.61086,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.85332,
+       "speed_mae_ms": 0.914778,
+       "speed_bias_ms": -0.406055,
+       "direction_mae_deg": 15.0139,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.38918,
+       "speed_mae_ms": 1.7904,
+       "speed_bias_ms": -1.77685,
+       "direction_mae_deg": 8.40556,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.27114,
+       "speed_mae_ms": 1.01705,
+       "speed_bias_ms": -0.305546,
+       "direction_mae_deg": 24.7614,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.02497,
+       "speed_mae_ms": 0.98614,
+       "speed_bias_ms": -0.525669,
+       "direction_mae_deg": 16.717,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.763,
+       "speed_mae_ms": 1.01134,
+       "speed_bias_ms": -0.363313,
+       "direction_mae_deg": 11.8546,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.5371,
+       "speed_mae_ms": 0.824921,
+       "speed_bias_ms": -0.559479,
+       "direction_mae_deg": 15.4335,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.36118,
+       "speed_mae_ms": 1.08216,
+       "speed_bias_ms": 0.276866,
+       "direction_mae_deg": 18.5993,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 16.6078,
+     "headwind_forward_rmse_ms": 3.02192
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7974,
+     "stopped_jitter_p95_deg": 32.3998,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "+ensemble": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 2.12697,
+      "speed_mae_ms": 1.12038,
+      "speed_bias_ms": -0.560916,
+      "direction_mae_deg": 17.1682,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 3.11079,
+       "speed_mae_ms": 2.48572,
+       "speed_bias_ms": 2.48572,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 2.07205,
+       "speed_mae_ms": 1.04002,
+       "speed_bias_ms": -0.580293,
+       "direction_mae_deg": 17.5637,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.58561,
+       "speed_mae_ms": 2.16766,
+       "speed_bias_ms": -2.16766,
+       "direction_mae_deg": 7.41802,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.52468,
+       "speed_mae_ms": 1.07436,
+       "speed_bias_ms": -0.123743,
+       "direction_mae_deg": 27.0514,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.328,
+       "speed_mae_ms": 1.16208,
+       "speed_bias_ms": -0.646089,
+       "direction_mae_deg": 19.5249,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.98756,
+       "speed_mae_ms": 1.17387,
+       "speed_bias_ms": -0.520027,
+       "direction_mae_deg": 13.6819,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.79161,
+       "speed_mae_ms": 0.891608,
+       "speed_bias_ms": -0.693644,
+       "direction_mae_deg": 20.9481,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.15662,
+       "speed_mae_ms": 0.935365,
+       "speed_bias_ms": -0.285692,
+       "direction_mae_deg": 19.1518,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 15.9811,
+     "headwind_forward_rmse_ms": 2.89964
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7864,
+     "stopped_jitter_p95_deg": 32.4031,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "+obs": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 2.05469,
+      "speed_mae_ms": 1.01855,
+      "speed_bias_ms": -0.43315,
+      "direction_mae_deg": 16.4905,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 2.5505,
+       "speed_mae_ms": 2.00539,
+       "speed_bias_ms": 2.00539,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 2.0127,
+       "speed_mae_ms": 0.967983,
+       "speed_bias_ms": -0.453949,
+       "direction_mae_deg": 16.7501,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.62118,
+       "speed_mae_ms": 1.59013,
+       "speed_bias_ms": -1.58875,
+       "direction_mae_deg": 10.0896,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.5611,
+       "speed_mae_ms": 1.06047,
+       "speed_bias_ms": -0.177425,
+       "direction_mae_deg": 27.3351,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.3014,
+       "speed_mae_ms": 1.05727,
+       "speed_bias_ms": -0.409488,
+       "direction_mae_deg": 19.1841,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.84978,
+       "speed_mae_ms": 1.01121,
+       "speed_bias_ms": -0.401835,
+       "direction_mae_deg": 12.7745,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.70882,
+       "speed_mae_ms": 0.919318,
+       "speed_bias_ms": -0.758078,
+       "direction_mae_deg": 19.2898,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.1454,
+       "speed_mae_ms": 0.987732,
+       "speed_bias_ms": -0.368547,
+       "direction_mae_deg": 18.9759,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 16.5063,
+     "headwind_forward_rmse_ms": 3.00368
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7877,
+     "stopped_jitter_p95_deg": 32.4049,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   }
+  },
+  "variant_lag0": {
+   "upstream": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.9165,
+      "speed_mae_ms": 0.992073,
+      "speed_bias_ms": -0.379731,
+      "direction_mae_deg": 14.7564,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 3.04677,
+       "speed_mae_ms": 2.61086,
+       "speed_bias_ms": 2.61086,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.85332,
+       "speed_mae_ms": 0.914778,
+       "speed_bias_ms": -0.406055,
+       "direction_mae_deg": 15.0139,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.38918,
+       "speed_mae_ms": 1.7904,
+       "speed_bias_ms": -1.77685,
+       "direction_mae_deg": 8.40556,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.27114,
+       "speed_mae_ms": 1.01705,
+       "speed_bias_ms": -0.305546,
+       "direction_mae_deg": 24.7614,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.02497,
+       "speed_mae_ms": 0.98614,
+       "speed_bias_ms": -0.525669,
+       "direction_mae_deg": 16.717,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.763,
+       "speed_mae_ms": 1.01134,
+       "speed_bias_ms": -0.363313,
+       "direction_mae_deg": 11.8546,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.5371,
+       "speed_mae_ms": 0.824921,
+       "speed_bias_ms": -0.559479,
+       "direction_mae_deg": 15.4335,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.36118,
+       "speed_mae_ms": 1.08216,
+       "speed_bias_ms": 0.276866,
+       "direction_mae_deg": 18.5993,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 16.6078,
+     "headwind_forward_rmse_ms": 3.02192
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7974,
+     "stopped_jitter_p95_deg": 32.3998,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "+ensemble": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.94447,
+      "speed_mae_ms": 1.01489,
+      "speed_bias_ms": -0.428556,
+      "direction_mae_deg": 15.2838,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 3.09193,
+       "speed_mae_ms": 2.55849,
+       "speed_bias_ms": 2.55849,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.88041,
+       "speed_mae_ms": 0.935425,
+       "speed_bias_ms": -0.451033,
+       "direction_mae_deg": 15.5868,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.42247,
+       "speed_mae_ms": 1.9181,
+       "speed_bias_ms": -1.9181,
+       "direction_mae_deg": 7.81228,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.30898,
+       "speed_mae_ms": 1.02519,
+       "speed_bias_ms": -0.238616,
+       "direction_mae_deg": 25.428,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.07621,
+       "speed_mae_ms": 1.00839,
+       "speed_bias_ms": -0.544824,
+       "direction_mae_deg": 17.3869,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.82263,
+       "speed_mae_ms": 1.06878,
+       "speed_bias_ms": -0.414304,
+       "direction_mae_deg": 12.2949,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.57331,
+       "speed_mae_ms": 0.842981,
+       "speed_bias_ms": -0.601935,
+       "direction_mae_deg": 16.8695,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.19856,
+       "speed_mae_ms": 0.964574,
+       "speed_bias_ms": 0.116441,
+       "direction_mae_deg": 18.1241,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 16.5899,
+     "headwind_forward_rmse_ms": 2.95131
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7839,
+     "stopped_jitter_p95_deg": 32.3999,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "+obs": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.91039,
+      "speed_mae_ms": 0.977909,
+      "speed_bias_ms": -0.373157,
+      "direction_mae_deg": 15.0731,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 2.86017,
+       "speed_mae_ms": 2.3475,
+       "speed_bias_ms": 2.3475,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.86217,
+       "speed_mae_ms": 0.9128,
+       "speed_bias_ms": -0.39702,
+       "direction_mae_deg": 15.3813,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.24397,
+       "speed_mae_ms": 1.64626,
+       "speed_bias_ms": -1.64626,
+       "direction_mae_deg": 7.47224,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.31966,
+       "speed_mae_ms": 1.02018,
+       "speed_bias_ms": -0.249951,
+       "direction_mae_deg": 25.9142,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.07243,
+       "speed_mae_ms": 0.97222,
+       "speed_bias_ms": -0.436018,
+       "direction_mae_deg": 17.5648,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.74919,
+       "speed_mae_ms": 1.01312,
+       "speed_bias_ms": -0.37392,
+       "direction_mae_deg": 11.7407,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.55425,
+       "speed_mae_ms": 0.848487,
+       "speed_bias_ms": -0.621872,
+       "direction_mae_deg": 16.4725,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.17835,
+       "speed_mae_ms": 0.965858,
+       "speed_bias_ms": 0.0953363,
+       "direction_mae_deg": 17.985,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 16.6805,
+     "headwind_forward_rmse_ms": 2.99952
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.7868,
+     "stopped_jitter_p95_deg": 32.4,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   }
+  },
+  "variant_cda05": {
+   "+height": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.91661,
+      "speed_mae_ms": 0.99263,
+      "speed_bias_ms": -0.391685,
+      "direction_mae_deg": 14.9675,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 2.94321,
+       "speed_mae_ms": 2.41515,
+       "speed_bias_ms": 2.41515,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.8574,
+       "speed_mae_ms": 0.921185,
+       "speed_bias_ms": -0.413225,
+       "direction_mae_deg": 15.2383,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.40201,
+       "speed_mae_ms": 1.78101,
+       "speed_bias_ms": -1.78101,
+       "direction_mae_deg": 8.28896,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.3378,
+       "speed_mae_ms": 1.02319,
+       "speed_bias_ms": -0.226196,
+       "direction_mae_deg": 25.9218,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.06876,
+       "speed_mae_ms": 0.99061,
+       "speed_bias_ms": -0.477989,
+       "direction_mae_deg": 17.3145,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.76431,
+       "speed_mae_ms": 1.03139,
+       "speed_bias_ms": -0.385882,
+       "direction_mae_deg": 11.672,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.56681,
+       "speed_mae_ms": 0.846777,
+       "speed_bias_ms": -0.611111,
+       "direction_mae_deg": 16.6817,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.18679,
+       "speed_mae_ms": 0.965919,
+       "speed_bias_ms": 0.113856,
+       "direction_mae_deg": 18.0177,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 6.81674,
+     "headwind_forward_rmse_ms": 1.6177
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 11.787,
+     "stopped_jitter_p95_deg": 32.4001,
+     "stopped_windows": 177,
+     "turn_lag_s": 2.21964,
+     "turns": 560
+    }
+   },
+   "+virtual": {
+    "metric_a": {
+     "overall": {
+      "n": 1001,
+      "vector_rmse_ms": 1.91661,
+      "speed_mae_ms": 0.99263,
+      "speed_bias_ms": -0.391685,
+      "direction_mae_deg": 14.9675,
+      "n_direction": 975
+     },
+     "regimes": {
+      "calm": {
+       "n": 26,
+       "vector_rmse_ms": 2.94321,
+       "speed_mae_ms": 2.41515,
+       "speed_bias_ms": 2.41515,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 937,
+       "vector_rmse_ms": 1.8574,
+       "speed_mae_ms": 0.921185,
+       "speed_bias_ms": -0.413225,
+       "direction_mae_deg": 15.2383,
+       "n_direction": 937
+      },
+      "strong": {
+       "n": 38,
+       "vector_rmse_ms": 2.40201,
+       "speed_mae_ms": 1.78101,
+       "speed_bias_ms": -1.78101,
+       "direction_mae_deg": 8.28896,
+       "n_direction": 38
+      },
+      "shift": {
+       "n": 122,
+       "vector_rmse_ms": 2.3378,
+       "speed_mae_ms": 1.02319,
+       "speed_bias_ms": -0.226196,
+       "direction_mae_deg": 25.9218,
+       "n_direction": 122
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 388,
+       "vector_rmse_ms": 2.06876,
+       "speed_mae_ms": 0.99061,
+       "speed_bias_ms": -0.477989,
+       "direction_mae_deg": 17.3145,
+       "n_direction": 384
+      },
+      "10-20km": {
+       "n": 424,
+       "vector_rmse_ms": 1.76431,
+       "speed_mae_ms": 1.03139,
+       "speed_bias_ms": -0.385882,
+       "direction_mae_deg": 11.672,
+       "n_direction": 408
+      },
+      "20-30km": {
+       "n": 89,
+       "vector_rmse_ms": 1.56681,
+       "speed_mae_ms": 0.846777,
+       "speed_bias_ms": -0.611111,
+       "direction_mae_deg": 16.6817,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 100,
+       "vector_rmse_ms": 2.18679,
+       "speed_mae_ms": 0.965919,
+       "speed_bias_ms": 0.113856,
+       "direction_mae_deg": 18.0177,
+       "n_direction": 97
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 5.79925,
+     "headwind_forward_rmse_ms": 1.56966
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 5.18308,
+     "stopped_jitter_p95_deg": 21.3898,
+     "stopped_windows": 185,
+     "turn_lag_s": 1.48214,
+     "turns": 560
+    }
+   }
+  }
+ },
+ "tuning": {
+  "corpus": {
+   "rides": 13,
+   "rides_with_power": 13,
+   "ride_hours": 41.7406,
+   "stations": 170,
+   "metric_a_stations": 65,
+   "metric_a_station_hours": 197.917,
+   "obs_lag_min": 10,
+   "forecast_members": [
+    "open-meteo:best_match",
+    "open-meteo:ecmwf_ifs",
+    "open-meteo:gfs_global",
+    "open-meteo:ncep_hrrr_conus",
+    "open-meteo:ncep_nbm_conus"
+   ],
+   "metric_b_fit": "calm20",
+   "metric_b_fits_at_grid_edge": 10
+  },
+  "configs": {
+   "upstream": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.87769,
+      "speed_mae_ms": 0.980967,
+      "speed_bias_ms": -0.462589,
+      "direction_mae_deg": 17.1694,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.65447,
+       "speed_mae_ms": 1.07159,
+       "speed_bias_ms": 0.697989,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.87767,
+       "speed_mae_ms": 0.966975,
+       "speed_bias_ms": -0.537848,
+       "direction_mae_deg": 17.1404,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.05255,
+       "speed_mae_ms": 2.62346,
+       "speed_bias_ms": -2.62346,
+       "direction_mae_deg": 23.6485,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.3306,
+       "speed_mae_ms": 1.0504,
+       "speed_bias_ms": -0.54213,
+       "direction_mae_deg": 30.3525,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 1.994,
+       "speed_mae_ms": 0.995946,
+       "speed_bias_ms": -0.718344,
+       "direction_mae_deg": 16.3064,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.69771,
+       "speed_mae_ms": 0.983512,
+       "speed_bias_ms": -0.247433,
+       "direction_mae_deg": 16.6559,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.50378,
+       "speed_mae_ms": 0.709096,
+       "speed_bias_ms": -0.226476,
+       "direction_mae_deg": 20.0592,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.8217,
+       "speed_mae_ms": 1.42883,
+       "speed_bias_ms": 0.250189,
+       "direction_mae_deg": 33.1795,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 15.108,
+     "headwind_forward_rmse_ms": 2.5551
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.80666,
+     "stopped_jitter_p95_deg": 24.6623,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "nowind": {
+    "metric_a": {
+     "overall": {
+      "n": 0,
+      "vector_rmse_ms": null,
+      "speed_mae_ms": null,
+      "speed_bias_ms": null,
+      "direction_mae_deg": null,
+      "n_direction": 0
+     },
+     "regimes": {
+      "calm": {
+       "n": 0,
+       "vector_rmse_ms": null,
+       "speed_mae_ms": null,
+       "speed_bias_ms": null,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 0,
+       "vector_rmse_ms": null,
+       "speed_mae_ms": null,
+       "speed_bias_ms": null,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "strong": {
+       "n": 0,
+       "vector_rmse_ms": null,
+       "speed_mae_ms": null,
+       "speed_bias_ms": null,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "shift": {
+       "n": 0,
+       "vector_rmse_ms": null,
+       "speed_mae_ms": null,
+       "speed_bias_ms": null,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      }
+     },
+     "by_nearest_remaining_station": {}
+    },
+    "metric_b": {
+     "ve_rmse_m": 11.6793,
+     "headwind_forward_rmse_ms": 2.39989
+    },
+    "metric_c": {
+     "stopped_jitter_deg": null,
+     "stopped_jitter_p95_deg": null,
+     "stopped_windows": 0,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "+ensemble": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.92407,
+      "speed_mae_ms": 1.01927,
+      "speed_bias_ms": -0.580502,
+      "direction_mae_deg": 17.5289,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.61523,
+       "speed_mae_ms": 1.06122,
+       "speed_bias_ms": 0.645991,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.92742,
+       "speed_mae_ms": 1.00792,
+       "speed_bias_ms": -0.660023,
+       "direction_mae_deg": 17.4938,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.32153,
+       "speed_mae_ms": 2.86699,
+       "speed_bias_ms": -2.86699,
+       "direction_mae_deg": 25.3659,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.34306,
+       "speed_mae_ms": 1.06911,
+       "speed_bias_ms": -0.574788,
+       "direction_mae_deg": 30.5865,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.11742,
+       "speed_mae_ms": 1.0666,
+       "speed_bias_ms": -0.838649,
+       "direction_mae_deg": 17.6875,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.67216,
+       "speed_mae_ms": 0.982288,
+       "speed_bias_ms": -0.354097,
+       "direction_mae_deg": 16.0734,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.45089,
+       "speed_mae_ms": 0.737449,
+       "speed_bias_ms": -0.276814,
+       "direction_mae_deg": 18.5632,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.66039,
+       "speed_mae_ms": 1.48387,
+       "speed_bias_ms": -0.154758,
+       "direction_mae_deg": 31.6004,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 14.7087,
+     "headwind_forward_rmse_ms": 2.53176
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.80676,
+     "stopped_jitter_p95_deg": 24.6613,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "+obs": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.91816,
+      "speed_mae_ms": 0.956945,
+      "speed_bias_ms": -0.473452,
+      "direction_mae_deg": 17.853,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.59817,
+       "speed_mae_ms": 1.044,
+       "speed_bias_ms": 0.617161,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.92355,
+       "speed_mae_ms": 0.943196,
+       "speed_bias_ms": -0.543729,
+       "direction_mae_deg": 17.8229,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.17546,
+       "speed_mae_ms": 2.6034,
+       "speed_bias_ms": -2.6034,
+       "direction_mae_deg": 24.5678,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.3505,
+       "speed_mae_ms": 1.02051,
+       "speed_bias_ms": -0.523901,
+       "direction_mae_deg": 30.5263,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.11171,
+       "speed_mae_ms": 0.956461,
+       "speed_bias_ms": -0.6687,
+       "direction_mae_deg": 18.3624,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.66157,
+       "speed_mae_ms": 0.961096,
+       "speed_bias_ms": -0.292389,
+       "direction_mae_deg": 15.9403,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.46431,
+       "speed_mae_ms": 0.741471,
+       "speed_bias_ms": -0.290446,
+       "direction_mae_deg": 18.8964,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.66039,
+       "speed_mae_ms": 1.48387,
+       "speed_bias_ms": -0.154758,
+       "direction_mae_deg": 31.6004,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 14.88,
+     "headwind_forward_rmse_ms": 2.53995
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.80052,
+     "stopped_jitter_p95_deg": 23.2504,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "+height": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.91816,
+      "speed_mae_ms": 0.956945,
+      "speed_bias_ms": -0.473452,
+      "direction_mae_deg": 17.853,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.59817,
+       "speed_mae_ms": 1.044,
+       "speed_bias_ms": 0.617161,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.92355,
+       "speed_mae_ms": 0.943196,
+       "speed_bias_ms": -0.543729,
+       "direction_mae_deg": 17.8229,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.17546,
+       "speed_mae_ms": 2.6034,
+       "speed_bias_ms": -2.6034,
+       "direction_mae_deg": 24.5678,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.3505,
+       "speed_mae_ms": 1.02051,
+       "speed_bias_ms": -0.523901,
+       "direction_mae_deg": 30.5263,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.11171,
+       "speed_mae_ms": 0.956461,
+       "speed_bias_ms": -0.6687,
+       "direction_mae_deg": 18.3624,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.66157,
+       "speed_mae_ms": 0.961096,
+       "speed_bias_ms": -0.292389,
+       "direction_mae_deg": 15.9403,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.46431,
+       "speed_mae_ms": 0.741471,
+       "speed_bias_ms": -0.290446,
+       "direction_mae_deg": 18.8964,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.66039,
+       "speed_mae_ms": 1.48387,
+       "speed_bias_ms": -0.154758,
+       "direction_mae_deg": 31.6004,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 11.6583,
+     "headwind_forward_rmse_ms": 2.13547
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.80052,
+     "stopped_jitter_p95_deg": 23.2504,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "+heading": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.91816,
+      "speed_mae_ms": 0.956945,
+      "speed_bias_ms": -0.473452,
+      "direction_mae_deg": 17.853,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.59817,
+       "speed_mae_ms": 1.044,
+       "speed_bias_ms": 0.617161,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.92355,
+       "speed_mae_ms": 0.943196,
+       "speed_bias_ms": -0.543729,
+       "direction_mae_deg": 17.8229,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.17546,
+       "speed_mae_ms": 2.6034,
+       "speed_bias_ms": -2.6034,
+       "direction_mae_deg": 24.5678,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.3505,
+       "speed_mae_ms": 1.02051,
+       "speed_bias_ms": -0.523901,
+       "direction_mae_deg": 30.5263,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.11171,
+       "speed_mae_ms": 0.956461,
+       "speed_bias_ms": -0.6687,
+       "direction_mae_deg": 18.3624,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.66157,
+       "speed_mae_ms": 0.961096,
+       "speed_bias_ms": -0.292389,
+       "direction_mae_deg": 15.9403,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.46431,
+       "speed_mae_ms": 0.741471,
+       "speed_bias_ms": -0.290446,
+       "direction_mae_deg": 18.8964,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.66039,
+       "speed_mae_ms": 1.48387,
+       "speed_bias_ms": -0.154758,
+       "direction_mae_deg": 31.6004,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 11.7165,
+     "headwind_forward_rmse_ms": 2.13547
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 4.69946,
+     "stopped_jitter_p95_deg": 23.6798,
+     "stopped_windows": 311,
+     "turn_lag_s": 1.73196,
+     "turns": 582
+    }
+   },
+   "+virtual": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.91816,
+      "speed_mae_ms": 0.956945,
+      "speed_bias_ms": -0.473452,
+      "direction_mae_deg": 17.853,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.59817,
+       "speed_mae_ms": 1.044,
+       "speed_bias_ms": 0.617161,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.92355,
+       "speed_mae_ms": 0.943196,
+       "speed_bias_ms": -0.543729,
+       "direction_mae_deg": 17.8229,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.17546,
+       "speed_mae_ms": 2.6034,
+       "speed_bias_ms": -2.6034,
+       "direction_mae_deg": 24.5678,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.3505,
+       "speed_mae_ms": 1.02051,
+       "speed_bias_ms": -0.523901,
+       "direction_mae_deg": 30.5263,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.11171,
+       "speed_mae_ms": 0.956461,
+       "speed_bias_ms": -0.6687,
+       "direction_mae_deg": 18.3624,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.66157,
+       "speed_mae_ms": 0.961096,
+       "speed_bias_ms": -0.292389,
+       "direction_mae_deg": 15.9403,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.46431,
+       "speed_mae_ms": 0.741471,
+       "speed_bias_ms": -0.290446,
+       "direction_mae_deg": 18.8964,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.66039,
+       "speed_mae_ms": 1.48387,
+       "speed_bias_ms": -0.154758,
+       "direction_mae_deg": 31.6004,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 11.5551,
+     "headwind_forward_rmse_ms": 2.17823
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 4.71952,
+     "stopped_jitter_p95_deg": 23.6811,
+     "stopped_windows": 311,
+     "turn_lag_s": 1.73196,
+     "turns": 582
+    }
+   },
+   "member:ncep_hrrr_conus": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.88184,
+      "speed_mae_ms": 1.00075,
+      "speed_bias_ms": -0.504364,
+      "direction_mae_deg": 16.9411,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.60415,
+       "speed_mae_ms": 1.07801,
+       "speed_bias_ms": 0.650604,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.88471,
+       "speed_mae_ms": 0.987358,
+       "speed_bias_ms": -0.578929,
+       "direction_mae_deg": 16.911,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.11627,
+       "speed_mae_ms": 2.72858,
+       "speed_bias_ms": -2.72858,
+       "direction_mae_deg": 23.6575,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.33157,
+       "speed_mae_ms": 1.07984,
+       "speed_bias_ms": -0.571511,
+       "direction_mae_deg": 30.0667,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.02024,
+       "speed_mae_ms": 1.02754,
+       "speed_bias_ms": -0.771036,
+       "direction_mae_deg": 16.3259,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.67652,
+       "speed_mae_ms": 0.989388,
+       "speed_bias_ms": -0.287375,
+       "direction_mae_deg": 16.2411,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.48927,
+       "speed_mae_ms": 0.701374,
+       "speed_bias_ms": -0.228925,
+       "direction_mae_deg": 19.722,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.79552,
+       "speed_mae_ms": 1.51146,
+       "speed_bias_ms": 0.256465,
+       "direction_mae_deg": 31.1718,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 15.049,
+     "headwind_forward_rmse_ms": 2.57203
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.80641,
+     "stopped_jitter_p95_deg": 24.6637,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "member:ncep_nbm_conus": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 2.23141,
+      "speed_mae_ms": 1.08285,
+      "speed_bias_ms": -0.439716,
+      "direction_mae_deg": 20.2602,
+      "n_direction": 1344
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 2.06109,
+       "speed_mae_ms": 1.30682,
+       "speed_bias_ms": 0.842656,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 2.23072,
+       "speed_mae_ms": 1.05933,
+       "speed_bias_ms": -0.523554,
+       "direction_mae_deg": 20.239,
+       "n_direction": 1338
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.1961,
+       "speed_mae_ms": 2.67526,
+       "speed_bias_ms": -2.67526,
+       "direction_mae_deg": 25.0015,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.60097,
+       "speed_mae_ms": 1.09949,
+       "speed_bias_ms": -0.25999,
+       "direction_mae_deg": 32.8103,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.46312,
+       "speed_mae_ms": 1.11956,
+       "speed_bias_ms": -0.614502,
+       "direction_mae_deg": 20.8986,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.92455,
+       "speed_mae_ms": 1.07082,
+       "speed_bias_ms": -0.293359,
+       "direction_mae_deg": 17.4519,
+       "n_direction": 514
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.6392,
+       "speed_mae_ms": 0.857283,
+       "speed_bias_ms": -0.192435,
+       "direction_mae_deg": 18.7083,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 3.16966,
+       "speed_mae_ms": 1.24553,
+       "speed_bias_ms": -0.172175,
+       "direction_mae_deg": 49.155,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 15.5262,
+     "headwind_forward_rmse_ms": 2.63567
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.8077,
+     "stopped_jitter_p95_deg": 24.6546,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "member:ecmwf_ifs": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 2.82173,
+      "speed_mae_ms": 1.64115,
+      "speed_bias_ms": -1.42449,
+      "direction_mae_deg": 26.9844,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.75316,
+       "speed_mae_ms": 1.05161,
+       "speed_bias_ms": 0.812938,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 2.86136,
+       "speed_mae_ms": 1.67312,
+       "speed_bias_ms": -1.5761,
+       "direction_mae_deg": 26.9281,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 6.12697,
+       "speed_mae_ms": 4.13584,
+       "speed_bias_ms": -4.13584,
+       "direction_mae_deg": 39.552,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 3.02667,
+       "speed_mae_ms": 1.35228,
+       "speed_bias_ms": -1.13681,
+       "direction_mae_deg": 40.9159,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 3.13213,
+       "speed_mae_ms": 1.86123,
+       "speed_bias_ms": -1.80744,
+       "direction_mae_deg": 27.1731,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 2.53144,
+       "speed_mae_ms": 1.44468,
+       "speed_bias_ms": -1.1023,
+       "direction_mae_deg": 25.6006,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.8629,
+       "speed_mae_ms": 1.24198,
+       "speed_bias_ms": -0.661393,
+       "direction_mae_deg": 21.3631,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 3.19515,
+       "speed_mae_ms": 1.69609,
+       "speed_bias_ms": -1.44676,
+       "direction_mae_deg": 54.2425,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 12.5932,
+     "headwind_forward_rmse_ms": 2.25507
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.8077,
+     "stopped_jitter_p95_deg": 24.6642,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "member:gfs_global": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 2.66714,
+      "speed_mae_ms": 1.13047,
+      "speed_bias_ms": -0.269122,
+      "direction_mae_deg": 24.5176,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 2.26953,
+       "speed_mae_ms": 1.47137,
+       "speed_bias_ms": 1.18394,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 2.67182,
+       "speed_mae_ms": 1.09577,
+       "speed_bias_ms": -0.36186,
+       "direction_mae_deg": 24.4494,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 5.7956,
+       "speed_mae_ms": 3.30642,
+       "speed_bias_ms": -3.30642,
+       "direction_mae_deg": 39.7293,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 3.07637,
+       "speed_mae_ms": 1.10445,
+       "speed_bias_ms": 0.065697,
+       "direction_mae_deg": 37.4969,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 3.01896,
+       "speed_mae_ms": 1.11582,
+       "speed_bias_ms": -0.601178,
+       "direction_mae_deg": 26.6431,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 2.25125,
+       "speed_mae_ms": 1.17894,
+       "speed_bias_ms": 0.101438,
+       "direction_mae_deg": 20.1732,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.79869,
+       "speed_mae_ms": 0.921892,
+       "speed_bias_ms": 0.0627918,
+       "direction_mae_deg": 18.0768,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 3.41242,
+       "speed_mae_ms": 1.29304,
+       "speed_bias_ms": -0.594837,
+       "direction_mae_deg": 57.666,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 15.4279,
+     "headwind_forward_rmse_ms": 2.79346
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.8084,
+     "stopped_jitter_p95_deg": 24.653,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   }
+  },
+  "metric_b_whole_ride_fit": {
+   "upstream": {
+    "ve_rmse_m": 11.512,
+    "headwind_forward_rmse_ms": 1.98158
+   },
+   "nowind": {
+    "ve_rmse_m": 7.06563,
+    "headwind_forward_rmse_ms": 1.6938
+   },
+   "+ensemble": {
+    "ve_rmse_m": 11.056,
+    "headwind_forward_rmse_ms": 1.91532
+   },
+   "+obs": {
+    "ve_rmse_m": 11.1411,
+    "headwind_forward_rmse_ms": 1.92574
+   },
+   "+height": {
+    "ve_rmse_m": 6.96276,
+    "headwind_forward_rmse_ms": 1.32262
+   },
+   "+heading": {
+    "ve_rmse_m": 7.05699,
+    "headwind_forward_rmse_ms": 1.32262
+   },
+   "+virtual": {
+    "ve_rmse_m": 7.08112,
+    "headwind_forward_rmse_ms": 1.39887
+   }
+  },
+  "metric_b_whole_ride_fit_corpus": {
+   "rides": 13,
+   "rides_with_power": 13,
+   "ride_hours": 41.7406,
+   "stations": 170,
+   "metric_a_stations": 65,
+   "metric_a_station_hours": 197.917,
+   "obs_lag_min": 10,
+   "forecast_members": [
+    "open-meteo:best_match",
+    "open-meteo:ecmwf_ifs",
+    "open-meteo:gfs_global",
+    "open-meteo:ncep_hrrr_conus",
+    "open-meteo:ncep_nbm_conus"
+   ],
+   "metric_b_fit": "ride",
+   "metric_b_fits_at_grid_edge": 2
+  },
+  "variant_spec": {
+   "upstream": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.87769,
+      "speed_mae_ms": 0.980967,
+      "speed_bias_ms": -0.462589,
+      "direction_mae_deg": 17.1694,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.65447,
+       "speed_mae_ms": 1.07159,
+       "speed_bias_ms": 0.697989,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.87767,
+       "speed_mae_ms": 0.966975,
+       "speed_bias_ms": -0.537848,
+       "direction_mae_deg": 17.1404,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.05255,
+       "speed_mae_ms": 2.62346,
+       "speed_bias_ms": -2.62346,
+       "direction_mae_deg": 23.6485,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.3306,
+       "speed_mae_ms": 1.0504,
+       "speed_bias_ms": -0.54213,
+       "direction_mae_deg": 30.3525,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 1.994,
+       "speed_mae_ms": 0.995946,
+       "speed_bias_ms": -0.718344,
+       "direction_mae_deg": 16.3064,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.69771,
+       "speed_mae_ms": 0.983512,
+       "speed_bias_ms": -0.247433,
+       "direction_mae_deg": 16.6559,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.50378,
+       "speed_mae_ms": 0.709096,
+       "speed_bias_ms": -0.226476,
+       "direction_mae_deg": 20.0592,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.8217,
+       "speed_mae_ms": 1.42883,
+       "speed_bias_ms": 0.250189,
+       "direction_mae_deg": 33.1795,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 15.108,
+     "headwind_forward_rmse_ms": 2.5551
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.80666,
+     "stopped_jitter_p95_deg": 24.6623,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "+ensemble": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 2.17618,
+      "speed_mae_ms": 1.14032,
+      "speed_bias_ms": -0.768363,
+      "direction_mae_deg": 19.7704,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.70708,
+       "speed_mae_ms": 1.07737,
+       "speed_bias_ms": 0.699765,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 2.18604,
+       "speed_mae_ms": 1.13526,
+       "speed_bias_ms": -0.864475,
+       "direction_mae_deg": 19.7208,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.98908,
+       "speed_mae_ms": 3.29865,
+       "speed_bias_ms": -3.29865,
+       "direction_mae_deg": 30.8522,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.52715,
+       "speed_mae_ms": 1.08806,
+       "speed_bias_ms": -0.634269,
+       "direction_mae_deg": 32.9086,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.50535,
+       "speed_mae_ms": 1.23078,
+       "speed_bias_ms": -1.03403,
+       "direction_mae_deg": 21.3799,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.76474,
+       "speed_mae_ms": 1.06252,
+       "speed_bias_ms": -0.525116,
+       "direction_mae_deg": 16.4119,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.46347,
+       "speed_mae_ms": 0.843357,
+       "speed_bias_ms": -0.355358,
+       "direction_mae_deg": 17.0975,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.78822,
+       "speed_mae_ms": 1.47787,
+       "speed_bias_ms": -0.730253,
+       "direction_mae_deg": 40.9206,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 14.1377,
+     "headwind_forward_rmse_ms": 2.49071
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.80704,
+     "stopped_jitter_p95_deg": 24.6579,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "+obs": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 2.23571,
+      "speed_mae_ms": 0.967029,
+      "speed_bias_ms": -0.405276,
+      "direction_mae_deg": 21.4748,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.6331,
+       "speed_mae_ms": 1.04585,
+       "speed_bias_ms": 0.603384,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 2.25926,
+       "speed_mae_ms": 0.954043,
+       "speed_bias_ms": -0.469365,
+       "direction_mae_deg": 21.459,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.41036,
+       "speed_mae_ms": 2.57764,
+       "speed_bias_ms": -2.57764,
+       "direction_mae_deg": 24.9986,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.68753,
+       "speed_mae_ms": 0.971971,
+       "speed_bias_ms": -0.406292,
+       "direction_mae_deg": 33.1949,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.55795,
+       "speed_mae_ms": 0.979299,
+       "speed_bias_ms": -0.521372,
+       "direction_mae_deg": 22.6889,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.85265,
+       "speed_mae_ms": 0.94245,
+       "speed_bias_ms": -0.245813,
+       "direction_mae_deg": 18.9357,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.48669,
+       "speed_mae_ms": 0.820306,
+       "speed_bias_ms": -0.355789,
+       "direction_mae_deg": 17.9088,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.78822,
+       "speed_mae_ms": 1.47787,
+       "speed_bias_ms": -0.730253,
+       "direction_mae_deg": 40.9206,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 14.1939,
+     "headwind_forward_rmse_ms": 2.5335
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.81141,
+     "stopped_jitter_p95_deg": 24.6514,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   }
+  },
+  "variant_lag0": {
+   "upstream": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.87769,
+      "speed_mae_ms": 0.980967,
+      "speed_bias_ms": -0.462589,
+      "direction_mae_deg": 17.1694,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.65447,
+       "speed_mae_ms": 1.07159,
+       "speed_bias_ms": 0.697989,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.87767,
+       "speed_mae_ms": 0.966975,
+       "speed_bias_ms": -0.537848,
+       "direction_mae_deg": 17.1404,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.05255,
+       "speed_mae_ms": 2.62346,
+       "speed_bias_ms": -2.62346,
+       "direction_mae_deg": 23.6485,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.3306,
+       "speed_mae_ms": 1.0504,
+       "speed_bias_ms": -0.54213,
+       "direction_mae_deg": 30.3525,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 1.994,
+       "speed_mae_ms": 0.995946,
+       "speed_bias_ms": -0.718344,
+       "direction_mae_deg": 16.3064,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.69771,
+       "speed_mae_ms": 0.983512,
+       "speed_bias_ms": -0.247433,
+       "direction_mae_deg": 16.6559,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.50378,
+       "speed_mae_ms": 0.709096,
+       "speed_bias_ms": -0.226476,
+       "direction_mae_deg": 20.0592,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.8217,
+       "speed_mae_ms": 1.42883,
+       "speed_bias_ms": 0.250189,
+       "direction_mae_deg": 33.1795,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 15.108,
+     "headwind_forward_rmse_ms": 2.5551
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.80666,
+     "stopped_jitter_p95_deg": 24.6623,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "+ensemble": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.92407,
+      "speed_mae_ms": 1.01927,
+      "speed_bias_ms": -0.580502,
+      "direction_mae_deg": 17.5289,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.61523,
+       "speed_mae_ms": 1.06122,
+       "speed_bias_ms": 0.645991,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.92742,
+       "speed_mae_ms": 1.00792,
+       "speed_bias_ms": -0.660023,
+       "direction_mae_deg": 17.4938,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.32153,
+       "speed_mae_ms": 2.86699,
+       "speed_bias_ms": -2.86699,
+       "direction_mae_deg": 25.3659,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.34306,
+       "speed_mae_ms": 1.06911,
+       "speed_bias_ms": -0.574788,
+       "direction_mae_deg": 30.5865,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.11742,
+       "speed_mae_ms": 1.0666,
+       "speed_bias_ms": -0.838649,
+       "direction_mae_deg": 17.6875,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.67216,
+       "speed_mae_ms": 0.982288,
+       "speed_bias_ms": -0.354097,
+       "direction_mae_deg": 16.0734,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.45089,
+       "speed_mae_ms": 0.737449,
+       "speed_bias_ms": -0.276814,
+       "direction_mae_deg": 18.5632,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.66039,
+       "speed_mae_ms": 1.48387,
+       "speed_bias_ms": -0.154758,
+       "direction_mae_deg": 31.6004,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 14.7087,
+     "headwind_forward_rmse_ms": 2.53176
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.80676,
+     "stopped_jitter_p95_deg": 24.6613,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "+obs": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.93012,
+      "speed_mae_ms": 0.943035,
+      "speed_bias_ms": -0.448979,
+      "direction_mae_deg": 17.7943,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.56041,
+       "speed_mae_ms": 0.993763,
+       "speed_bias_ms": 0.560928,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.93853,
+       "speed_mae_ms": 0.931633,
+       "speed_bias_ms": -0.51299,
+       "direction_mae_deg": 17.765,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.18795,
+       "speed_mae_ms": 2.65898,
+       "speed_bias_ms": -2.65898,
+       "direction_mae_deg": 24.3399,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.38445,
+       "speed_mae_ms": 1.02501,
+       "speed_bias_ms": -0.496463,
+       "direction_mae_deg": 30.3777,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.13414,
+       "speed_mae_ms": 0.940682,
+       "speed_bias_ms": -0.628906,
+       "direction_mae_deg": 18.2789,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.66232,
+       "speed_mae_ms": 0.947404,
+       "speed_bias_ms": -0.277642,
+       "direction_mae_deg": 15.8956,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.45631,
+       "speed_mae_ms": 0.73262,
+       "speed_bias_ms": -0.302409,
+       "direction_mae_deg": 18.9307,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.66039,
+       "speed_mae_ms": 1.48387,
+       "speed_bias_ms": -0.154758,
+       "direction_mae_deg": 31.6004,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 14.789,
+     "headwind_forward_rmse_ms": 2.53026
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.8047,
+     "stopped_jitter_p95_deg": 24.6578,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   }
+  },
+  "variant_cda05": {
+   "+height": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.91816,
+      "speed_mae_ms": 0.956945,
+      "speed_bias_ms": -0.473452,
+      "direction_mae_deg": 17.853,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.59817,
+       "speed_mae_ms": 1.044,
+       "speed_bias_ms": 0.617161,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.92355,
+       "speed_mae_ms": 0.943196,
+       "speed_bias_ms": -0.543729,
+       "direction_mae_deg": 17.8229,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.17546,
+       "speed_mae_ms": 2.6034,
+       "speed_bias_ms": -2.6034,
+       "direction_mae_deg": 24.5678,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.3505,
+       "speed_mae_ms": 1.02051,
+       "speed_bias_ms": -0.523901,
+       "direction_mae_deg": 30.5263,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.11171,
+       "speed_mae_ms": 0.956461,
+       "speed_bias_ms": -0.6687,
+       "direction_mae_deg": 18.3624,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.66157,
+       "speed_mae_ms": 0.961096,
+       "speed_bias_ms": -0.292389,
+       "direction_mae_deg": 15.9403,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.46431,
+       "speed_mae_ms": 0.741471,
+       "speed_bias_ms": -0.290446,
+       "direction_mae_deg": 18.8964,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.66039,
+       "speed_mae_ms": 1.48387,
+       "speed_bias_ms": -0.154758,
+       "direction_mae_deg": 31.6004,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 6.96276,
+     "headwind_forward_rmse_ms": 1.32262
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 9.80052,
+     "stopped_jitter_p95_deg": 23.2504,
+     "stopped_windows": 305,
+     "turn_lag_s": 2.57216,
+     "turns": 582
+    }
+   },
+   "+virtual": {
+    "metric_a": {
+     "overall": {
+      "n": 1443,
+      "vector_rmse_ms": 1.91816,
+      "speed_mae_ms": 0.956945,
+      "speed_bias_ms": -0.473452,
+      "direction_mae_deg": 17.853,
+      "n_direction": 1345
+     },
+     "regimes": {
+      "calm": {
+       "n": 98,
+       "vector_rmse_ms": 1.59817,
+       "speed_mae_ms": 1.044,
+       "speed_bias_ms": 0.617161,
+       "direction_mae_deg": null,
+       "n_direction": 0
+      },
+      "moderate": {
+       "n": 1339,
+       "vector_rmse_ms": 1.92355,
+       "speed_mae_ms": 0.943196,
+       "speed_bias_ms": -0.543729,
+       "direction_mae_deg": 17.8229,
+       "n_direction": 1339
+      },
+      "strong": {
+       "n": 6,
+       "vector_rmse_ms": 4.17546,
+       "speed_mae_ms": 2.6034,
+       "speed_bias_ms": -2.6034,
+       "direction_mae_deg": 24.5678,
+       "n_direction": 6
+      },
+      "shift": {
+       "n": 284,
+       "vector_rmse_ms": 2.3505,
+       "speed_mae_ms": 1.02051,
+       "speed_bias_ms": -0.523901,
+       "direction_mae_deg": 30.5263,
+       "n_direction": 284
+      }
+     },
+     "by_nearest_remaining_station": {
+      "0-10km": {
+       "n": 711,
+       "vector_rmse_ms": 2.11171,
+       "speed_mae_ms": 0.956461,
+       "speed_bias_ms": -0.6687,
+       "direction_mae_deg": 18.3624,
+       "n_direction": 705
+      },
+      "10-20km": {
+       "n": 571,
+       "vector_rmse_ms": 1.66157,
+       "speed_mae_ms": 0.961096,
+       "speed_bias_ms": -0.292389,
+       "direction_mae_deg": 15.9403,
+       "n_direction": 515
+      },
+      "20-30km": {
+       "n": 117,
+       "vector_rmse_ms": 1.46431,
+       "speed_mae_ms": 0.741471,
+       "speed_bias_ms": -0.290446,
+       "direction_mae_deg": 18.8964,
+       "n_direction": 86
+      },
+      ">=30km": {
+       "n": 44,
+       "vector_rmse_ms": 2.66039,
+       "speed_mae_ms": 1.48387,
+       "speed_bias_ms": -0.154758,
+       "direction_mae_deg": 31.6004,
+       "n_direction": 39
+      }
+     }
+    },
+    "metric_b": {
+     "ve_rmse_m": 6.20931,
+     "headwind_forward_rmse_ms": 1.32081
+    },
+    "metric_c": {
+     "stopped_jitter_deg": 4.73077,
+     "stopped_jitter_p95_deg": 23.6798,
+     "stopped_windows": 311,
+     "turn_lag_s": 1.73196,
+     "turns": 582
+    }
+   }
+  }
+ }
+}
