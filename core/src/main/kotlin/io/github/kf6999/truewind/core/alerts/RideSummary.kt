@@ -150,7 +150,7 @@ object RideSummaryBuilder {
         if (temps.isNotEmpty()) {
             val lo = temps.min()
             val hi = temps.max()
-            parts += "Temp ${temp(units, lo)}–${temp(units, hi)}"
+            parts += "Temp ${temp(units, lo).dropLast(2)}–${temp(units, hi)}"
         }
         parts += when {
             rainFrom != null -> {
