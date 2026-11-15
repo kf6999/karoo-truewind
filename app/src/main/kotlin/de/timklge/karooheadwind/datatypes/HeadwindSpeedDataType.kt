@@ -16,6 +16,7 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.KarooHeadwindExtension
 import android.content.Context
 import de.timklge.karooheadwind.HeadingResponse
 import de.timklge.karooheadwind.HeadwindSettings
@@ -44,7 +45,7 @@ import kotlin.math.cos
 
 class HeadwindSpeedDataType(
     private val karooSystem: KarooSystemService,
-    private val context: Context) : DataTypeImpl("karoo-headwind", "headwindSpeed"){
+    private val context: Context) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "headwindSpeed"){
 
     data class StreamData(val headingResponse: HeadingResponse, val weatherData: WeatherData?, val settings: HeadwindSettings, val isImperial: Boolean)
 

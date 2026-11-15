@@ -134,10 +134,10 @@ class HeadwindClient(context: Context) {
 
     companion object {
         /** Package name of karoo-headwind. */
-        const val SERVICE_PACKAGE = "de.timklge.karooheadwind"
+        const val SERVICE_PACKAGE = "io.github.kf6999.truewind"
 
         /** Intent action of the karoo-headwind service. */
-        const val SERVICE_ACTION = "de.timklge.karooheadwind.HEADWIND_SERVICE"
+        const val SERVICE_ACTION = "io.github.kf6999.truewind.HEADWIND_SERVICE"
 
         private const val SERVICE_CLASS = "de.timklge.karooheadwind.aidl.HeadwindService"
         private const val TAG = "HeadwindClient"

@@ -182,7 +182,7 @@ fun MainScreen(close: () -> Unit) {
                 },
                 text = {
                     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                        Text("Welcome to karoo-headwind!")
+                        Text("Welcome to TrueWind!")
 
                         Spacer(Modifier.padding(10.dp))
 
@@ -211,7 +211,7 @@ fun MainScreen(close: () -> Unit) {
                     },
                     text = {
                         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                            Text("A new version of karoo-headwind is available.")
+                            Text("A new version of TrueWind is available.")
 
                             Spacer(Modifier.padding(10.dp))
 

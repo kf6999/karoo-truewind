@@ -86,7 +86,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-abstract class ForecastDataType(private val karooSystem: KarooSystemService, typeId: String) : DataTypeImpl("karoo-headwind", typeId) {
+abstract class ForecastDataType(private val karooSystem: KarooSystemService, typeId: String) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, typeId) {
     @Composable
     abstract fun RenderWidget(
         arrowBitmap: Bitmap,

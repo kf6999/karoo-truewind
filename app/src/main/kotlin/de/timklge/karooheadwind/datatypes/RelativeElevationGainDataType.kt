@@ -16,6 +16,7 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.KarooHeadwindExtension
 import android.content.Context
 import de.timklge.karooheadwind.streamRideState
 import io.hammerhead.karooext.KarooSystemService
@@ -35,7 +36,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 
-class RelativeElevationGainDataType(private val karooSystemService: KarooSystemService, private val context: Context): DataTypeImpl("karoo-headwind", "relativeElevationGain") {
+class RelativeElevationGainDataType(private val karooSystemService: KarooSystemService, private val context: Context): DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "relativeElevationGain") {
     fun updateAccumulatedWindElevation(
         previousAccumulatedWindElevation: Double,
         relativeGrade: Double,

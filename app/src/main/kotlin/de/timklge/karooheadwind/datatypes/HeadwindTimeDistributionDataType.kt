@@ -1,5 +1,6 @@
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.KarooHeadwindExtension
 import android.content.Context
 import androidx.compose.ui.unit.DpSize
 import androidx.glance.GlanceModifier
@@ -41,7 +42,7 @@ class HeadwindTimeDistributionDataType(
     private val karooSystem: KarooSystemService,
     private val context: Context,
     private val windAggregator: WindAggregator
-) : DataTypeImpl("karoo-headwind", "headwindTimeDistribution") {
+) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "headwindTimeDistribution") {
 
     private fun previewDistributions(): Pair<Map<Int, Int>, Map<Int, Int>> {
         val speedMean = Random.nextInt(-WindAggregator.MAX_WIND_SPEED.toInt(), WindAggregator.MAX_WIND_SPEED.toInt())

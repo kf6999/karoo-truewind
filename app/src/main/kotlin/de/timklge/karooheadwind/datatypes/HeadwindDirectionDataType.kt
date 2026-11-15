@@ -58,7 +58,7 @@ import kotlin.math.roundToInt
 class HeadwindDirectionDataType(
     private val karooSystem: KarooSystemService,
     private val applicationContext: Context
-) : DataTypeImpl("karoo-headwind", "headwind") {
+) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "headwind") {
     private val glance = GlanceRemoteViews()
 
     data class StreamData(val headingResponse: HeadingResponse, val absoluteWindDirection: Double?, val windSpeed: Double?, val settings: HeadwindSettings)
@@ -141,7 +141,7 @@ class HeadwindDirectionDataType(
             val directionFlow = karooSystem.streamDataFlow(dataTypeId).map { (it as? StreamState.Streaming)?.dataPoint?.singleValue }
             val speedFlow = flow {
                 emit(0.0)
-                emitAll(karooSystem.streamDataFlow(DataType.dataTypeId("karoo-headwind", "headwindSpeed")).map { (it as? StreamState.Streaming)?.dataPoint?.singleValue ?: 0.0 })
+                emitAll(karooSystem.streamDataFlow(DataType.dataTypeId(KarooHeadwindExtension.EXTENSION_ID, "headwindSpeed")).map { (it as? StreamState.Streaming)?.dataPoint?.singleValue ?: 0.0 })
             }
 
             combine(directionFlow.filterNotNull(), speedFlow, karooSystem.streamDatatypeIsVisible(dataTypeId)) { direction, speed, isVisible ->

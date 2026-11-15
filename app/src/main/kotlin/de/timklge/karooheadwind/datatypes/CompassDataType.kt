@@ -64,7 +64,7 @@ import kotlinx.coroutines.launch
 class CompassDataType(
     private val karooSystem: KarooSystemService,
     private val applicationContext: Context
-) : DataTypeImpl("karoo-headwind", "compass") {
+) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "compass") {
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
     private val glance = GlanceRemoteViews()
 

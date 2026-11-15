@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.cos
 
-class RelativeGradeDataType(private val karooSystemService: KarooSystemService, private val context: Context): DataTypeImpl("karoo-headwind", "relativeGrade") {
+class RelativeGradeDataType(private val karooSystemService: KarooSystemService, private val context: Context): DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "relativeGrade") {
     data class RelativeGradeResponse(val relativeGrade: Double, val actualGrade: Double, val riderSpeed: Double)
 
     data class ResistanceForces(

@@ -28,7 +28,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "de.timklge.karooheadwind"
+        applicationId = "io.github.kf6999.truewind"
         minSdk = 26
         targetSdk = 37
         versionCode = 100 + (System.getenv("BUILD_NUMBER")?.toInt() ?: 1)
@@ -71,17 +71,17 @@ tasks.register("generateManifest") {
     group = "build"
 
     doLast {
-        val baseUrl = "https://github.com/timklge/karoo-headwind/releases/latest/download"
+        val baseUrl = System.getenv("BASE_URL") ?: "https://github.com/kf6999/karoo-truewind/releases/latest/download"
         val manifestFile = file("$projectDir/manifest.json")
         val manifest = mapOf(
-            "label" to "Headwind",
-            "packageName" to "de.timklge.karooheadwind",
+            "label" to "TrueWind",
+            "packageName" to "io.github.kf6999.truewind",
             "iconUrl" to "$baseUrl/karoo-headwind.png",
             "latestApkUrl" to "$baseUrl/app-release.apk",
             "latestVersion" to android.defaultConfig.versionName,
             "latestVersionCode" to android.defaultConfig.versionCode,
-            "developer" to "github.com/timklge",
-            "description" to "Open-source extension that provides headwind direction, wind speed, forecast and other weather data fields.",
+            "developer" to "github.com/kf6999",
+            "description" to "TrueWind, a modified fork of karoo-headwind. Open-source extension that provides headwind direction, wind speed, forecast and other weather data fields.",
             "releaseNotes" to "* Add headwind time percentage, headwind time distribution data fields\n* Record headwind data to FIT file",
             "screenshotUrls" to listOf(
                 "$baseUrl/preview3.png",

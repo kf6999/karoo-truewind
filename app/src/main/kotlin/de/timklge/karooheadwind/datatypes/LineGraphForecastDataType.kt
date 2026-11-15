@@ -74,7 +74,7 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 
-abstract class LineGraphForecastDataType(private val karooSystem: KarooSystemService, typeId: String) : DataTypeImpl("karoo-headwind", typeId) {
+abstract class LineGraphForecastDataType(private val karooSystem: KarooSystemService, typeId: String) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, typeId) {
     sealed class LineGraphForecastData {
         data class LineData(val data: Set<LineGraphBuilder.Line>) : LineGraphForecastData()
         data class Error(val message: String) : LineGraphForecastData()

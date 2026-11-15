@@ -55,7 +55,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/timklge/karoo-headwind")
+            url = uri("https://maven.pkg.github.com/kf6999/karoo-truewind")
             credentials {
                 username = System.getenv("GPR_USER")
                 password = System.getenv("GPR_KEY")

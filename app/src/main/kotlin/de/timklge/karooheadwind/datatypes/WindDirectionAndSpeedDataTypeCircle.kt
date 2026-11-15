@@ -55,7 +55,7 @@ import kotlin.math.roundToInt
 class WindDirectionAndSpeedDataTypeCircle(
     private val karooSystem: KarooSystemService,
     private val applicationContext: Context
-) : DataTypeImpl("karoo-headwind", "windDirectionAndSpeedCircle") {
+) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "windDirectionAndSpeedCircle") {
     private val glance = GlanceRemoteViews()
 
     data class StreamData(val headingResponse: HeadingResponse, val absoluteWindDirection: Double?, val windSpeed: Double?, val settings: HeadwindSettings)

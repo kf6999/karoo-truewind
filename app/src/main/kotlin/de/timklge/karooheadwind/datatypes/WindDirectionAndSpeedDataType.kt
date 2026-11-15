@@ -57,7 +57,7 @@ import kotlin.math.roundToInt
 class WindDirectionAndSpeedDataType(
     private val karooSystem: KarooSystemService,
     private val applicationContext: Context
-) : DataTypeImpl("karoo-headwind", "windDirectionAndSpeed") {
+) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "windDirectionAndSpeed") {
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
     private val glance = GlanceRemoteViews()
 

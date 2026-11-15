@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <queries>
-        <package android:name="de.timklge.karooheadwind" />
+        <package android:name="io.github.kf6999.truewind" />
     </queries>
 
 </manifest>

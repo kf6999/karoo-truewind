@@ -58,7 +58,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Karoo Headwind"
+rootProject.name = "Karoo TrueWind"
 include("app")
 include(":client")
 include(":client-example")

@@ -56,7 +56,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-class ResistanceForcesDataType(val karooSystem: KarooSystemService, context: Context) : DataTypeImpl("karoo-headwind", "forces"){
+class ResistanceForcesDataType(val karooSystem: KarooSystemService, context: Context) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "forces"){
     private fun previewFlow(): Flow<RelativeGradeDataType.ResistanceForces> {
         return flow {
             while (true) {

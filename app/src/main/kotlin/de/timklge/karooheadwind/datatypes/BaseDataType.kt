@@ -45,7 +45,7 @@ abstract class BaseDataType(
     private val karooSystemService: KarooSystemService,
     private val applicationContext: Context,
     dataTypeId: String
-) : DataTypeImpl("karoo-headwind", dataTypeId) {
+) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, dataTypeId) {
     abstract fun getValue(data: WeatherData, userProfile: UserProfile, settings: HeadwindSettings): Double?
 
     open fun getFormatDataType(): String? = null

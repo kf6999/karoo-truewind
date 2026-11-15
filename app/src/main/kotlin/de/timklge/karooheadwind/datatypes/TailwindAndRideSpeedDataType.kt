@@ -88,7 +88,7 @@ fun interpolateWindColor(windSpeedInKmh: Double, night: Boolean, context: Contex
 class TailwindAndRideSpeedDataType(
     private val karooSystem: KarooSystemService,
     private val applicationContext: Context
-) : DataTypeImpl("karoo-headwind", "tailwind-and-ride-speed") {
+) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "tailwind-and-ride-speed") {
 
     companion object {
         const val AVERAGE_SPEED_THRESHOLD = (0.1 / 3.6)

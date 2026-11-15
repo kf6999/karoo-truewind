@@ -54,12 +54,12 @@
             android:exported="true"
             tools:ignore="ExportedService">
             <intent-filter>
-                <action android:name="de.timklge.karooheadwind.HEADWIND_SERVICE" />
+                <action android:name="io.github.kf6999.truewind.HEADWIND_SERVICE" />
             </intent-filter>
         </service>
 
         <meta-data
             android:name="io.hammerhead.karooext.MANIFEST_URL"
-            android:value="https://github.com/timklge/karoo-headwind/releases/latest/download/manifest.json" />
+            android:value="https://github.com/kf6999/karoo-truewind/releases/latest/download/manifest.json" />
     </application>
 </manifest>

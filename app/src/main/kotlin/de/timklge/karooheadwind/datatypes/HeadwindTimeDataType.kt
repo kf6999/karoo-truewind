@@ -1,5 +1,6 @@
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.KarooHeadwindExtension
 import android.content.Context
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
@@ -20,7 +21,7 @@ class HeadwindTimeDataType(
     private val karooSystemService: KarooSystemService,
     private val context: Context,
     private val windAggregator: WindAggregator
-) : DataTypeImpl("karoo-headwind", "headwindTime") {
+) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "headwindTime") {
 
     companion object {
         const val HEADWIND_THRESHOLD_MS = 1.0

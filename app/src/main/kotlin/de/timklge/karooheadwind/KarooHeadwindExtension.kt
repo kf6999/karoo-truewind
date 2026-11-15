@@ -79,9 +79,10 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
-class KarooHeadwindExtension : KarooExtension("karoo-headwind", BuildConfig.VERSION_NAME) {
+class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_NAME) {
     companion object {
-        const val TAG = "karoo-headwind"
+        const val EXTENSION_ID = "truewind"
+        const val TAG = "truewind"
     }
 
     private lateinit var karooSystem: KarooSystemService
@@ -311,10 +312,10 @@ class KarooHeadwindExtension : KarooExtension("karoo-headwind", BuildConfig.VERS
                 val update = Updater.checkForUpdate(this@KarooHeadwindExtension, karooSystem)
                 if (update != null) {
                     karooSystem.dispatch(SystemNotification(
-                        id = "karoo-headwind-update",
-                        message = "Headwind ${update.latestVersion} available",
-                        subText = "You are running version ${update.currentVersion}. Open Headwind for details.",
-                        header = "Headwind update",
+                        id = "truewind-update",
+                        message = "TrueWind ${update.latestVersion} available",
+                        subText = "You are running version ${update.currentVersion}. Open TrueWind for details.",
+                        header = "TrueWind update",
                         style = SystemNotification.Style.UPDATE,
                         action = "Open",
                         actionIntent = "de.timklge.karooheadwind.MainActivity",
