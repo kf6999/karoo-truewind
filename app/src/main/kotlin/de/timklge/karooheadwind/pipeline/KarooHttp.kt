@@ -69,7 +69,9 @@ class KarooHttpException(message: String) : Exception(message)
  * - Every request and its body size are counted in [Diagnostics].
  * - [allowGzip]: when false the `Accept-Encoding: gzip` header the core request builders add is
  *   removed (kill switch in case the Karoo path mangles binary bodies). Either way `decodeBody`
- *   handles plain and gzip bodies. Device check (2026-11-15, Karoo 3 over Wi-Fi): see
+ *   handles plain and gzip bodies. Device check (2026-11-15, Karoo 3 over Wi-Fi): gzip responses
+ *   arrive raw and intact (gzip magic, 3 of 3; none decoded by the transport); `decodeBody`
+ *   inflates them and the cycles parse, so the header stays on. Counters:
  *   [Diagnostics.httpGzipBodies] / [Diagnostics.httpGzipDecodedByTransport].
  */
 class KarooHttp(

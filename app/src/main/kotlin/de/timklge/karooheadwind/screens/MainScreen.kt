@@ -35,7 +35,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -156,10 +156,11 @@ fun MainScreen(close: () -> Unit) {
         ) {
 
             Column(modifier = Modifier.fillMaxWidth()) {
-                TabRow(selectedTabIndex = tabIndex) {
+                // Scrollable: five tabs do not fit the Karoo's 480 px width without wrapping.
+                ScrollableTabRow(selectedTabIndex = tabIndex, edgePadding = 0.dp) {
                     tabs.forEachIndexed { index, title ->
                         Tab(
-                            text = { Text(title) },
+                            text = { Text(title, maxLines = 1, softWrap = false) },
                             selected = tabIndex == index,
                             onClick = { tabIndex = index }
                         )
