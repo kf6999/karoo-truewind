@@ -19,7 +19,7 @@ package de.timklge.karooheadwind
 import android.content.Context
 import android.util.Log
 import de.timklge.karooheadwind.datatypes.GpsCoordinates
-import de.timklge.karooheadwind.util.signedAngleDifference
+import io.github.kf6999.truewind.core.wind.RelativeWind
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.DataType
 import io.hammerhead.karooext.models.StreamState
@@ -33,7 +33,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import java.time.Instant
 
 sealed class HeadingResponse {
     data object NoGps: HeadingResponse()
@@ -44,22 +43,12 @@ sealed class HeadingResponse {
 fun KarooSystemService.getRelativeHeadingFlow(context: Context): Flow<HeadingResponse> {
     val currentWeatherData = context.streamCurrentWeatherData(this)
 
-    var lastLogAt: Instant? = Instant.now()
-
     return getHeadingFlow(this, context)
         .combine(currentWeatherData) { bearing, data -> bearing to data }
         .map { (bearing, data) ->
             when {
                 bearing is HeadingResponse.Value && data != null -> {
-                    val windBearing = data.windDirection + 180
-                    val diff = signedAngleDifference(bearing.diff, windBearing)
-
-                    if (lastLogAt?.isBefore(Instant.now().minusSeconds(3)) == true) {
-                        Log.d(KarooHeadwindExtension.TAG, "Wind bearing: Heading $bearing vs wind $windBearing => $diff")
-                        lastLogAt = Instant.now()
-                    }
-
-                    HeadingResponse.Value(diff)
+                    HeadingResponse.Value(RelativeWind.relativeBearing(bearing.diff, data.windDirection))
                 }
                 bearing is HeadingResponse.NoGps -> HeadingResponse.NoGps
                 bearing is HeadingResponse.NoWeatherData || data == null -> HeadingResponse.NoWeatherData
@@ -100,9 +89,9 @@ fun<T> Flow<T>.dropNullsIfNullEncountered(): Flow<T?> = flow {
     }
 }
 
-suspend fun KarooSystemService.updateLastKnownGps(context: Context) {
+suspend fun updateLastKnownGps(context: Context, gpsCoordinates: Flow<GpsCoordinates?>) {
     while (true) {
-        getGpsCoordinateFlow(context)
+        gpsCoordinates
             .filterNotNull()
             .throttle(60 * 1_000) // Only update last known gps position once every minute
             .collect { gps ->
@@ -112,18 +101,27 @@ suspend fun KarooSystemService.updateLastKnownGps(context: Context) {
     }
 }
 
-fun KarooSystemService.getGpsCoordinateFlow(context: Context): Flow<GpsCoordinates?> {
-    /* return flow {
-        // emit(GpsCoordinates(52.5164069,13.3784))
-        emit(GpsCoordinates(32.46,-111.524))
-        awaitCancellation()
-    } */
+fun KarooSystemService.getGpsCoordinateFlow(context: Context): Flow<GpsCoordinates?> =
+    gpsCoordinateFlow(
+        lastKnownPosition = { context.getLastKnownPosition() },
+        locationStream = streamDataFlow(DataType.Type.LOCATION),
+        settings = context.streamSettings(this),
+    )
 
+/**
+ * Rider position, rounded to the configured privacy grid: the last known position (or the first
+ * LOCATION fix) followed by every usable LOCATION fix. Once a position was seen, nulls are dropped.
+ */
+fun gpsCoordinateFlow(
+    lastKnownPosition: suspend () -> GpsCoordinates?,
+    locationStream: Flow<StreamState>,
+    settings: Flow<HeadwindSettings>,
+): Flow<GpsCoordinates?> {
     val initialFlow = flow {
-        val lastKnownPosition = context.getLastKnownPosition()
+        val lastKnownPosition = lastKnownPosition()
 
         if (lastKnownPosition == null) {
-            val initialState = streamDataFlow(DataType.Type.LOCATION).firstOrNull()?.let { it as? StreamState.Streaming }
+            val initialState = locationStream.firstOrNull()?.let { it as? StreamState.Streaming }
 
             initialState?.dataPoint?.let { dataPoint ->
                 val lat = dataPoint.values[DataType.Field.LOC_LATITUDE]
@@ -148,18 +146,19 @@ fun KarooSystemService.getGpsCoordinateFlow(context: Context): Flow<GpsCoordinat
         } else {
             emit(lastKnownPosition)
 
-            Log.i(KarooHeadwindExtension.TAG, "Using last known position: $lastKnownPosition")
+            if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Using last known position: $lastKnownPosition")
         }
     }
 
-    val gpsFlow = streamDataFlow(DataType.Type.LOCATION).mapNotNull { it as? StreamState.Streaming }
+    val gpsFlow = locationStream.mapNotNull { it as? StreamState.Streaming }
         .mapNotNull { dataPoint ->
             val lat = dataPoint.dataPoint.values[DataType.Field.LOC_LATITUDE]
             val lng = dataPoint.dataPoint.values[DataType.Field.LOC_LONGITUDE]
             val orientation = dataPoint.dataPoint.values[DataType.Field.LOC_BEARING]
             val accuracy = dataPoint.dataPoint.values[DataType.Field.LOC_ACCURACY]
 
-            Log.i(KarooHeadwindExtension.TAG, "Received GPS update: lat=$lat, lng=$lng, accuracy=$accuracy, orientation=$orientation")
+            // Per-fix logging only in debug builds (SPEC 3, rule 6)
+            if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Received GPS update: lat=$lat, lng=$lng, accuracy=$accuracy, orientation=$orientation")
 
             if (lat != null && lng != null && accuracy != null && accuracy < 500) {
                 GpsCoordinates(lat, lng, orientation)
@@ -171,7 +170,7 @@ fun KarooSystemService.getGpsCoordinateFlow(context: Context): Flow<GpsCoordinat
     val concatenatedFlow = concatenate(initialFlow, gpsFlow)
 
     return concatenatedFlow
-        .combine(context.streamSettings(this)) { gps, settings -> gps to settings }
+        .combine(settings) { gps, settings -> gps to settings }
         .map { (gps, settings) ->
             gps?.round(settings.roundLocationTo.km.toDouble())
         }

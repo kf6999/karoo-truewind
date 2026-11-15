@@ -19,14 +19,12 @@ package de.timklge.karooheadwind.datatypes
 import android.content.Context
 import android.util.Log
 import androidx.glance.appwidget.ExperimentalGlanceRemoteViewsApi
+import de.timklge.karooheadwind.BuildConfig
 import de.timklge.karooheadwind.HeadwindSettings
 import de.timklge.karooheadwind.KarooHeadwindExtension
-import de.timklge.karooheadwind.streamCurrentWeatherData
-import de.timklge.karooheadwind.streamSettings
-import de.timklge.karooheadwind.streamUserProfile
+import de.timklge.karooheadwind.pipeline.WindRepository
 import de.timklge.karooheadwind.throttle
 import de.timklge.karooheadwind.weatherprovider.WeatherData
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.Emitter
 import io.hammerhead.karooext.internal.ViewEmitter
@@ -41,48 +39,61 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
+/**
+ * Numeric weather field. Maps the shared [WindRepository] state (TrueWind WP1: no per-field GPS,
+ * settings or DataStore chain) and emits only when the value changes.
+ */
 abstract class BaseDataType(
-    private val karooSystemService: KarooSystemService,
-    private val applicationContext: Context,
+    private val windRepository: WindRepository,
     dataTypeId: String
 ) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, dataTypeId) {
     abstract fun getValue(data: WeatherData, userProfile: UserProfile, settings: HeadwindSettings): Double?
 
     open fun getFormatDataType(): String? = null
 
+    /** The value this field streams for the given inputs; null means "not available". */
+    fun computeValue(data: WeatherData?, userProfile: UserProfile, settings: HeadwindSettings): Double? =
+        data?.let { getValue(it, userProfile, settings) }
+
     override fun startStream(emitter: Emitter<StreamState>) {
-        Log.d(KarooHeadwindExtension.TAG, "start $dataTypeId stream")
+        if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "start $dataTypeId stream")
         val job = CoroutineScope(Dispatchers.IO).launch {
             data class StreamData(val weatherData: WeatherData?, val userProfile: UserProfile, val settings: HeadwindSettings)
 
-            val currentWeatherData = combine(applicationContext.streamCurrentWeatherData(karooSystemService), karooSystemService.streamUserProfile(), applicationContext.streamSettings(karooSystemService)) { weatherData, userProfile, settings ->
+            val currentWeatherData = combine(windRepository.currentWeather, windRepository.sensorHub.userProfile, windRepository.settings) { weatherData, userProfile, settings ->
                 StreamData(weatherData, userProfile, settings)
             }
 
-            val refreshRate = karooSystemService.getRefreshRateInMilliseconds(applicationContext)
+            val refreshRate = windRepository.refreshRateMs()
+            var lastEmitted: StreamState? = null
 
             currentWeatherData
                 .throttle(refreshRate)
                 .collect { (data, userProfile, settings) ->
-                    val value = data?.let { getValue(it, userProfile, settings) }
-                    Log.d(KarooHeadwindExtension.TAG, "$dataTypeId: $value")
+                    val value = computeValue(data, userProfile, settings)
 
-                    if (value != null) {
-                        emitter.onNext(StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to value))))
+                    val state = if (value != null) {
+                        StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to value)))
                     } else {
-                        emitter.onNext(StreamState.NotAvailable)
+                        StreamState.NotAvailable
+                    }
+
+                    // Emit on change only (SPEC section 3, rule 4)
+                    if (state != lastEmitted) {
+                        lastEmitted = state
+                        emitter.onNext(state)
                     }
             }
         }
         emitter.setCancellable {
-            Log.d(KarooHeadwindExtension.TAG, "stop $dataTypeId stream")
+            if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "stop $dataTypeId stream")
             job.cancel()
         }
     }
 
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
-        Log.d(KarooHeadwindExtension.TAG, "Starting $dataTypeId view with $emitter")
+        if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Starting $dataTypeId view with $emitter")
 
         if (getFormatDataType() != null){
             emitter.onNext(UpdateGraphicConfig(formatDataTypeId = getFormatDataType()))

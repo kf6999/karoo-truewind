@@ -21,10 +21,8 @@ import de.timklge.karooheadwind.HeadingResponse
 import de.timklge.karooheadwind.datatypes.WindAggregator
 import de.timklge.karooheadwind.datatypes.WindCategoryStats
 import de.timklge.karooheadwind.datatypes.WindSessionStats
-import de.timklge.karooheadwind.getRelativeHeadingFlow
-import de.timklge.karooheadwind.streamCurrentWeatherData
+import de.timklge.karooheadwind.pipeline.WindRepository
 import de.timklge.karooheadwind.throttle
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.internal.Emitter
 import io.hammerhead.karooext.models.DeveloperField
 import io.hammerhead.karooext.models.FieldValue
@@ -37,12 +35,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.math.cos
 
 class HeadwindFitFileWriter(
-    private val karooSystem: KarooSystemService,
-    private val context: Context,
+    private val windRepository: WindRepository,
     private val windAggregator: WindAggregator,
 ) {
     companion object {
@@ -133,10 +131,7 @@ class HeadwindFitFileWriter(
     fun start(emitter: Emitter<FitEffect>): Job {
         return CoroutineScope(Dispatchers.IO).launch {
             launch {
-                combine(
-                    karooSystem.getRelativeHeadingFlow(context),
-                    context.streamCurrentWeatherData(karooSystem),
-                ) { heading, weather ->
+                windRepository.relativeHeadingAndWeather.map { (heading, weather) ->
                     buildRecordValues(
                         relativeAngle = (heading as? HeadingResponse.Value)?.diff,
                         windSpeed = weather?.windSpeed,

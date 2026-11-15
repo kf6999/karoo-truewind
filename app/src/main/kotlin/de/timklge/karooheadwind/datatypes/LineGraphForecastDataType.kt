@@ -16,6 +16,8 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.BuildConfig
+import de.timklge.karooheadwind.pipeline.WindRepository
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.unit.DpSize
@@ -34,22 +36,14 @@ import de.timklge.karooheadwind.R
 import de.timklge.karooheadwind.UpcomingRoute
 import de.timklge.karooheadwind.WeatherDataProvider
 import de.timklge.karooheadwind.WindUnit
-import de.timklge.karooheadwind.getHeadingFlow
 import de.timklge.karooheadwind.screens.LineGraphBuilder
 import de.timklge.karooheadwind.screens.isNightMode
-import de.timklge.karooheadwind.streamCurrentForecastWeatherData
-import de.timklge.karooheadwind.streamDatatypeIsVisible
-import de.timklge.karooheadwind.streamSettings
-import de.timklge.karooheadwind.streamUpcomingRoute
-import de.timklge.karooheadwind.streamUserProfile
-import de.timklge.karooheadwind.streamWidgetSettings
 import de.timklge.karooheadwind.throttle
 import de.timklge.karooheadwind.util.getTimeFormatter
 import de.timklge.karooheadwind.weatherprovider.WeatherData
 import de.timklge.karooheadwind.weatherprovider.WeatherDataForLocation
 import de.timklge.karooheadwind.weatherprovider.WeatherDataResponse
 import de.timklge.karooheadwind.weatherprovider.WeatherInterpretation
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.ViewEmitter
 import io.hammerhead.karooext.models.ShowCustomStreamState
@@ -74,7 +68,7 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 
-abstract class LineGraphForecastDataType(private val karooSystem: KarooSystemService, typeId: String) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, typeId) {
+abstract class LineGraphForecastDataType(private val windRepository: WindRepository, typeId: String) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, typeId) {
     sealed class LineGraphForecastData {
         data class LineData(val data: Set<LineGraphBuilder.Line>) : LineGraphForecastData()
         data class Error(val message: String) : LineGraphForecastData()
@@ -184,13 +178,13 @@ abstract class LineGraphForecastDataType(private val karooSystem: KarooSystemSer
 
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
-        Log.d(KarooHeadwindExtension.TAG, "Starting weather forecast view with $emitter")
+        if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Starting weather forecast view with $emitter")
         val configJob = CoroutineScope(Dispatchers.IO).launch {
             emitter.onNext(UpdateGraphicConfig(showHeader = false))
             awaitCancellation()
         }
 
-        val settingsAndProfileStream = context.streamSettings(karooSystem).combine(karooSystem.streamUserProfile()) { settings, userProfile ->
+        val settingsAndProfileStream = windRepository.settings.combine(windRepository.sensorHub.userProfile) { settings, userProfile ->
             SettingsAndProfile(settings = settings, isImperial = userProfile.preferredUnit.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL,
                 isImperialTemperature = userProfile.preferredUnit.temperature == UserProfile.PreferredUnit.UnitType.IMPERIAL)
         }
@@ -199,11 +193,11 @@ abstract class LineGraphForecastDataType(private val karooSystem: KarooSystemSer
             previewFlow(settingsAndProfileStream)
         } else {
             combine(
-                context.streamCurrentForecastWeatherData(),
+                windRepository.forecastResponse,
                 settingsAndProfileStream,
-                context.streamWidgetSettings(),
-                karooSystem.getHeadingFlow(karooSystem, context).throttle(3 * 60_000L),
-                karooSystem.streamUpcomingRoute().distinctUntilChanged { old, new ->
+                windRepository.widgetSettings,
+                windRepository.heading.throttle(3 * 60_000L),
+                windRepository.sensorHub.upcomingRoute.distinctUntilChanged { old, new ->
                     val oldDistance = old?.distanceAlongRoute
                     val newDistance = new?.distanceAlongRoute
 
@@ -212,7 +206,7 @@ abstract class LineGraphForecastDataType(private val karooSystem: KarooSystemSer
 
                     abs(oldDistance - newDistance) < 1_000
                 },
-                karooSystem.streamDatatypeIsVisible(dataTypeId)
+                windRepository.sensorHub.isVisible(dataTypeId)
             ) { data ->
                 val weatherData = data[0] as WeatherDataResponse?
                 val settings = data[1] as SettingsAndProfile
@@ -236,7 +230,7 @@ abstract class LineGraphForecastDataType(private val karooSystem: KarooSystemSer
             emitter.onNext(ShowCustomStreamState("", null))
 
             dataFlow.filter { it.isVisible }.collect { (allData, settingsAndProfile, _, headingResponse, upcomingRoute) ->
-                Log.d(KarooHeadwindExtension.TAG, "Updating weather forecast view")
+                if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Updating weather forecast view")
 
                 if (allData?.data.isNullOrEmpty() || headingResponse is HeadingResponse.NoGps || headingResponse is HeadingResponse.NoWeatherData){
                     emitter.updateView(
@@ -341,7 +335,7 @@ abstract class LineGraphForecastDataType(private val karooSystem: KarooSystemSer
             }
         }
         emitter.setCancellable {
-            Log.d(
+            if (BuildConfig.DEBUG) Log.d(
                 KarooHeadwindExtension.TAG,
                 "Stopping headwind weather forecast view with $emitter"
             )

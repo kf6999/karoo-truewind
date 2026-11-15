@@ -16,6 +16,7 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.BuildConfig
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.graphics.Color
@@ -55,7 +56,7 @@ suspend fun getErrorWidget(glance: GlanceRemoteViews, context: Context, settings
                 "Weather data download failed"
             }
 
-            Log.d(KarooHeadwindExtension.TAG, "Error widget: $errorMessage")
+            if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Error widget: $errorMessage")
 
             Text(text = errorMessage,
                 style = TextStyle(
@@ -84,7 +85,7 @@ suspend fun getErrorWidget(glance: GlanceRemoteViews, context: Context, errorCod
                 }
             }
 
-            Log.d(KarooHeadwindExtension.TAG, "Error widget: $errorMessage")
+            if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Error widget: $errorMessage")
 
             Text(text = errorMessage,
                 style = TextStyle(

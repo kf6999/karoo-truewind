@@ -16,6 +16,7 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.pipeline.WindRepository
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.graphics.Color
@@ -31,8 +32,7 @@ import de.timklge.karooheadwind.lerpWeather
 import de.timklge.karooheadwind.screens.LineGraphBuilder
 import de.timklge.karooheadwind.screens.isNightMode
 import de.timklge.karooheadwind.util.msInWindUnit
-import de.timklge.karooheadwind.util.signedAngleDifference
-import io.hammerhead.karooext.KarooSystemService
+import io.github.kf6999.truewind.core.math.signedAngleDifference
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.floor
@@ -52,7 +52,7 @@ fun interpolateWindLineColor(windSpeedInKmh: Double, night: Boolean, context: Co
     }
 }
 
-class HeadwindForecastDataType(karooSystem: KarooSystemService) : LineGraphForecastDataType(karooSystem, "headwindForecast") {
+class HeadwindForecastDataType(windRepository: WindRepository) : LineGraphForecastDataType(windRepository, "headwindForecast") {
     override fun getLineData(
         lineData: List<LineData>,
         isImperial: Boolean,

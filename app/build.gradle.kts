@@ -59,6 +59,10 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+    testOptions {
+        // android.util.Log and friends are no-ops in JVM unit tests (pipeline tests run real flow code)
+        unitTests.isReturnDefaultValues = true
+    }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -109,6 +113,7 @@ tasks.withType<ProcessApplicationManifest>().configureEach {
 }
 
 dependencies {
+    implementation(project(":core"))
     implementation(libs.mapbox.sdk.turf)
     implementation(libs.hammerhead.karoo.ext)
     implementation(libs.androidx.core.ktx)
@@ -122,4 +127,5 @@ dependencies {
     implementation(libs.androidx.glance.preview)
     testImplementation(kotlin("test"))
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

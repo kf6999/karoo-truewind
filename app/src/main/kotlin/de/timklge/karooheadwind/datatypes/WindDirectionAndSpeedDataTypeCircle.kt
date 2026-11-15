@@ -16,6 +16,8 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.BuildConfig
+import de.timklge.karooheadwind.pipeline.WindRepository
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.util.Log
@@ -26,14 +28,8 @@ import de.timklge.karooheadwind.HeadingResponse
 import de.timklge.karooheadwind.HeadwindSettings
 import de.timklge.karooheadwind.KarooHeadwindExtension
 import de.timklge.karooheadwind.datatypes.WindDirectionAndSpeedDataType.StreamData
-import de.timklge.karooheadwind.getRelativeHeadingFlow
-import de.timklge.karooheadwind.streamCurrentWeatherData
-import de.timklge.karooheadwind.streamDatatypeIsVisible
-import de.timklge.karooheadwind.streamSettings
-import de.timklge.karooheadwind.streamUserProfile
 import de.timklge.karooheadwind.throttle
 import de.timklge.karooheadwind.util.msInWindUnit
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.ViewEmitter
 import io.hammerhead.karooext.models.UpdateGraphicConfig
@@ -53,7 +49,7 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalGlanceRemoteViewsApi::class)
 class WindDirectionAndSpeedDataTypeCircle(
-    private val karooSystem: KarooSystemService,
+    private val windRepository: WindRepository,
     private val applicationContext: Context
 ) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "windDirectionAndSpeedCircle") {
     private val glance = GlanceRemoteViews()
@@ -78,7 +74,7 @@ class WindDirectionAndSpeedDataTypeCircle(
     }
 
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
-        Log.d(KarooHeadwindExtension.TAG, "Starting headwind direction view with $emitter")
+        if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Starting headwind direction view with $emitter")
 
         val baseBitmap = BitmapFactory.decodeResource(
             context.resources,
@@ -91,13 +87,13 @@ class WindDirectionAndSpeedDataTypeCircle(
         }
 
         val flow = if (config.preview) {
-            previewFlow(karooSystem.streamUserProfile())
+            previewFlow(windRepository.sensorHub.userProfile)
         } else {
-            combine(karooSystem.getRelativeHeadingFlow(context),
-                context.streamCurrentWeatherData(karooSystem),
-                context.streamSettings(karooSystem),
-                karooSystem.streamUserProfile(),
-                karooSystem.streamDatatypeIsVisible(dataTypeId)
+            combine(windRepository.relativeHeading,
+                windRepository.currentWeather,
+                windRepository.settings,
+                windRepository.sensorHub.userProfile,
+                windRepository.sensorHub.isVisible(dataTypeId)
             ) { headingResponse, weatherData, settings, userProfile, isVisible ->
                 val isImperial = userProfile.preferredUnit.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL
                 val absoluteWindDirection = weatherData?.windDirection
@@ -109,10 +105,10 @@ class WindDirectionAndSpeedDataTypeCircle(
         }
 
         val viewJob = CoroutineScope(Dispatchers.IO).launch {
-            val refreshRate = karooSystem.getRefreshRateInMilliseconds(context)
+            val refreshRate = windRepository.refreshRateMs()
 
             flow.filter { it.isVisible }.throttle(refreshRate).collect { streamData ->
-                Log.d(KarooHeadwindExtension.TAG, "Updating headwind direction view")
+                if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Updating headwind direction view")
 
                 val value = (streamData.headingResponse as? HeadingResponse.Value)?.diff
                 if (value == null || streamData.absoluteWindDirection == null || streamData.windSpeed == null){
@@ -145,7 +141,7 @@ class WindDirectionAndSpeedDataTypeCircle(
             }
         }
         emitter.setCancellable {
-            Log.d(KarooHeadwindExtension.TAG, "Stopping headwind view with $emitter")
+            if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Stopping headwind view with $emitter")
             configJob.cancel()
             viewJob.cancel()
         }

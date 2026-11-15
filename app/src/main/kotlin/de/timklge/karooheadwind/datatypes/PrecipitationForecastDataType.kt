@@ -16,13 +16,13 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.pipeline.WindRepository
 import android.content.Context
 import de.timklge.karooheadwind.UpcomingRoute
 import de.timklge.karooheadwind.WindUnit
 import de.timklge.karooheadwind.screens.LineGraphBuilder
-import io.hammerhead.karooext.KarooSystemService
 
-class PrecipitationForecastDataType(karooSystem: KarooSystemService) : LineGraphForecastDataType(karooSystem, "precipitationForecast") {
+class PrecipitationForecastDataType(windRepository: WindRepository) : LineGraphForecastDataType(windRepository, "precipitationForecast") {
     override fun getLineData(
         lineData: List<LineData>,
         isImperial: Boolean,

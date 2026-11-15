@@ -49,12 +49,16 @@ import de.timklge.karooheadwind.datatypes.WindForecastDataType
 import de.timklge.karooheadwind.datatypes.WindGustsDataType
 import de.timklge.karooheadwind.datatypes.WindSpeedDataType
 import de.timklge.karooheadwind.fit.HeadwindFitFileWriter
+import de.timklge.karooheadwind.pipeline.KarooSystemStreamSource
+import de.timklge.karooheadwind.pipeline.SensorHub
+import de.timklge.karooheadwind.pipeline.WindRepository
 import de.timklge.karooheadwind.util.Updater
 import de.timklge.karooheadwind.weatherprovider.WeatherProviderFactory
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.KarooExtension
 import io.hammerhead.karooext.internal.Emitter
 import io.hammerhead.karooext.models.FitEffect
+import io.hammerhead.karooext.models.HardwareType
 import io.hammerhead.karooext.models.SystemNotification
 import io.hammerhead.karooext.models.UserProfile
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +66,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -87,6 +93,9 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
 
     private lateinit var karooSystem: KarooSystemService
     private lateinit var windAggregator: WindAggregator
+    private lateinit var sensorHub: SensorHub
+    private lateinit var windRepository: WindRepository
+    private var pipelineScope: CoroutineScope? = null
 
     private var updateLastKnownGpsJob: Job? = null
     private var serviceJob: Job? = null
@@ -95,33 +104,33 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
 
     override val types by lazy {
         listOf(
-            HeadwindDirectionDataType(karooSystem, applicationContext),
-            TailwindAndRideSpeedDataType(karooSystem, applicationContext),
-            WindDirectionAndSpeedDataTypeCircle(karooSystem, applicationContext),
-            WeatherForecastDataType(karooSystem),
-            HeadwindSpeedDataType(karooSystem, applicationContext),
-            HeadwindTimeDataType(karooSystem, applicationContext, windAggregator),
-            HeadwindTimeDistributionDataType(karooSystem, applicationContext, windAggregator),
-            RelativeHumidityDataType(karooSystem, applicationContext),
-            CloudCoverDataType(karooSystem, applicationContext),
-            WindGustsDataType(karooSystem, applicationContext),
-            WindSpeedDataType(karooSystem, applicationContext),
-            WindDirectionDataType(karooSystem, applicationContext),
-            WindDirectionAndSpeedDataType(karooSystem, applicationContext),
-            PrecipitationDataType(karooSystem, applicationContext),
-            SurfacePressureDataType(karooSystem, applicationContext),
-            SealevelPressureDataType(karooSystem, applicationContext),
-            TemperatureForecastDataType(karooSystem),
-            PrecipitationForecastDataType(karooSystem),
-            WindForecastDataType(karooSystem),
-            HeadwindForecastDataType(karooSystem),
-            WindDirectionAndSpeedDataType(karooSystem, applicationContext),
-            RelativeGradeDataType(karooSystem, applicationContext),
-            RelativeElevationGainDataType(karooSystem, applicationContext),
-            TemperatureDataType(karooSystem, applicationContext),
-            UviDataType(karooSystem, applicationContext),
-            ResistanceForcesDataType(karooSystem, applicationContext),
-            CompassDataType(karooSystem, applicationContext)
+            HeadwindDirectionDataType(windRepository, applicationContext),
+            TailwindAndRideSpeedDataType(windRepository, applicationContext),
+            WindDirectionAndSpeedDataTypeCircle(windRepository, applicationContext),
+            WeatherForecastDataType(windRepository),
+            HeadwindSpeedDataType(windRepository),
+            HeadwindTimeDataType(windRepository, windAggregator),
+            HeadwindTimeDistributionDataType(windRepository, windAggregator),
+            RelativeHumidityDataType(windRepository),
+            CloudCoverDataType(windRepository),
+            WindGustsDataType(windRepository),
+            WindSpeedDataType(windRepository),
+            WindDirectionDataType(windRepository),
+            WindDirectionAndSpeedDataType(windRepository, applicationContext),
+            PrecipitationDataType(windRepository),
+            SurfacePressureDataType(windRepository),
+            SealevelPressureDataType(windRepository),
+            TemperatureForecastDataType(windRepository),
+            PrecipitationForecastDataType(windRepository),
+            WindForecastDataType(windRepository),
+            HeadwindForecastDataType(windRepository),
+            WindDirectionAndSpeedDataType(windRepository, applicationContext),
+            RelativeGradeDataType(windRepository),
+            RelativeElevationGainDataType(windRepository),
+            TemperatureDataType(windRepository),
+            UviDataType(windRepository),
+            ResistanceForcesDataType(windRepository),
+            CompassDataType(windRepository, applicationContext)
         )
     }
 
@@ -132,13 +141,25 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
         karooSystem = KarooSystemService(applicationContext)
         ServiceStatusSingleton.getInstance().setServiceStatus(true)
 
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        pipelineScope = scope
+        sensorHub = SensorHub(KarooSystemStreamSource(karooSystem), scope)
+        windRepository = WindRepository(
+            scope = scope,
+            sensorHub = sensorHub,
+            settingsSource = streamSettings(karooSystem),
+            widgetSettingsSource = streamWidgetSettings(),
+            forecastRecordSource = streamForecastRecord(),
+            lastKnownPosition = { getLastKnownPosition() },
+            isK2 = { karooSystem.hardwareType == HardwareType.K2 },
+        )
 
         updateLastKnownGpsJob = CoroutineScope(Dispatchers.IO).launch {
-            karooSystem.updateLastKnownGps(this@KarooHeadwindExtension)
+            updateLastKnownGps(this@KarooHeadwindExtension, windRepository.location)
         }
 
-        windAggregator = WindAggregator(this)
-        windAggregationJob = windAggregator.start(karooSystem)
+        windAggregator = WindAggregator()
+        windAggregationJob = windAggregator.start(windRepository)
 
         serviceJob = CoroutineScope(Dispatchers.IO).launch {
             karooSystem.connect { connected ->
@@ -148,8 +169,7 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
                 }
             }
 
-            val gpsFlow = karooSystem
-                .getGpsCoordinateFlow(this@KarooHeadwindExtension)
+            val gpsFlow = windRepository.location
                 .distinctUntilChanged { old, new ->
                     if (old != null && new != null) {
                         old.distanceTo(new).absoluteValue < 0.001
@@ -161,12 +181,12 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
 
             var requestedGpsCoordinates: List<GpsCoordinates> = emptyList()
 
-            val settingsStream = streamSettings(karooSystem).filter { it.welcomeDialogAccepted }
+            val settingsStream = windRepository.settings.filter { it.welcomeDialogAccepted }
 
             data class StreamData(val settings: HeadwindSettings, val gps: GpsCoordinates?, val profile: UserProfile?, val upcomingRoute: UpcomingRoute?)
             data class StreamDataIdentity(val settings: HeadwindSettings, val gpsLat: Double?, val gpsLon: Double?, val profile: UserProfile?, val routePolyline: LineString?)
 
-            combine(settingsStream, gpsFlow, karooSystem.streamUserProfile(), karooSystem.streamUpcomingRoute()) { settings, gps, profile, upcomingRoute ->
+            combine(settingsStream, gpsFlow, sensorHub.userProfile, sensorHub.upcomingRoute) { settings, gps, profile, upcomingRoute ->
                 StreamData(settings, gps, profile, upcomingRoute)
             }
             .distinctUntilChangedBy { StreamDataIdentity(it.settings, it.gps?.lat, it.gps?.lon, it.profile, it.upcomingRoute?.routePolyline) }
@@ -177,7 +197,7 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
                 }
             }
             .map { (settings: HeadwindSettings, gps, profile, upcomingRoute) ->
-                Log.d(TAG, "Acquired updated gps coordinates: $gps")
+                if (BuildConfig.DEBUG) Log.d(TAG, "Acquired updated gps coordinates: $gps")
 
                 val lastKnownStats = try {
                     streamStats().first()
@@ -192,7 +212,7 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
 
                 if (upcomingRoute != null){
                     val positionOnRoute = upcomingRoute.distanceAlongRoute
-                    Log.i(TAG, "Position on route: ${positionOnRoute}m")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Position on route: ${positionOnRoute}m")
                     val distancePerHour = settings.getForecastMetersPerHour(profile?.preferredUnit?.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL).toDouble()
                     val msSinceFullHour = let {
                         val now = LocalDateTime.now()
@@ -203,7 +223,7 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
                     val msToNextFullHour = (1_000 * 60 * 60) - msSinceFullHour
                     val calculatedDistanceToNextFullHour = ((msToNextFullHour / (1_000.0 * 60 * 60)) * distancePerHour).coerceIn(0.0, distancePerHour)
 
-                    Log.d(TAG, "Minutes to next full hour: ${msToNextFullHour / 1000 / 60}, Distance to next full hour: ${(calculatedDistanceToNextFullHour / 1000).roundToInt()}km")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Minutes to next full hour: ${msToNextFullHour / 1000 / 60}, Distance to next full hour: ${(calculatedDistanceToNextFullHour / 1000).roundToInt()}km")
 
                     requestedGpsCoordinates = buildList {
                         add(GpsCoordinates(gps.lat, gps.lon, gps.bearing, distanceAlongRoute = positionOnRoute))
@@ -280,7 +300,7 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
                 delay(2.minutes); true
             }.collect { response ->
                 try {
-                    Log.d(TAG, "Got updated weather info: $response")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Got updated weather info: $response")
 
                     saveWidgetSettings(applicationContext, HeadwindWidgetSettings(currentForecastHourOffset = 0))
                 } catch(e: Exception){
@@ -291,7 +311,7 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
     }
 
     override fun startFit(emitter: Emitter<FitEffect>) {
-        val fitWriteJob = HeadwindFitFileWriter(karooSystem, applicationContext, windAggregator).start(emitter)
+        val fitWriteJob = HeadwindFitFileWriter(windRepository, windAggregator).start(emitter)
 
         emitter.setCancellable {
             fitWriteJob.cancel()
@@ -303,7 +323,7 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
 
         updateCheckJob = CoroutineScope(Dispatchers.IO).launch {
             try {
-                val settings = streamSettings(karooSystem).first()
+                val settings = windRepository.settings.first()
                 if (!settings.enableUpdateNotifications) {
                     Log.d(TAG, "Update notifications disabled, skipping update check")
                     return@launch
@@ -336,6 +356,12 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
 
         updateLastKnownGpsJob?.cancel()
         updateLastKnownGpsJob = null
+
+        windAggregationJob?.cancel()
+        windAggregationJob = null
+
+        pipelineScope?.cancel()
+        pipelineScope = null
 
         karooSystem.disconnect()
         super.onDestroy()

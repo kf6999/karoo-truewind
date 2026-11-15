@@ -16,6 +16,8 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.BuildConfig
+import de.timklge.karooheadwind.pipeline.WindRepository
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.unit.DpSize
@@ -29,13 +31,8 @@ import androidx.glance.layout.fillMaxSize
 import de.timklge.karooheadwind.HeadingResponse
 import de.timklge.karooheadwind.KarooHeadwindExtension
 import de.timklge.karooheadwind.datatypes.RelativeGradeDataType.Companion.DEFAULT_BIKE_WEIGHT
-import de.timklge.karooheadwind.getRelativeHeadingFlow
 import de.timklge.karooheadwind.screens.BarChartBuilder
-import de.timklge.karooheadwind.streamCurrentWeatherData
-import de.timklge.karooheadwind.streamDataFlow
-import de.timklge.karooheadwind.streamUserProfile
 import de.timklge.karooheadwind.throttle
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.ViewEmitter
 import io.hammerhead.karooext.models.DataType
@@ -56,7 +53,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-class ResistanceForcesDataType(val karooSystem: KarooSystemService, context: Context) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "forces"){
+class ResistanceForcesDataType(private val windRepository: WindRepository) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "forces"){
     private fun previewFlow(): Flow<RelativeGradeDataType.ResistanceForces> {
         return flow {
             while (true) {
@@ -85,10 +82,10 @@ class ResistanceForcesDataType(val karooSystem: KarooSystemService, context: Con
             val flow = if (config.preview) {
                 previewFlow()
             } else {
-                val relativeWindDirectionFlow = karooSystem.getRelativeHeadingFlow(context).filterIsInstance<HeadingResponse.Value>().map { it.diff + 180 }
-                val speedFlow = karooSystem.streamDataFlow(DataType.Type.SMOOTHED_3S_AVERAGE_SPEED).filterIsInstance<StreamState.Streaming>().map { it.dataPoint.singleValue ?: 0.0 }
-                val actualGradeFlow = karooSystem.streamDataFlow(DataType.Type.ELEVATION_GRADE).filterIsInstance<StreamState.Streaming>().map { it.dataPoint.singleValue }.filterNotNull().map { it / 100.0 } // Convert to decimal grade
-                val totalMassFlow = karooSystem.streamUserProfile().map {
+                val relativeWindDirectionFlow = windRepository.relativeHeading.filterIsInstance<HeadingResponse.Value>().map { it.diff + 180 }
+                val speedFlow = windRepository.sensorHub.stream(DataType.Type.SMOOTHED_3S_AVERAGE_SPEED).filterIsInstance<StreamState.Streaming>().map { it.dataPoint.singleValue ?: 0.0 }
+                val actualGradeFlow = windRepository.sensorHub.stream(DataType.Type.ELEVATION_GRADE).filterIsInstance<StreamState.Streaming>().map { it.dataPoint.singleValue }.filterNotNull().map { it / 100.0 } // Convert to decimal grade
+                val totalMassFlow = windRepository.sensorHub.userProfile.map {
                     if (it.weight in 30.0f..300.0f){
                         it.weight
                     } else {
@@ -97,9 +94,9 @@ class ResistanceForcesDataType(val karooSystem: KarooSystemService, context: Con
                     } + DEFAULT_BIKE_WEIGHT
                 }
 
-                val refreshRate = karooSystem.getRefreshRateInMilliseconds(context)
+                val refreshRate = windRepository.refreshRateMs()
 
-                val windSpeedFlow = context.streamCurrentWeatherData(karooSystem).filterNotNull().map { weatherData ->
+                val windSpeedFlow = windRepository.currentWeather.filterNotNull().map { weatherData ->
                     weatherData.windSpeed
                 }
 
@@ -122,13 +119,13 @@ class ResistanceForcesDataType(val karooSystem: KarooSystemService, context: Con
                         totalMass = totalMass
                     )
 
-                    Log.d(KarooHeadwindExtension.TAG, "Resistance Forces: $resistanceForces")
+                    if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Resistance Forces: $resistanceForces")
 
                     resistanceForces
                 }
             }
 
-            val refreshRate = karooSystem.getRefreshRateInMilliseconds(context)
+            val refreshRate = windRepository.refreshRateMs()
 
             flow.throttle(refreshRate).collect { resistanceForces ->
                 if (resistanceForces != null) {

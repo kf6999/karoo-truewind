@@ -16,20 +16,20 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.pipeline.WindRepository
 import android.content.Context
 import android.graphics.Color
 import de.timklge.karooheadwind.UpcomingRoute
 import de.timklge.karooheadwind.WindUnit
 import de.timklge.karooheadwind.screens.LineGraphBuilder
 import de.timklge.karooheadwind.util.msInWindUnit
-import io.hammerhead.karooext.KarooSystemService
 
 fun remap(value: Float, fromLow: Float, fromHigh: Float, toLow: Float, toHigh: Float): Float {
     if (fromHigh == fromLow) return toLow
     return toLow + (value - fromLow) / (fromHigh - fromLow) * (toHigh - toLow)
 }
 
-class WindForecastDataType(karooSystem: KarooSystemService) : LineGraphForecastDataType(karooSystem, "windForecast") {
+class WindForecastDataType(windRepository: WindRepository) : LineGraphForecastDataType(windRepository, "windForecast") {
     override fun getLineData(
         lineData: List<LineData>,
         isImperial: Boolean,

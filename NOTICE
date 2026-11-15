@@ -16,6 +16,12 @@ Summary of changes relative to karoo-headwind (commit c9be073):
   Data type ids (typeId) are unchanged.
 - Update manifest, generateManifest task and CI release URLs point at
   https://github.com/kf6999/karoo-truewind/releases.
+- New pure-Kotlin "core" module (angle/vector math, WindVector, WindState,
+  interpolation helpers, provider interfaces); angle and lerp helpers moved
+  there from DataStore.kt and util/AngleDifference.kt.
+- Single shared pipeline (SensorHub, WindRepository) replacing per-data-type
+  GPS, settings and DataStore flows; streams emit only on change; per-fix and
+  per-emit debug logging limited to debug builds.
 - Design documents in docs/SPEC.md and docs/TESTING.md describe further
   planned accuracy work (multi-model forecasts, observation anchoring,
   rider-height wind, heading fusion, virtual wind sensor).

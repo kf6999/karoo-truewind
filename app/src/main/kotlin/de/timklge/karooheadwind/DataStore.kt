@@ -26,12 +26,11 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.mapbox.geojson.LineString
-import com.mapbox.geojson.Point
 import com.mapbox.turf.TurfConstants
 import com.mapbox.turf.TurfMeasurement
 import de.timklge.karooheadwind.datatypes.GpsCoordinates
+import de.timklge.karooheadwind.pipeline.currentWeatherAt
 import de.timklge.karooheadwind.weatherprovider.WeatherData
-import de.timklge.karooheadwind.weatherprovider.WeatherDataForLocation
 import de.timklge.karooheadwind.weatherprovider.WeatherDataResponse
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.DataType
@@ -51,6 +50,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import io.github.kf6999.truewind.core.math.lerp
+import io.github.kf6999.truewind.core.math.lerpAngle
+import io.github.kf6999.truewind.core.math.lerpNullable
 import kotlinx.serialization.json.Json
 import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.minutes
@@ -94,7 +96,7 @@ suspend fun saveForecastRecord(context: Context, response: WeatherDataResponse, 
 }
 
 suspend fun saveLastKnownPosition(context: Context, gpsCoordinates: GpsCoordinates) {
-    Log.i(KarooHeadwindExtension.TAG, "Saving last known position: $gpsCoordinates")
+    if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Saving last known position: $gpsCoordinates")
 
     try {
         context.dataStore.edit { t ->
@@ -140,22 +142,26 @@ fun Context.streamSettings(karooSystemService: KarooSystemService): Flow<Headwin
 
 data class UpcomingRoute(val distanceAlongRoute: Double, val routePolyline: LineString, val routeLength: Double)
 
-fun KarooSystemService.streamUpcomingRoute(): Flow<UpcomingRoute?> {
-    val distanceToDestinationStream = streamDataFlow(DataType.Type.DISTANCE_TO_DESTINATION)
+fun KarooSystemService.streamUpcomingRoute(): Flow<UpcomingRoute?> =
+    upcomingRouteFlow(streamNavigationState(), streamDataFlow(DataType.Type.DISTANCE_TO_DESTINATION))
+
+/** Builds the upcoming-route flow from a navigation state flow and the DISTANCE_TO_DESTINATION stream. */
+fun upcomingRouteFlow(navigationState: Flow<OnNavigationState>, distanceToDestination: Flow<StreamState>): Flow<UpcomingRoute?> {
+    val distanceToDestinationStream = distanceToDestination
         .map { (it as? StreamState.Streaming)?.dataPoint?.values?.get(DataType.Field.DISTANCE_TO_DESTINATION) }
         .distinctUntilChanged()
 
     var lastKnownDistanceAlongRoute = 0.0
     var lastKnownRoutePolyline: LineString? = null
 
-    val navigationStateStream = streamNavigationState()
+    val navigationStateStream = navigationState
         .map { it.state as? OnNavigationState.NavigationState.NavigatingRoute }
         .map { navigationState ->
             navigationState?.let { LineString.fromPolyline(it.routePolyline, 5) }
         }
         .distinctUntilChanged()
         .combine(distanceToDestinationStream) { routePolyline, distanceToDestination ->
-            Log.d(KarooHeadwindExtension.TAG, "Route polyline size: ${routePolyline?.coordinates()?.size}, distance to destination: $distanceToDestination")
+            if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Route polyline size: ${routePolyline?.coordinates()?.size}, distance to destination: $distanceToDestination")
             if (routePolyline != null){
                 val length = TurfMeasurement.length(routePolyline, TurfConstants.UNIT_METERS)
                 if (routePolyline != lastKnownRoutePolyline){
@@ -237,68 +243,6 @@ fun Context.streamCurrentForecastWeatherData(): Flow<WeatherDataResponse?> {
     return dataStore.data.map { prefs -> decodeCurrentForecast(prefs) }.distinctUntilChanged()
 }
 
-fun lerp(
-    start: Double,
-    end: Double,
-    factor: Double
-): Double {
-    return start + (end - start) * factor
-}
-
-fun lerp(
-    start: Int,
-    end: Int,
-    factor: Double
-): Int {
-    return (start + (end - start) * factor).toInt()
-}
-
-fun lerpNullable(
-    start: Double?,
-    end: Double?,
-    factor: Double
-): Double? {
-    if (start == null && end == null) return null
-    if (start == null) return end
-    if (end == null) return start
-
-    return start + (end - start) * factor
-}
-
-/**
- * Linearly interpolates between two angles in degrees
- * 
- * @param start Starting angle in degrees [0-360]
- * @param end Ending angle in degrees [0-360]
- * @param factor Interpolation factor [0-1]
- * @return Interpolated angle in degrees [0-360]
- */
-fun lerpAngle(
-    start: Double,
-    end: Double,
-    factor: Double
-): Double {
-    val normalizedStart = start % 360.0
-    val normalizedEnd = end % 360.0
-    
-    var diff = normalizedEnd - normalizedStart
-    if (diff > 180.0) {
-        diff -= 360.0
-    } else if (diff < -180.0) {
-        diff += 360.0
-    }
-    
-    var result = normalizedStart + diff * factor
-    
-    if (result < 0) {
-        result += 360.0
-    } else if (result >= 360.0) {
-        result -= 360.0
-    }
-    
-    return result
-}
-
 fun lerpWeather(
     start: WeatherData,
     end: WeatherData,
@@ -326,9 +270,9 @@ fun lerpWeather(
 }
 fun lerpWeatherTime(
     weatherData: List<WeatherData>?,
-    currentWeatherData: WeatherData
+    currentWeatherData: WeatherData,
+    now: Long = System.currentTimeMillis(),
 ): WeatherData {
-    val now = System.currentTimeMillis()
     val nextWeatherForecastData = weatherData?.find { forecast -> forecast.time * 1000 >= now }
     val previousWeatherForecastData = weatherData?.findLast { forecast -> forecast.time * 1000 < now }
 
@@ -344,6 +288,13 @@ fun lerpWeatherTime(
     )
 }
 
+/**
+ * Current weather at the rider, recomputed every minute.
+ *
+ * TrueWind: data types and the FIT writer use [de.timklge.karooheadwind.pipeline.WindRepository]
+ * instead, which shares one instance of this chain; this standalone version remains for the
+ * settings/weather screens of the app UI.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 fun Context.streamCurrentWeatherData(karooSystemService: KarooSystemService): Flow<WeatherData?> {
     val locationFlow = flow {
@@ -358,62 +309,7 @@ fun Context.streamCurrentWeatherData(karooSystemService: KarooSystemService): Fl
         flow {
             if (!weatherData?.data.isNullOrEmpty()) {
                 while(true){
-                    // Get weather for closest position
-                    val weatherDataForCurrentPosition = if (location == null || weatherData?.data?.size == 1) weatherData?.data?.first() else {
-                        val weatherDatas = weatherData?.data?.sortedBy { data ->
-                            TurfMeasurement.distance(
-                                Point.fromLngLat(location.lon, location.lat),
-                                Point.fromLngLat(data.coords.lon, data.coords.lat),
-                                TurfConstants.UNIT_METERS
-                            )
-                        }!!.take(2)
-
-                        val location1 = weatherDatas[0]
-                        val location2 = weatherDatas[1]
-                        val distanceToLocation1 = TurfMeasurement.distance(
-                            Point.fromLngLat(location.lon, location.lat),
-                            Point.fromLngLat(location1.coords.lon, location1.coords.lat),
-                            TurfConstants.UNIT_METERS
-                        )
-                        val distanceToLocation2 = TurfMeasurement.distance(
-                            Point.fromLngLat(location.lon, location.lat),
-                            Point.fromLngLat(location2.coords.lon, location2.coords.lat),
-                            TurfConstants.UNIT_METERS
-                        )
-                        val lerpFactor = (distanceToLocation1 / (distanceToLocation1 + distanceToLocation2)).coerceIn(0.0, 1.0)
-
-                        val interpolatedWeatherData = lerpWeather(
-                            start = location1.current,
-                            end = location2.current,
-                            factor = lerpFactor
-                        )
-
-                        val interpolatedForecasts = location1.forecasts?.mapIndexed { index, forecast ->
-                            val forecast2 = location2.forecasts?.get(index) ?: error("Mismatched forecast lengths")
-                            val interpolatedForecast = lerpWeather(
-                                start = forecast,
-                                end = forecast2,
-                                factor = lerpFactor
-                            )
-                            interpolatedForecast
-                        }
-
-                        WeatherDataForLocation(
-                            coords = location,
-                            current = interpolatedWeatherData,
-                            forecasts = interpolatedForecasts
-                        )
-                    }
-
-                    if (weatherDataForCurrentPosition != null) {
-                        emit(lerpWeatherTime(
-                            weatherDataForCurrentPosition.forecasts,
-                            weatherDataForCurrentPosition.current
-                        ))
-                    } else {
-                        emit(null)
-                    }
-
+                    emit(currentWeatherAt(weatherData, location, System.currentTimeMillis()))
                     delay(1.minutes)
                 }
             } else {

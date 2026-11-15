@@ -16,18 +16,15 @@
 
 package de.timklge.karooheadwind.datatypes
 
-import de.timklge.karooheadwind.KarooHeadwindExtension
 import android.content.Context
 import de.timklge.karooheadwind.HeadingResponse
 import de.timklge.karooheadwind.HeadwindSettings
-import de.timklge.karooheadwind.getRelativeHeadingFlow
-import de.timklge.karooheadwind.streamCurrentWeatherData
-import de.timklge.karooheadwind.streamSettings
-import de.timklge.karooheadwind.streamUserProfile
+import de.timklge.karooheadwind.KarooHeadwindExtension
+import de.timklge.karooheadwind.pipeline.WindRepository
 import de.timklge.karooheadwind.throttle
 import de.timklge.karooheadwind.util.msInWindUnit
 import de.timklge.karooheadwind.weatherprovider.WeatherData
-import io.hammerhead.karooext.KarooSystemService
+import io.github.kf6999.truewind.core.wind.RelativeWind
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.Emitter
 import io.hammerhead.karooext.internal.ViewEmitter
@@ -40,37 +37,43 @@ import io.hammerhead.karooext.models.ViewConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlin.math.cos
 
 class HeadwindSpeedDataType(
-    private val karooSystem: KarooSystemService,
-    private val context: Context) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "headwindSpeed"){
+    private val windRepository: WindRepository,
+) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "headwindSpeed"){
 
     data class StreamData(val headingResponse: HeadingResponse, val weatherData: WeatherData?, val settings: HeadwindSettings, val isImperial: Boolean)
 
+    companion object {
+        /** Headwind speed in the user's wind unit, or null when not available. */
+        fun computeValue(streamData: StreamData): Double? {
+            val heading = (streamData.headingResponse as? HeadingResponse.Value)?.diff
+            val windSpeed = streamData.weatherData?.windSpeed
+            val errorCode = HeadwindDirectionDataType.getErrorCode(streamData.headingResponse, streamData.settings)
+
+            if (errorCode != null || heading == null || windSpeed == null) return null
+
+            val headwindSpeed = RelativeWind.headwind(heading, windSpeed)
+            return msInWindUnit(headwindSpeed, streamData.settings.getWindUnit(streamData.isImperial))
+        }
+    }
+
     override fun startStream(emitter: Emitter<StreamState>) {
         val job = CoroutineScope(Dispatchers.IO).launch {
-            val refreshRate = karooSystem.getRefreshRateInMilliseconds(context)
+            val refreshRate = windRepository.refreshRateMs()
 
-            combine(karooSystem.getRelativeHeadingFlow(context), context.streamCurrentWeatherData(karooSystem), context.streamSettings(karooSystem), karooSystem.streamUserProfile()) { value, data, settings, userProfile ->
+            combine(windRepository.relativeHeadingAndWeather, windRepository.settings, windRepository.sensorHub.userProfile) { (value, data), settings, userProfile ->
                 StreamData(value, data, settings, userProfile.preferredUnit.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL)
             }.throttle(refreshRate)
-                .collect { streamData ->
-                    val heading = (streamData.headingResponse as? HeadingResponse.Value)?.diff
-                    val windSpeed = streamData.weatherData?.windSpeed
-                    val errorCode = HeadwindDirectionDataType.getErrorCode(streamData.headingResponse, streamData.settings)
-
-                    if (errorCode != null || heading == null || windSpeed == null) {
-                        emitter.onNext(StreamState.NotAvailable)
-                        return@collect
-                    }
-
-                    val headwindSpeed = cos( (heading + 180) * Math.PI / 180.0) * windSpeed
-
-                    val headwindSpeedUserUnit = msInWindUnit(headwindSpeed, streamData.settings.getWindUnit(streamData.isImperial))
-                    emitter.onNext(StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to headwindSpeedUserUnit))))
+                .map { streamData ->
+                    computeValue(streamData)?.let { StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to it))) }
+                        ?: StreamState.NotAvailable
                 }
+                .distinctUntilChanged()
+                .collect { emitter.onNext(it) }
         }
 
         emitter.setCancellable {
@@ -82,4 +85,3 @@ class HeadwindSpeedDataType(
         emitter.onNext(UpdateGraphicConfig(formatDataTypeId = DataType.Type.INTENSITY_FACTOR))
     }
 }
-

@@ -16,6 +16,8 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.BuildConfig
+import de.timklge.karooheadwind.pipeline.WindRepository
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -41,11 +43,8 @@ import androidx.glance.layout.padding
 import de.timklge.karooheadwind.HeadingResponse
 import de.timklge.karooheadwind.KarooHeadwindExtension
 import de.timklge.karooheadwind.MainActivity
-import de.timklge.karooheadwind.getHeadingFlow
 import de.timklge.karooheadwind.screens.isNightMode
-import de.timklge.karooheadwind.streamDatatypeIsVisible
 import de.timklge.karooheadwind.throttle
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.ViewEmitter
 import io.hammerhead.karooext.models.ShowCustomStreamState
@@ -62,7 +61,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 class CompassDataType(
-    private val karooSystem: KarooSystemService,
+    private val windRepository: WindRepository,
     private val applicationContext: Context
 ) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "compass") {
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
@@ -140,7 +139,7 @@ class CompassDataType(
 
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
-        Log.d(KarooHeadwindExtension.TAG, "Starting compass view with $emitter")
+        if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Starting compass view with $emitter")
 
         val baseModifier = GlanceModifier.fillMaxSize().padding(2.dp).background(Color.White, Color.Black).cornerRadius(10.dp)
 
@@ -158,7 +157,7 @@ class CompassDataType(
         val flow = if (config.preview) {
             previewFlow()
         } else {
-            combine(karooSystem.getHeadingFlow(karooSystem, context), karooSystem.streamDatatypeIsVisible(dataTypeId)){ bearingResponse, isVisible ->
+            combine(windRepository.heading, windRepository.sensorHub.isVisible(dataTypeId)){ bearingResponse, isVisible ->
                 val bearing = when(bearingResponse) {
                     is HeadingResponse.Value -> ((bearingResponse.diff + 360) % 360).toFloat()
                     else -> null
@@ -171,7 +170,7 @@ class CompassDataType(
         val viewJob = CoroutineScope(Dispatchers.IO).launch {
             emitter.onNext(ShowCustomStreamState("", null))
 
-            val refreshRate = karooSystem.getRefreshRateInMilliseconds(context)
+            val refreshRate = windRepository.refreshRateMs()
             flow.filter { it.isVisible }.throttle(refreshRate).collect { streamData ->
                 if (streamData.bearing == null) {
                     emitter.updateView(getErrorWidget(glance, context, HeadwindDirectionDataType.ERROR_NO_GPS).remoteViews)
@@ -196,7 +195,7 @@ class CompassDataType(
         }
 
         emitter.setCancellable {
-            Log.d(KarooHeadwindExtension.TAG, "Stopping compass view with $emitter")
+            if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Stopping compass view with $emitter")
             configJob.cancel()
             viewJob.cancel()
         }

@@ -16,6 +16,7 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.BuildConfig
 import android.content.Context
 import android.util.Log
 import androidx.glance.GlanceId
@@ -34,7 +35,7 @@ class CycleHoursAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters
     ) {
-        Log.d(KarooHeadwindExtension.TAG, "Cycling hours")
+        if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Cycling hours")
 
         val currentSettings = context.streamWidgetSettings().first()
         val forecastData = context.streamCurrentForecastWeatherData().firstOrNull()

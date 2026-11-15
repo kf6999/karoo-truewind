@@ -16,14 +16,14 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.pipeline.WindRepository
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
 import de.timklge.karooheadwind.TemperatureUnit
 import de.timklge.karooheadwind.WindUnit
 import de.timklge.karooheadwind.weatherprovider.WeatherInterpretation
-import io.hammerhead.karooext.KarooSystemService
 
-class WeatherForecastDataType(karooSystem: KarooSystemService) : ForecastDataType(karooSystem, "weatherForecast") {
+class WeatherForecastDataType(windRepository: WindRepository) : ForecastDataType(windRepository, "weatherForecast") {
     @Composable
     override fun RenderWidget(
         arrowBitmap: Bitmap,

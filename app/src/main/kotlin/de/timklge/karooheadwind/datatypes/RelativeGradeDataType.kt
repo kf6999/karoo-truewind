@@ -16,16 +16,13 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.BuildConfig
+import de.timklge.karooheadwind.pipeline.WindRepository
 import android.content.Context
 import android.util.Log
 import de.timklge.karooheadwind.HeadingResponse
 import de.timklge.karooheadwind.KarooHeadwindExtension
-import de.timklge.karooheadwind.getRelativeHeadingFlow
-import de.timklge.karooheadwind.streamCurrentWeatherData
-import de.timklge.karooheadwind.streamDataFlow
-import de.timklge.karooheadwind.streamUserProfile
 import de.timklge.karooheadwind.throttle
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.Emitter
 import io.hammerhead.karooext.internal.ViewEmitter
@@ -46,7 +43,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.cos
 
-class RelativeGradeDataType(private val karooSystemService: KarooSystemService, private val context: Context): DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "relativeGrade") {
+class RelativeGradeDataType(private val windRepository: WindRepository): DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "relativeGrade") {
     data class RelativeGradeResponse(val relativeGrade: Double, val actualGrade: Double, val riderSpeed: Double)
 
     data class ResistanceForces(
@@ -203,11 +200,11 @@ class RelativeGradeDataType(private val karooSystemService: KarooSystemService, 
             return actualGrade + (dragForceDifference / gravitationalFactor)
         }
 
-        suspend fun streamRelativeGrade(karooSystemService: KarooSystemService, context: Context): Flow<RelativeGradeResponse> {
-            val relativeWindDirectionFlow = karooSystemService.getRelativeHeadingFlow(context).filterIsInstance<HeadingResponse.Value>().map { it.diff + 180 }
-            val speedFlow = karooSystemService.streamDataFlow(DataType.Type.SPEED).filterIsInstance<StreamState.Streaming>().map { it.dataPoint.singleValue ?: 0.0 }
-            val actualGradeFlow = karooSystemService.streamDataFlow(DataType.Type.ELEVATION_GRADE).filterIsInstance<StreamState.Streaming>().map { it.dataPoint.singleValue }.filterNotNull().map { it / 100.0 } // Convert to decimal grade
-            val totalMassFlow = karooSystemService.streamUserProfile().map {
+        suspend fun streamRelativeGrade(windRepository: WindRepository): Flow<RelativeGradeResponse> {
+            val relativeWindDirectionFlow = windRepository.relativeHeading.filterIsInstance<HeadingResponse.Value>().map { it.diff + 180 }
+            val speedFlow = windRepository.sensorHub.stream(DataType.Type.SPEED).filterIsInstance<StreamState.Streaming>().map { it.dataPoint.singleValue ?: 0.0 }
+            val actualGradeFlow = windRepository.sensorHub.stream(DataType.Type.ELEVATION_GRADE).filterIsInstance<StreamState.Streaming>().map { it.dataPoint.singleValue }.filterNotNull().map { it / 100.0 } // Convert to decimal grade
+            val totalMassFlow = windRepository.sensorHub.userProfile.map {
                 if (it.weight in 30.0f..300.0f){
                     it.weight
                 } else {
@@ -216,9 +213,9 @@ class RelativeGradeDataType(private val karooSystemService: KarooSystemService, 
                 } + DEFAULT_BIKE_WEIGHT
             }
 
-            val refreshRate = karooSystemService.getRefreshRateInMilliseconds(context)
+            val refreshRate = windRepository.refreshRateMs()
 
-            val windSpeedFlow = context.streamCurrentWeatherData(karooSystemService).filterNotNull().map { weatherData ->
+            val windSpeedFlow = windRepository.currentWeather.filterNotNull().map { weatherData ->
                 weatherData.windSpeed
             }
 
@@ -235,7 +232,7 @@ class RelativeGradeDataType(private val karooSystemService: KarooSystemService, 
             }.distinctUntilChanged().throttle(refreshRate).map { (windDirection, speed, windSpeed, actualGrade, totalMass) ->
                 val relativeGrade = estimateRelativeGrade(actualGrade, speed, windSpeed, windDirection, totalMass)
 
-                Log.d(KarooHeadwindExtension.TAG, "Relative grade: $relativeGrade - Wind Direction: $windDirection - Speed: $speed - Wind Speed: $windSpeed - Actual Grade: $actualGrade - Total Mass: $totalMass")
+                if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Relative grade: $relativeGrade - Wind Direction: $windDirection - Speed: $speed - Wind Speed: $windSpeed - Actual Grade: $actualGrade - Total Mass: $totalMass")
 
                 RelativeGradeResponse(relativeGrade, actualGrade, speed)
             }
@@ -244,14 +241,16 @@ class RelativeGradeDataType(private val karooSystemService: KarooSystemService, 
 
     override fun startStream(emitter: Emitter<StreamState>) {
         val job = CoroutineScope(Dispatchers.IO).launch {
-            val relativeGradeFlow = streamRelativeGrade(karooSystemService, context)
+            val relativeGradeFlow = streamRelativeGrade(windRepository)
 
-            relativeGradeFlow.collect { response ->
-                emitter.onNext(StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to response.relativeGrade * 100))))
-            }
+            relativeGradeFlow.map { response -> response.relativeGrade * 100 }
+                .distinctUntilChanged() // emit on change only
+                .collect { value ->
+                    emitter.onNext(StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to value))))
+                }
         }
         emitter.setCancellable {
-            Log.d(KarooHeadwindExtension.TAG, "stop $dataTypeId stream")
+            if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "stop $dataTypeId stream")
             job.cancel()
         }
     }

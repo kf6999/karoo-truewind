@@ -16,14 +16,9 @@
 
 package de.timklge.karooheadwind.datatypes
 
-import android.content.Context
 import de.timklge.karooheadwind.HeadingResponse
-import de.timklge.karooheadwind.getRelativeHeadingFlow
-import de.timklge.karooheadwind.streamCurrentWeatherData
-import de.timklge.karooheadwind.streamDataFlow
-import de.timklge.karooheadwind.streamRideState
+import de.timklge.karooheadwind.pipeline.WindRepository
 import de.timklge.karooheadwind.weatherprovider.WeatherData
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.DataType
 import io.hammerhead.karooext.models.RideState
 import io.hammerhead.karooext.models.StreamState
@@ -32,7 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -97,7 +91,7 @@ internal class CategoryAccumulator {
     }
 }
 
-class WindAggregator(val context: Context) {
+class WindAggregator {
     companion object {
         const val BUCKET_SIZE = 1 / 3.0 // m/s per bucket
         const val MAX_WIND_SPEED = 20.0 // m/s, bucket indices are limited to [-MAX_WIND_SPEED, MAX_WIND_SPEED]
@@ -200,13 +194,13 @@ class WindAggregator(val context: Context) {
         }
     }
 
-    fun start(karooSystemService: KarooSystemService): Job {
+    fun start(windRepository: WindRepository): Job {
         return CoroutineScope(Dispatchers.IO).launch {
             val latestInput = MutableStateFlow<Pair<HeadingResponse, WeatherData?>?>(null)
             val latestRideSpeed = MutableStateFlow<Double?>(null)
 
             launch {
-                karooSystemService.streamDataFlow(DataType.Type.SPEED).collect { state ->
+                windRepository.sensorHub.stream(DataType.Type.SPEED).collect { state ->
                     latestRideSpeed.value = (state as? StreamState.Streaming)?.dataPoint?.singleValue
                 }
             }
@@ -214,7 +208,7 @@ class WindAggregator(val context: Context) {
             launch {
                 var previousRideState: RideState? = null
 
-                karooSystemService.streamRideState().collect { rideState ->
+                windRepository.sensorHub.rideState.collect { rideState ->
                     // A new ride starts when transitioning from Idle to Recording (not on resume from Paused)
                     if (previousRideState is RideState.Idle && rideState is RideState.Recording) {
                         reset()
@@ -224,8 +218,7 @@ class WindAggregator(val context: Context) {
             }
 
             launch {
-                karooSystemService.getRelativeHeadingFlow(context)
-                    .combine(context.streamCurrentWeatherData(karooSystemService)) { heading, weather -> heading to weather }
+                windRepository.relativeHeadingAndWeather
                     .collect { latestInput.value = it }
             }
 

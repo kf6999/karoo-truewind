@@ -16,10 +16,9 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.pipeline.WindRepository
 import de.timklge.karooheadwind.KarooHeadwindExtension
 import android.content.Context
-import de.timklge.karooheadwind.streamRideState
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.Emitter
 import io.hammerhead.karooext.internal.ViewEmitter
@@ -36,7 +35,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 
-class RelativeElevationGainDataType(private val karooSystemService: KarooSystemService, private val context: Context): DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "relativeElevationGain") {
+class RelativeElevationGainDataType(private val windRepository: WindRepository): DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "relativeElevationGain") {
     fun updateAccumulatedWindElevation(
         previousAccumulatedWindElevation: Double,
         relativeGrade: Double,
@@ -60,7 +59,7 @@ class RelativeElevationGainDataType(private val karooSystemService: KarooSystemS
 
     override fun startStream(emitter: Emitter<StreamState>) {
         val resetJob = CoroutineScope(Dispatchers.IO).launch {
-            karooSystemService.streamRideState().collect { rideState ->
+            windRepository.sensorHub.rideState.collect { rideState ->
                 if (rideState is RideState.Idle) {
                     currentWindElevationGainLock.withLock { currentWindElevationGain = 0.0 }
                 }
@@ -69,7 +68,7 @@ class RelativeElevationGainDataType(private val karooSystemService: KarooSystemS
         val job = CoroutineScope(Dispatchers.IO).launch {
             var lastTime: Long? = null
 
-            RelativeGradeDataType.streamRelativeGrade(karooSystemService, context).collect { streamValues ->
+            RelativeGradeDataType.streamRelativeGrade(windRepository).collect { streamValues ->
                 val now = Instant.now().toEpochMilli()
                 val deltaTime = (now - (lastTime ?: now)) / 1000.0
                 lastTime = now

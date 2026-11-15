@@ -1,5 +1,6 @@
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.pipeline.WindRepository
 import de.timklge.karooheadwind.KarooHeadwindExtension
 import android.content.Context
 import androidx.compose.ui.unit.DpSize
@@ -12,11 +13,7 @@ import androidx.glance.layout.Box
 import androidx.glance.layout.fillMaxSize
 import de.timklge.karooheadwind.WindUnit
 import de.timklge.karooheadwind.screens.LineGraphBuilder
-import de.timklge.karooheadwind.streamDatatypeIsVisible
-import de.timklge.karooheadwind.streamSettings
-import de.timklge.karooheadwind.streamUserProfile
 import de.timklge.karooheadwind.util.msInWindUnit
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.ViewEmitter
 import io.hammerhead.karooext.models.ShowCustomStreamState
@@ -39,8 +36,7 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 class HeadwindTimeDistributionDataType(
-    private val karooSystem: KarooSystemService,
-    private val context: Context,
+    private val windRepository: WindRepository,
     private val windAggregator: WindAggregator
 ) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "headwindTimeDistribution") {
 
@@ -111,8 +107,8 @@ class HeadwindTimeDistributionDataType(
             emitter.onNext(ShowCustomStreamState("", null))
 
             val glance = GlanceRemoteViews()
-            val refreshRate = karooSystem.getRefreshRateInMilliseconds(context)
-            val isImperial = karooSystem.streamUserProfile().first().preferredUnit.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL
+            val refreshRate = windRepository.refreshRateMs()
+            val isImperial = windRepository.sensorHub.userProfile.first().preferredUnit.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL
             var isShowingMessage = false
 
             val ticks = flow {
@@ -125,7 +121,7 @@ class HeadwindTimeDistributionDataType(
             val updates = if (config.preview) {
                 ticks
             } else {
-                karooSystem.streamDatatypeIsVisible(dataTypeId)
+                windRepository.sensorHub.isVisible(dataTypeId)
                     .distinctUntilChanged()
                     .flatMapLatest { isVisible -> if (isVisible) ticks else emptyFlow() }
             }
@@ -137,7 +133,7 @@ class HeadwindTimeDistributionDataType(
                     windAggregator.getHeadwindSpeedDistribution() to windAggregator.getHeadwindGustDistribution()
                 }
 
-                val windUnit = context.streamSettings(karooSystem).first().getWindUnit(isImperial)
+                val windUnit = windRepository.settings.first().getWindUnit(isImperial)
                 val lines = buildLines(headwindSpeedDistribution, headwindGustDistribution, windUnit)
 
                 if (lines.isEmpty()) {

@@ -16,6 +16,8 @@
 
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.BuildConfig
+import de.timklge.karooheadwind.pipeline.WindRepository
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.util.Log
@@ -25,13 +27,7 @@ import androidx.glance.appwidget.GlanceRemoteViews
 import de.timklge.karooheadwind.HeadingResponse
 import de.timklge.karooheadwind.HeadwindSettings
 import de.timklge.karooheadwind.KarooHeadwindExtension
-import de.timklge.karooheadwind.getRelativeHeadingFlow
-import de.timklge.karooheadwind.streamCurrentWeatherData
-import de.timklge.karooheadwind.streamDataFlow
-import de.timklge.karooheadwind.streamDatatypeIsVisible
-import de.timklge.karooheadwind.streamSettings
 import de.timklge.karooheadwind.throttle
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.Emitter
 import io.hammerhead.karooext.internal.ViewEmitter
@@ -46,6 +42,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -56,7 +53,7 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalGlanceRemoteViewsApi::class)
 class HeadwindDirectionDataType(
-    private val karooSystem: KarooSystemService,
+    private val windRepository: WindRepository,
     private val applicationContext: Context
 ) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "headwind") {
     private val glance = GlanceRemoteViews()
@@ -66,32 +63,20 @@ class HeadwindDirectionDataType(
     override fun startStream(emitter: Emitter<StreamState>) {
         val job = CoroutineScope(Dispatchers.IO).launch {
             combine(
-                karooSystem.getRelativeHeadingFlow(applicationContext),
-                applicationContext.streamCurrentWeatherData(karooSystem),
-                applicationContext.streamSettings(karooSystem),
-            ) { headingResponse, currentWeather, settings ->
+                windRepository.relativeHeadingAndWeather,
+                windRepository.settings,
+            ) { (headingResponse, currentWeather), settings ->
                 StreamData(
                     headingResponse,
                     currentWeather?.windDirection,
                     currentWeather?.windSpeed,
                     settings,
                 )
-            }.collect { streamData ->
-                val value = (streamData.headingResponse as? HeadingResponse.Value)?.diff
-                val errorCode = getErrorCode(streamData.headingResponse, streamData.settings)
-
-                val returnValue = if (errorCode == null && value != null && streamData.absoluteWindDirection != null && streamData.windSpeed != null) {
-                    var windDirection = value
-
-                    if (windDirection < 0) windDirection += 360
-
-                    windDirection
-                } else {
-                    (errorCode ?: ERROR_NO_WEATHER_DATA).toDouble()
+            }.map { streamData -> computeValue(streamData) }
+                .distinctUntilChanged() // emit on change only
+                .collect { returnValue ->
+                    emitter.onNext(StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to returnValue))))
                 }
-
-                emitter.onNext(StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to returnValue))))
-            }
         }
         emitter.setCancellable {
             job.cancel()
@@ -123,7 +108,7 @@ class HeadwindDirectionDataType(
 
 
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
-        Log.d(KarooHeadwindExtension.TAG, "Starting headwind direction view with $emitter")
+        if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Starting headwind direction view with $emitter")
 
         val baseBitmap = BitmapFactory.decodeResource(
             context.resources,
@@ -138,22 +123,22 @@ class HeadwindDirectionDataType(
         val flow = if (config.preview) {
             previewFlow()
         } else {
-            val directionFlow = karooSystem.streamDataFlow(dataTypeId).map { (it as? StreamState.Streaming)?.dataPoint?.singleValue }
+            val directionFlow = windRepository.sensorHub.stream(dataTypeId).map { (it as? StreamState.Streaming)?.dataPoint?.singleValue }
             val speedFlow = flow {
                 emit(0.0)
-                emitAll(karooSystem.streamDataFlow(DataType.dataTypeId(KarooHeadwindExtension.EXTENSION_ID, "headwindSpeed")).map { (it as? StreamState.Streaming)?.dataPoint?.singleValue ?: 0.0 })
+                emitAll(windRepository.sensorHub.stream(DataType.dataTypeId(KarooHeadwindExtension.EXTENSION_ID, "headwindSpeed")).map { (it as? StreamState.Streaming)?.dataPoint?.singleValue ?: 0.0 })
             }
 
-            combine(directionFlow.filterNotNull(), speedFlow, karooSystem.streamDatatypeIsVisible(dataTypeId)) { direction, speed, isVisible ->
+            combine(directionFlow.filterNotNull(), speedFlow, windRepository.sensorHub.isVisible(dataTypeId)) { direction, speed, isVisible ->
                 DirectionAndSpeed(direction, speed, isVisible)
             }
         }
 
         val viewJob = CoroutineScope(Dispatchers.IO).launch {
-            val refreshRate = karooSystem.getRefreshRateInMilliseconds(context)
+            val refreshRate = windRepository.refreshRateMs()
 
             flow.filter { it.isVisible }.throttle(refreshRate).collect { streamData ->
-                Log.d(KarooHeadwindExtension.TAG, "Updating headwind direction view")
+                if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Updating headwind direction view")
 
                 val errorCode = streamData.bearing.let { if(it < 0) it.toInt() else null }
                 if (errorCode != null) {
@@ -179,13 +164,29 @@ class HeadwindDirectionDataType(
             }
         }
         emitter.setCancellable {
-            Log.d(KarooHeadwindExtension.TAG, "Stopping headwind view with $emitter")
+            if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Stopping headwind view with $emitter")
             configJob.cancel()
             viewJob.cancel()
         }
     }
 
     companion object {
+        /** Relative wind bearing in [0, 360) for the arrow, or a negative error code. */
+        fun computeValue(streamData: StreamData): Double {
+            val value = (streamData.headingResponse as? HeadingResponse.Value)?.diff
+            val errorCode = getErrorCode(streamData.headingResponse, streamData.settings)
+
+            return if (errorCode == null && value != null && streamData.absoluteWindDirection != null && streamData.windSpeed != null) {
+                var windDirection = value
+
+                if (windDirection < 0) windDirection += 360
+
+                windDirection
+            } else {
+                (errorCode ?: ERROR_NO_WEATHER_DATA).toDouble()
+            }
+        }
+
         const val ERROR_NO_GPS = -1
         const val ERROR_NO_WEATHER_DATA = -2
         const val ERROR_APP_NOT_SET_UP = -3

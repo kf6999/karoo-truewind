@@ -1,8 +1,8 @@
 package de.timklge.karooheadwind.datatypes
 
+import de.timklge.karooheadwind.pipeline.WindRepository
 import de.timklge.karooheadwind.KarooHeadwindExtension
 import android.content.Context
-import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.Emitter
 import io.hammerhead.karooext.internal.ViewEmitter
@@ -18,8 +18,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class HeadwindTimeDataType(
-    private val karooSystemService: KarooSystemService,
-    private val context: Context,
+    private val windRepository: WindRepository,
     private val windAggregator: WindAggregator
 ) : DataTypeImpl(KarooHeadwindExtension.EXTENSION_ID, "headwindTime") {
 
@@ -29,11 +28,15 @@ class HeadwindTimeDataType(
 
     override fun startStream(emitter: Emitter<StreamState>) {
         val job = CoroutineScope(Dispatchers.IO).launch {
-            val refreshRate = karooSystemService.getRefreshRateInMilliseconds(context)
+            val refreshRate = windRepository.refreshRateMs()
 
+            var lastValue: Double? = null
             while (isActive) {
-                val headwindTime = windAggregator.getRideTimeInHeadwind()
-                emitter.onNext(StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to headwindTime.toMillis().toDouble()))))
+                val headwindTime = windAggregator.getRideTimeInHeadwind().toMillis().toDouble()
+                if (headwindTime != lastValue) { // emit on change only
+                    lastValue = headwindTime
+                    emitter.onNext(StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to headwindTime))))
+                }
 
                 delay(refreshRate)
             }
