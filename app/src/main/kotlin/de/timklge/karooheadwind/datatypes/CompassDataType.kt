@@ -173,7 +173,7 @@ class CompassDataType(
             val refreshRate = windRepository.refreshRateMs()
             flow.filter { it.isVisible }.throttle(refreshRate).collect { streamData ->
                 if (streamData.bearing == null) {
-                    emitter.updateView(getErrorWidget(glance, context, HeadwindDirectionDataType.ERROR_NO_GPS).remoteViews)
+                    emitter.updateViewCounted(dataTypeId, getErrorWidget(glance, context, HeadwindDirectionDataType.ERROR_NO_GPS).remoteViews)
                     return@collect
                 }
 
@@ -190,7 +190,7 @@ class CompassDataType(
                     }
                 }
 
-                emitter.updateView(result.remoteViews)
+                emitter.updateViewCounted(dataTypeId, result.remoteViews)
             }
         }
 

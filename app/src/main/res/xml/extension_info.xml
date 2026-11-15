@@ -166,14 +166,14 @@
         description="@string/temperature_description"
         displayName="@string/temperature"
         graphical="false"
-        icon="@drawable/thermometer"
+        icon="@drawable/wind"
         typeId="temperature" />
 
     <DataType
             description="@string/uvi_description"
             displayName="@string/uvi"
             graphical="false"
-            icon="@drawable/thermometer"
+            icon="@drawable/wind"
             typeId="uvi" />
 
     <DataType
@@ -203,4 +203,82 @@
         graphical="true"
         icon="@drawable/arrow"
         typeId="compass" />
+
+    <!-- TrueWind fields (SPEC 5) -->
+    <DataType
+        description="@string/crosswind_description"
+        displayName="@string/crosswind"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="crosswind" />
+
+    <DataType
+        description="@string/windConfidence_description"
+        displayName="@string/windConfidence"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="windConfidence" />
+
+    <DataType
+        description="@string/windSource_description"
+        displayName="@string/windSource"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="windSource" />
+
+    <DataType
+        description="@string/measuredHeadwind_description"
+        displayName="@string/measuredHeadwind"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="measuredHeadwind" />
+
+    <DataType
+        description="@string/airDensity_description"
+        displayName="@string/airDensity"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="airDensity" />
+
+    <DataType
+        description="@string/feelsLike_description"
+        displayName="@string/feelsLike"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="feelsLike" />
+
+    <DataType
+        description="@string/rainIn_description"
+        displayName="@string/rainIn"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="rainIn" />
+
+    <DataType
+        description="@string/lastUpdate_description"
+        displayName="@string/lastUpdate"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="lastUpdate" />
+
+    <DataType
+        description="@string/nextUpdate_description"
+        displayName="@string/nextUpdate"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="nextUpdate" />
+
+    <DataType
+        description="@string/stationDistance_description"
+        displayName="@string/stationDistance"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="stationDistance" />
+
+    <DataType
+        description="@string/maxWindRide_description"
+        displayName="@string/maxWindRide"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="maxWindRide" />
 </ExtensionInfo>

@@ -62,6 +62,7 @@ class HeadwindDirectionDataType(
 
     override fun startStream(emitter: Emitter<StreamState>) {
         val job = CoroutineScope(Dispatchers.IO).launch {
+            val gate = EmitGate(EmitGate.ANGLE_THRESHOLD, angle = true)
             combine(
                 windRepository.relativeHeadingAndWeather,
                 windRepository.settings,
@@ -73,9 +74,12 @@ class HeadwindDirectionDataType(
                     settings,
                 )
             }.map { streamData -> computeValue(streamData) }
-                .distinctUntilChanged() // emit on change only
                 .collect { returnValue ->
-                    emitter.onNext(StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to returnValue))))
+                    // Emit when the direction moves by >= 3 degrees or the error state changes (SPEC 3 rule 4)
+                    if (gate.shouldEmit(returnValue.takeIf { it >= 0 }, band = returnValue.takeIf { it < 0 })) {
+                        de.timklge.karooheadwind.pipeline.Diagnostics.countEmit(dataTypeId)
+                        emitter.onNext(StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to returnValue))))
+                    }
                 }
         }
         emitter.setCancellable {
@@ -87,6 +91,8 @@ class HeadwindDirectionDataType(
         val bearing: Double,
         val speed: Double?,
         val isVisible: Boolean,
+        val style: ArrowStyle = ArrowStyle.SOLID,
+        val grey: Boolean = false,
     )
 
     private fun previewFlow(): Flow<DirectionAndSpeed> {
@@ -129,20 +135,25 @@ class HeadwindDirectionDataType(
                 emitAll(windRepository.sensorHub.stream(DataType.dataTypeId(KarooHeadwindExtension.EXTENSION_ID, "headwindSpeed")).map { (it as? StreamState.Streaming)?.dataPoint?.singleValue ?: 0.0 })
             }
 
-            combine(directionFlow.filterNotNull(), speedFlow, windRepository.sensorHub.isVisible(dataTypeId)) { direction, speed, isVisible ->
-                DirectionAndSpeed(direction, speed, isVisible)
+            val styleFlow = flow {
+                emit(ArrowStyle.SOLID to false)
+                emitAll(windRepository.readySnapshot.map { arrowStyleOf(it) }.distinctUntilChanged())
+            }
+            combine(directionFlow.filterNotNull(), speedFlow, windRepository.sensorHub.isVisible(dataTypeId), styleFlow) { direction, speed, isVisible, style ->
+                DirectionAndSpeed(direction, speed, isVisible, style.first, style.second)
             }
         }
 
         val viewJob = CoroutineScope(Dispatchers.IO).launch {
-            val refreshRate = windRepository.refreshRateMs()
+            // At most one update per second, none while hidden (SPEC 3 rule 4)
+            val refreshRate = windRepository.refreshRateMs().coerceAtLeast(1_000L)
 
-            flow.filter { it.isVisible }.throttle(refreshRate).collect { streamData ->
+            flow.filter { it.isVisible }.distinctUntilChanged().throttle(refreshRate).collect { streamData ->
                 if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Updating headwind direction view")
 
                 val errorCode = streamData.bearing.let { if(it < 0) it.toInt() else null }
                 if (errorCode != null) {
-                    emitter.updateView(getErrorWidget(glance, context, errorCode).remoteViews)
+                    emitter.updateViewCounted(dataTypeId, getErrorWidget(glance, context, errorCode).remoteViews)
                     return@collect
                 }
 
@@ -156,11 +167,13 @@ class HeadwindDirectionDataType(
                         config.textSize,
                         windSpeed.roundToInt().toString(),
                         preview = config.preview,
-                        wideMode = false
+                        wideMode = false,
+                        arrowStyle = streamData.style,
+                        grey = streamData.grey,
                     )
                 }
 
-                emitter.updateView(result.remoteViews)
+                emitter.updateViewCounted(dataTypeId, result.remoteViews)
             }
         }
         emitter.setCancellable {
@@ -171,6 +184,17 @@ class HeadwindDirectionDataType(
     }
 
     companion object {
+        /** Confidence styling (SPEC 5): solid/dashed/dotted for high/medium/low; grey when STALE. */
+        fun arrowStyleOf(s: de.timklge.karooheadwind.pipeline.WindSnapshot): Pair<ArrowStyle, Boolean> {
+            val style = when (s.extras.band) {
+                io.github.kf6999.truewind.core.fusion.ConfidenceBand.MEDIUM -> ArrowStyle.DASHED
+                io.github.kf6999.truewind.core.fusion.ConfidenceBand.LOW -> ArrowStyle.DOTTED
+                else -> ArrowStyle.SOLID
+            }
+            val grey = s.state.status == io.github.kf6999.truewind.core.model.Status.STALE || !s.extras.directionReliable
+            return style to grey
+        }
+
         /** Relative wind bearing in [0, 360) for the arrow, or a negative error code. */
         fun computeValue(streamData: StreamData): Double {
             val value = (streamData.headingResponse as? HeadingResponse.Value)?.diff

@@ -72,6 +72,9 @@ class WindDirectionDataType(private val windRepository: WindRepository) : BaseDa
         return data.windDirection
     }
 
+    override val emitThreshold: Double = EmitGate.ANGLE_THRESHOLD
+    override val emitAngle: Boolean = true
+
     data class StreamData(
         val windBearing: Double,
         val isVisible: Boolean
@@ -134,7 +137,7 @@ class WindDirectionDataType(private val windRepository: WindRepository) : BaseDa
                             config.textSize.toFloat(), TextUnitType.Sp)))
                     }
                 }
-                emitter.updateView(result.remoteViews)
+                emitter.updateViewCounted(dataTypeId, result.remoteViews)
             }
         }
 

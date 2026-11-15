@@ -100,7 +100,7 @@ class WindDirectionAndSpeedDataType(
             previewFlow(windRepository.sensorHub.userProfile)
         } else {
             combine(windRepository.relativeHeading,
-                windRepository.currentWeather,
+                windRepository.headlineWeather,
                 windRepository.settings,
                 windRepository.sensorHub.userProfile,
                 windRepository.sensorHub.isVisible(dataTypeId)
@@ -129,7 +129,7 @@ class WindDirectionAndSpeedDataType(
                         headingResponse = HeadingResponse.NoWeatherData
                     }
 
-                    emitter.updateView(getErrorWidget(glance, context, streamData.settings, headingResponse).remoteViews)
+                    emitter.updateViewCounted(dataTypeId, getErrorWidget(glance, context, streamData.settings, headingResponse).remoteViews)
 
                     return@collect
                 }
@@ -165,7 +165,7 @@ class WindDirectionAndSpeedDataType(
                     )
                 }
 
-                emitter.updateView(result.remoteViews)
+                emitter.updateViewCounted(dataTypeId, result.remoteViews)
             }
         }
         emitter.setCancellable {

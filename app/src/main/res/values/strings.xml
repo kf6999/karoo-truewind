@@ -71,4 +71,26 @@
     <string name="forces_description">Current resistance forces (air, rolling, gradient)</string>
     <string name="compass">Compass</string>
     <string name="compass_description">Points to true north</string>
+    <string name="crosswind">Crosswind</string>
+    <string name="crosswind_description">Crosswind at rider height; positive from the right</string>
+    <string name="windConfidence">Wind confidence</string>
+    <string name="windConfidence_description">Confidence of the wind estimate, 0 to 100</string>
+    <string name="windSource">Wind source</string>
+    <string name="windSource_description">Forecast models, nearest station and data age in use</string>
+    <string name="measuredHeadwind">Measured headwind</string>
+    <string name="measuredHeadwind_description">Headwind measured from power (needs a power meter); blank when invalid</string>
+    <string name="airDensity">Air density</string>
+    <string name="airDensity_description">Air density at the rider in kg/m³</string>
+    <string name="feelsLike">Feels like</string>
+    <string name="feelsLike_description">Wind chill or heat index using the rider\'s air speed</string>
+    <string name="rainIn">Rain in</string>
+    <string name="rainIn_description">Minutes until rain is expected (next 2 hours); blank if none</string>
+    <string name="lastUpdate">Weather updated</string>
+    <string name="lastUpdate_description">Minutes since the last successful weather update</string>
+    <string name="nextUpdate">Next weather update</string>
+    <string name="nextUpdate_description">Minutes until the next scheduled weather update</string>
+    <string name="stationDistance">Station distance</string>
+    <string name="stationDistance_description">Distance to the nearest weather station in use (km or mi)</string>
+    <string name="maxWindRide">Max wind this ride</string>
+    <string name="maxWindRide_description">Highest wind speed at rider height during this ride</string>
 </resources>

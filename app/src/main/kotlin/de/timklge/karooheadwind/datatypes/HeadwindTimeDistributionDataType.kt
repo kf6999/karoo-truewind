@@ -165,7 +165,7 @@ class HeadwindTimeDistributionDataType(
                         }
                     }
 
-                    emitter.updateView(result.remoteViews)
+                    emitter.updateViewCounted(dataTypeId, result.remoteViews)
                 }
             }
         }

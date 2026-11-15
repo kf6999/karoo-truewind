@@ -29,6 +29,8 @@ class WindSpeedDataType(windRepository: WindRepository) : BaseDataType(windRepos
         return msInWindUnit(data.windSpeed, settings.getWindUnit(isImperial))
     }
 
+    override val emitThreshold: Double = EmitGate.SPEED_THRESHOLD
+
     override fun getFormatDataType(): String? {
         return DataType.Type.INTENSITY_FACTOR
     }

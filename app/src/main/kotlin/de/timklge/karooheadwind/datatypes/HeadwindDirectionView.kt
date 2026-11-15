@@ -48,6 +48,42 @@ import androidx.glance.text.TextStyle
 import de.timklge.karooheadwind.MainActivity
 import kotlin.math.roundToInt
 
+/** TrueWind confidence styling of the arrow (SPEC 5): solid / dashed / dotted for high / medium / low. */
+enum class ArrowStyle { SOLID, DASHED, DOTTED }
+
+/**
+ * Cuts the arrow into dashes (radial gaps) or dots (a hole grid) so its outline reads as dashed /
+ * dotted. Works on any opaque arrow bitmap.
+ */
+private fun applyArrowStyle(bitmap: Bitmap, style: ArrowStyle) {
+    if (style == ArrowStyle.SOLID) return
+    val canvas = Canvas(bitmap)
+    val clear = Paint().apply {
+        xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.CLEAR)
+        isAntiAlias = false
+    }
+    val w = bitmap.width.toFloat()
+    val h = bitmap.height.toFloat()
+    when (style) {
+        ArrowStyle.DASHED -> {
+            // Horizontal gaps every 16 px (4 px wide): a dashed look in any rotation.
+            var y = 0f
+            while (y < h) { canvas.drawRect(0f, y + 12f, w, y + 16f, clear); y += 16f }
+        }
+        ArrowStyle.DOTTED -> {
+            // Keep 6x6 px dots on a 10 px grid.
+            var y = 0f
+            while (y < h) { canvas.drawRect(0f, y + 6f, w, y + 10f, clear); y += 10f }
+            var x = 0f
+            while (x < w) { canvas.drawRect(x + 6f, 0f, x + 10f, h, clear); x += 10f }
+        }
+        ArrowStyle.SOLID -> Unit
+    }
+}
+
+fun getArrowBitmapByBearing(baseBitmap: Bitmap, bearing: Int, style: ArrowStyle): Bitmap =
+    getArrowBitmapByBearing(baseBitmap, bearing).also { applyArrowStyle(it, style) }
+
 fun getArrowBitmapByBearing(baseBitmap: Bitmap, bearing: Int): Bitmap {
     val bearingRounded = (((bearing + 360) / 10.0).roundToInt() * 10) % 360
 
@@ -74,9 +110,13 @@ fun HeadwindDirection(
     baseBitmap: Bitmap, bearing: Int, fontSize: Int,
     overlayText: String, overlaySubText: String? = null,
     nightColor: Color = Color.Black, dayColor: Color = Color.White, preview: Boolean = false,
-    wideMode: Boolean
+    wideMode: Boolean,
+    arrowStyle: ArrowStyle = ArrowStyle.SOLID,
+    /** STALE data: arrow drawn grey (SPEC 5). */
+    grey: Boolean = false,
 ) {
     val baseModifier = GlanceModifier.fillMaxSize().padding(5.dp).background(dayColor, nightColor).cornerRadius(10.dp)
+    val arrowTint = if (grey) ColorProvider(Color.Gray, Color.Gray) else ColorProvider(Color.Black, Color.White)
 
     Box(
         modifier = if (!preview) baseModifier.clickable(actionStartActivity<MainActivity>()) else baseModifier,
@@ -89,10 +129,10 @@ fun HeadwindDirection(
             if (overlaySubText == null){
                 Image(
                     modifier = GlanceModifier.fillMaxSize(),
-                    provider = ImageProvider(getArrowBitmapByBearing(baseBitmap, bearing)),
+                    provider = ImageProvider(getArrowBitmapByBearing(baseBitmap, bearing, arrowStyle)),
                     contentDescription = "Relative wind direction indicator",
                     contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(ColorProvider(Color.Black, Color.White))
+                    colorFilter = ColorFilter.tint(arrowTint)
                 )
 
                 Text(

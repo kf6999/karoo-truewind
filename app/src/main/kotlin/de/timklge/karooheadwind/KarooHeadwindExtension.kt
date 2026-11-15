@@ -12,14 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modified by TrueWind: WindEngine wiring (fetch loop + 1 Hz tick via TrueWindPipeline), KarooHttp,
+ * device barometer, connectivity callback, new data types; upstream's hourly fetch loop kept for
+ * the upstream-compatible mode.
  */
 
 package de.timklge.karooheadwind
 
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.net.ConnectivityManager
+import android.net.Network
 import android.util.Log
-import com.mapbox.geojson.LineString
-import com.mapbox.turf.TurfConstants
-import com.mapbox.turf.TurfMeasurement
 import de.timklge.karooheadwind.datatypes.CloudCoverDataType
 import de.timklge.karooheadwind.datatypes.CompassDataType
 import de.timklge.karooheadwind.datatypes.GpsCoordinates
@@ -39,6 +47,7 @@ import de.timklge.karooheadwind.datatypes.SurfacePressureDataType
 import de.timklge.karooheadwind.datatypes.TailwindAndRideSpeedDataType
 import de.timklge.karooheadwind.datatypes.TemperatureDataType
 import de.timklge.karooheadwind.datatypes.TemperatureForecastDataType
+import de.timklge.karooheadwind.datatypes.TrueWindFields
 import de.timklge.karooheadwind.datatypes.UviDataType
 import de.timklge.karooheadwind.datatypes.WeatherForecastDataType
 import de.timklge.karooheadwind.datatypes.WindAggregator
@@ -47,16 +56,42 @@ import de.timklge.karooheadwind.datatypes.WindDirectionAndSpeedDataTypeCircle
 import de.timklge.karooheadwind.datatypes.WindDirectionDataType
 import de.timklge.karooheadwind.datatypes.WindForecastDataType
 import de.timklge.karooheadwind.datatypes.WindGustsDataType
+import de.timklge.karooheadwind.datatypes.WindSourceDataType
 import de.timklge.karooheadwind.datatypes.WindSpeedDataType
 import de.timklge.karooheadwind.fit.HeadwindFitFileWriter
+import de.timklge.karooheadwind.pipeline.DataStoreKeyValueStore
+import de.timklge.karooheadwind.pipeline.Diagnostics
+import de.timklge.karooheadwind.pipeline.EngineFactory
+import de.timklge.karooheadwind.pipeline.KarooHttp
+import de.timklge.karooheadwind.pipeline.KarooSystemHttpTransport
 import de.timklge.karooheadwind.pipeline.KarooSystemStreamSource
 import de.timklge.karooheadwind.pipeline.SensorHub
+import de.timklge.karooheadwind.pipeline.TrueWindPipeline
+import de.timklge.karooheadwind.pipeline.TrueWindRuntime
 import de.timklge.karooheadwind.pipeline.WindRepository
+import de.timklge.karooheadwind.pipeline.engineDataStore
+import de.timklge.karooheadwind.pipeline.upcomingRoutePoints
 import de.timklge.karooheadwind.util.Updater
 import de.timklge.karooheadwind.weatherprovider.WeatherProviderFactory
+import io.github.kf6999.truewind.core.api.HttpClient
+import io.github.kf6999.truewind.core.engine.ForecastSource
+import io.github.kf6999.truewind.core.engine.HourlySource
+import io.github.kf6999.truewind.core.engine.ObservationSource
+import io.github.kf6999.truewind.core.engine.SourceStatus
+import io.github.kf6999.truewind.core.engine.WindEngine
+import io.github.kf6999.truewind.core.engine.WindEngineConfig
+import io.github.kf6999.truewind.core.model.GeoPoint
+import io.github.kf6999.truewind.core.providers.obs.AwcMetarProvider
+import io.github.kf6999.truewind.core.providers.obs.NwsObservationProvider
+import io.github.kf6999.truewind.core.providers.obs.SynopticProvider
+import io.github.kf6999.truewind.core.providers.openmeteo.OpenMeteoForecastProvider
+import io.github.kf6999.truewind.core.providers.tomorrow.TomorrowForecastProvider
+import io.github.kf6999.truewind.core.schedule.FetchPlannerConfig
+import io.github.kf6999.truewind.core.time.Clock
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.extension.KarooExtension
 import io.hammerhead.karooext.internal.Emitter
+import io.hammerhead.karooext.models.Bikes
 import io.hammerhead.karooext.models.FitEffect
 import io.hammerhead.karooext.models.HardwareType
 import io.hammerhead.karooext.models.SystemNotification
@@ -68,7 +103,11 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
@@ -78,10 +117,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
-import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -95,7 +131,10 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
     private lateinit var windAggregator: WindAggregator
     private lateinit var sensorHub: SensorHub
     private lateinit var windRepository: WindRepository
+    private lateinit var trueWind: TrueWindPipeline
+    private lateinit var http: HttpClient
     private var pipelineScope: CoroutineScope? = null
+    private var connectivityCallback: ConnectivityManager.NetworkCallback? = null
 
     private var updateLastKnownGpsJob: Job? = null
     private var serviceJob: Job? = null
@@ -124,14 +163,14 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
             PrecipitationForecastDataType(windRepository),
             WindForecastDataType(windRepository),
             HeadwindForecastDataType(windRepository),
-            WindDirectionAndSpeedDataType(windRepository, applicationContext),
             RelativeGradeDataType(windRepository),
             RelativeElevationGainDataType(windRepository),
             TemperatureDataType(windRepository),
             UviDataType(windRepository),
             ResistanceForcesDataType(windRepository),
-            CompassDataType(windRepository, applicationContext)
-        )
+            CompassDataType(windRepository, applicationContext),
+            WindSourceDataType(windRepository),
+        ) + TrueWindFields.numeric(windRepository)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
@@ -143,16 +182,34 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
 
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         pipelineScope = scope
+        http = KarooHttp(KarooSystemHttpTransport(karooSystem))
         sensorHub = SensorHub(KarooSystemStreamSource(karooSystem), scope)
+        val settingsFlow = streamSettings(karooSystem)
+        trueWind = TrueWindPipeline(
+            scope = scope,
+            hub = sensorHub,
+            settingsFlow = settingsFlow,
+            forecastRecordFlow = streamForecastRecord(),
+            lastKnownPosition = { getLastKnownPosition() },
+            engineFactory = EngineFactory { s -> buildEngine(s) },
+            store = DataStoreKeyValueStore(applicationContext.engineDataStore),
+            bikeKeyFlow = bikeKeyFlow(),
+            barometer = barometerFlow(applicationContext),
+        )
+        TrueWindRuntime.pipeline = trueWind
         windRepository = WindRepository(
             scope = scope,
             sensorHub = sensorHub,
-            settingsSource = streamSettings(karooSystem),
+            settingsSource = settingsFlow,
             widgetSettingsSource = streamWidgetSettings(),
             forecastRecordSource = streamForecastRecord(),
             lastKnownPosition = { getLastKnownPosition() },
             isK2 = { karooSystem.hardwareType == HardwareType.K2 },
+            trueWind = trueWind.snapshots,
         )
+        TrueWindRuntime.repository = windRepository
+        trueWind.start()
+        registerConnectivityCallback()
 
         updateLastKnownGpsJob = CoroutineScope(Dispatchers.IO).launch {
             updateLastKnownGps(this@KarooHeadwindExtension, windRepository.location)
@@ -169,143 +226,175 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
                 }
             }
 
-            val gpsFlow = windRepository.location
-                .distinctUntilChanged { old, new ->
-                    if (old != null && new != null) {
-                        old.distanceTo(new).absoluteValue < 0.001
-                    } else {
-                        old == new
-                    }
-                }
-                .throttle(5_000L)
-
-            var requestedGpsCoordinates: List<GpsCoordinates> = emptyList()
-
-            val settingsStream = windRepository.settings.filter { it.welcomeDialogAccepted }
-
-            data class StreamData(val settings: HeadwindSettings, val gps: GpsCoordinates?, val profile: UserProfile?, val upcomingRoute: UpcomingRoute?)
-            data class StreamDataIdentity(val settings: HeadwindSettings, val gpsLat: Double?, val gpsLon: Double?, val profile: UserProfile?, val routePolyline: LineString?)
-
-            combine(settingsStream, gpsFlow, sensorHub.userProfile, sensorHub.upcomingRoute) { settings, gps, profile, upcomingRoute ->
-                StreamData(settings, gps, profile, upcomingRoute)
+            // Upstream-compatible mode keeps karoo-headwind's hourly fetch loop; TrueWind mode
+            // fetches through the WindEngine (TrueWindPipeline), which also schedules the hourly
+            // widget forecast.
+            windRepository.settings.map { it.upstreamCompatibleMode }.distinctUntilChanged().collectLatest { upstream ->
+                if (upstream) runLegacyFetchLoop()
             }
-            .distinctUntilChangedBy { StreamDataIdentity(it.settings, it.gps?.lat, it.gps?.lon, it.profile, it.upcomingRoute?.routePolyline) }
-            .transformLatest { value ->
-                while(true){
-                    emit(value)
-                    delay(1.hours)
+        }
+    }
+
+    /** The engine for the current settings: Open-Meteo + AWC + NWS always; Synoptic / Tomorrow.io when keyed. */
+    private fun buildEngine(s: HeadwindSettings): WindEngine {
+        val clock = Clock.SYSTEM
+        val openMeteo = OpenMeteoForecastProvider(http, clock)
+        val omSource = ForecastSource.openMeteo(openMeteo)
+        val forecast = buildList {
+            add(
+                if (s.layerEnsemble) omSource
+                else ForecastSource(openMeteo, optional = false) { req -> omSource.fetch(req.copy(members = listOf("open-meteo:best_match"))) }
+            )
+            if (s.tomorrowApiKey.isNotBlank()) add(ForecastSource.tomorrow(TomorrowForecastProvider(http, s.tomorrowApiKey.trim(), clock)))
+        }
+        val observations = buildList {
+            add(ObservationSource.awc(AwcMetarProvider(http)))
+            add(ObservationSource.nws(NwsObservationProvider(http, clock)))
+            if (s.synopticToken.isNotBlank()) add(ObservationSource.synoptic(SynopticProvider(http, s.synopticToken.trim())))
+        }
+        val hourly = HourlySource("hourly") { points -> fetchHourlyWidgets(points) }
+        val config = WindEngineConfig(
+            planner = FetchPlannerConfig.forRefreshMinutes(s.refreshIntervalMin),
+            useObservations = s.layerObservations,
+        )
+        if (BuildConfig.DEBUG) Log.d(TAG, "Engine: forecast=${forecast.map { it.id }} obs=${observations.map { it.id }} settings=$s")
+        return WindEngine(forecast, observations, hourly, DataStoreKeyValueStore(applicationContext.engineDataStore), config)
+    }
+
+    /** Hourly 12 h widget forecast (route-aware, upstream provider choice), saved like upstream did. */
+    private suspend fun fetchHourlyWidgets(points: List<GeoPoint>): SourceStatus {
+        val rider = points.firstOrNull() ?: return SourceStatus(error = "no position")
+        val settings = windRepository.settings.first()
+        val profile = sensorHub.userProfile.replayCache.firstOrNull()
+        val gps = GpsCoordinates(rider.lat, rider.lon)
+        val route = sensorHub.upcomingRoute.replayCache.firstOrNull()
+        val coordinates = if (route != null) {
+            upcomingRoutePoints(gps, route, settings.getForecastMetersPerHour(profile?.preferredUnit?.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL).toDouble())
+        } else listOf(gps)
+        val before = Diagnostics.httpBytes.get()
+        val stats = try { streamStats().first() } catch (e: Exception) { HeadwindStats() }
+        return try {
+            val response = WeatherProviderFactory.makeWeatherRequest(karooSystem, coordinates, settings, profile)
+            saveForecastRecord(this, response, stats.copy(
+                lastSuccessfulWeatherRequest = System.currentTimeMillis(),
+                lastSuccessfulWeatherPosition = gps,
+                lastSuccessfulWeatherProvider = response.provider,
+                lastWeatherError = null,
+            ))
+            saveWidgetSettings(applicationContext, HeadwindWidgetSettings(currentForecastHourOffset = 0))
+            SourceStatus(bytes = Diagnostics.httpBytes.get() - before)
+        } catch (e: Exception) {
+            try {
+                saveStats(this, stats.copy(failedWeatherRequest = System.currentTimeMillis(), lastWeatherError = e.message ?: e.toString()))
+            } catch (_: Exception) {}
+            SourceStatus(bytes = Diagnostics.httpBytes.get() - before, error = e.message ?: e.javaClass.simpleName)
+        }
+    }
+
+    /** Bike key for the persisted virtual-sensor bias: the only bike, or the first listed one. */
+    private fun bikeKeyFlow(): Flow<String> = callbackFlow {
+        val id = karooSystem.addConsumer { bikes: Bikes ->
+            trySend(bikes.bikes.firstOrNull()?.id ?: TrueWindPipeline.DEFAULT_BIKE)
+        }
+        awaitClose { karooSystem.removeConsumer(id) }
+    }.distinctUntilChanged()
+
+    private fun registerConnectivityCallback() {
+        try {
+            val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val cb = object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    trueWind.onConnectivityChanged()
                 }
             }
-            .map { (settings: HeadwindSettings, gps, profile, upcomingRoute) ->
-                if (BuildConfig.DEBUG) Log.d(TAG, "Acquired updated gps coordinates: $gps")
+            cm.registerDefaultNetworkCallback(cb)
+            connectivityCallback = cb
+        } catch (e: Exception) {
+            Log.w(TAG, "Connectivity callback unavailable", e)
+        }
+    }
 
-                val lastKnownStats = try {
-                    streamStats().first()
-                } catch(e: Exception){
-                    Log.e(TAG, "Failed to read stats", e)
-                    HeadwindStats()
-                }
-
-                if (gps == null){
-                    error("No GPS coordinates available")
-                }
-
-                if (upcomingRoute != null){
-                    val positionOnRoute = upcomingRoute.distanceAlongRoute
-                    if (BuildConfig.DEBUG) Log.d(TAG, "Position on route: ${positionOnRoute}m")
-                    val distancePerHour = settings.getForecastMetersPerHour(profile?.preferredUnit?.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL).toDouble()
-                    val msSinceFullHour = let {
-                        val now = LocalDateTime.now()
-                        val startOfHour = now.truncatedTo(ChronoUnit.HOURS)
-
-                        ChronoUnit.MILLIS.between(startOfHour, now)
-                    }
-                    val msToNextFullHour = (1_000 * 60 * 60) - msSinceFullHour
-                    val calculatedDistanceToNextFullHour = ((msToNextFullHour / (1_000.0 * 60 * 60)) * distancePerHour).coerceIn(0.0, distancePerHour)
-
-                    if (BuildConfig.DEBUG) Log.d(TAG, "Minutes to next full hour: ${msToNextFullHour / 1000 / 60}, Distance to next full hour: ${(calculatedDistanceToNextFullHour / 1000).roundToInt()}km")
-
-                    requestedGpsCoordinates = buildList {
-                        add(GpsCoordinates(gps.lat, gps.lon, gps.bearing, distanceAlongRoute = positionOnRoute))
-
-                        var currentPosition = positionOnRoute + calculatedDistanceToNextFullHour
-                        var lastRequestedPosition = positionOnRoute
-
-                        while (currentPosition < upcomingRoute.routeLength && size < 10) {
-                            val point = TurfMeasurement.along(
-                                upcomingRoute.routePolyline,
-                                currentPosition,
-                                TurfConstants.UNIT_METERS
-                            )
-                            add(
-                                GpsCoordinates(
-                                    point.latitude(),
-                                    point.longitude(),
-                                    distanceAlongRoute = currentPosition
-                                )
-                            )
-
-                            lastRequestedPosition = currentPosition
-                            currentPosition += distancePerHour
-                        }
-
-                        if (upcomingRoute.routeLength > lastRequestedPosition + 1_000) {
-                            val point = TurfMeasurement.along(
-                                upcomingRoute.routePolyline,
-                                upcomingRoute.routeLength,
-                                TurfConstants.UNIT_METERS
-                            )
-                            add(
-                                GpsCoordinates(
-                                    point.latitude(),
-                                    point.longitude(),
-                                    distanceAlongRoute = upcomingRoute.routeLength
-                                )
-                            )
-                        }
-                    }
+    /** karoo-headwind's fetch loop (upstream-compatible mode only). */
+    private suspend fun runLegacyFetchLoop() {
+        val gpsFlow = windRepository.location
+            .distinctUntilChanged { old, new ->
+                if (old != null && new != null) {
+                    old.distanceTo(new).absoluteValue < 0.001
                 } else {
-                    requestedGpsCoordinates = mutableListOf(gps)
+                    old == new
                 }
+            }
+            .throttle(5_000L)
 
-                val response = try {
-                    WeatherProviderFactory.makeWeatherRequest(karooSystem, requestedGpsCoordinates, settings, profile)
-                } catch(e: Throwable){
-                    try {
-                        saveStats(this@KarooHeadwindExtension, lastKnownStats.copy(
-                            failedWeatherRequest = System.currentTimeMillis(),
-                            lastWeatherError = e.message ?: e.toString()
-                        ))
-                    } catch(writeError: Exception){
-                        Log.e(TAG, "Failed to write stats", writeError)
-                    }
-                    throw e
-                }
+        val settingsStream = windRepository.settings.filter { it.welcomeDialogAccepted }
 
+        data class StreamData(val settings: HeadwindSettings, val gps: GpsCoordinates?, val profile: UserProfile?, val upcomingRoute: UpcomingRoute?)
+        data class StreamDataIdentity(val settings: HeadwindSettings, val gpsLat: Double?, val gpsLon: Double?, val profile: UserProfile?, val routePolyline: com.mapbox.geojson.LineString?)
+
+        combine(settingsStream, gpsFlow, sensorHub.userProfile, sensorHub.upcomingRoute) { settings, gps, profile, upcomingRoute ->
+            StreamData(settings, gps, profile, upcomingRoute)
+        }
+        .distinctUntilChangedBy { StreamDataIdentity(it.settings, it.gps?.lat, it.gps?.lon, it.profile, it.upcomingRoute?.routePolyline) }
+        .transformLatest { value ->
+            while(true){
+                emit(value)
+                delay(1.hours)
+            }
+        }
+        .map { (settings: HeadwindSettings, gps, profile, upcomingRoute) ->
+            val lastKnownStats = try {
+                streamStats().first()
+            } catch(e: Exception){
+                Log.e(TAG, "Failed to read stats", e)
+                HeadwindStats()
+            }
+
+            if (gps == null){
+                error("No GPS coordinates available")
+            }
+
+            val requestedGpsCoordinates = if (upcomingRoute != null) {
+                val distancePerHour = settings.getForecastMetersPerHour(profile?.preferredUnit?.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL).toDouble()
+                upcomingRoutePoints(gps, upcomingRoute, distancePerHour)
+            } else {
+                listOf(gps)
+            }
+
+            val response = try {
+                WeatherProviderFactory.makeWeatherRequest(karooSystem, requestedGpsCoordinates, settings, profile)
+            } catch(e: Throwable){
                 try {
-                    val stats = lastKnownStats.copy(
-                        lastSuccessfulWeatherRequest = System.currentTimeMillis(),
-                        lastSuccessfulWeatherPosition = gps,
-                        lastSuccessfulWeatherProvider = response.provider,
-                        lastWeatherError = null
-                    )
-                    saveForecastRecord(this@KarooHeadwindExtension, response, stats)
-                } catch(e: Exception){
-                    Log.e(TAG, "Failed to write forecast", e)
+                    saveStats(this@KarooHeadwindExtension, lastKnownStats.copy(
+                        failedWeatherRequest = System.currentTimeMillis(),
+                        lastWeatherError = e.message ?: e.toString()
+                    ))
+                } catch(writeError: Exception){
+                    Log.e(TAG, "Failed to write stats", writeError)
                 }
+                throw e
+            }
 
-                response
-            }.retry(Long.MAX_VALUE) { e ->
-                Log.w(TAG, "Failed to get weather data", e)
-                delay(2.minutes); true
-            }.collect { response ->
-                try {
-                    if (BuildConfig.DEBUG) Log.d(TAG, "Got updated weather info: $response")
+            try {
+                val stats = lastKnownStats.copy(
+                    lastSuccessfulWeatherRequest = System.currentTimeMillis(),
+                    lastSuccessfulWeatherPosition = gps,
+                    lastSuccessfulWeatherProvider = response.provider,
+                    lastWeatherError = null
+                )
+                saveForecastRecord(this@KarooHeadwindExtension, response, stats)
+            } catch(e: Exception){
+                Log.e(TAG, "Failed to write forecast", e)
+            }
 
-                    saveWidgetSettings(applicationContext, HeadwindWidgetSettings(currentForecastHourOffset = 0))
-                } catch(e: Exception){
-                    Log.e(TAG, "Failed to read current weather data", e)
-                }
+            response
+        }.retry(Long.MAX_VALUE) { e ->
+            Log.w(TAG, "Failed to get weather data", e)
+            delay(2.minutes); true
+        }.collect { _ ->
+            try {
+                saveWidgetSettings(applicationContext, HeadwindWidgetSettings(currentForecastHourOffset = 0))
+            } catch(e: Exception){
+                Log.e(TAG, "Failed to read current weather data", e)
             }
         }
     }
@@ -360,10 +449,52 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
         windAggregationJob?.cancel()
         windAggregationJob = null
 
+        connectivityCallback?.let {
+            try {
+                (getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager).unregisterNetworkCallback(it)
+            } catch (_: Exception) {}
+        }
+        connectivityCallback = null
+
+        TrueWindRuntime.pipeline = null
+        TrueWindRuntime.repository = null
         pipelineScope?.cancel()
         pipelineScope = null
 
         karooSystem.disconnect()
         super.onDestroy()
     }
+}
+
+/**
+ * Device barometer (`SensorManager.TYPE_PRESSURE`), hPa, for air density (SPEC 4.4). Emits null
+ * when the device has no pressure sensor. Registered only while collected (the tick is running).
+ * Events are counted in [Diagnostics.barometerEvents] for the on-device probe (SPEC 8.2).
+ */
+fun barometerFlow(context: Context): Flow<Double?> = callbackFlow {
+    val sm = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+    val sensor = sm?.getDefaultSensor(Sensor.TYPE_PRESSURE)
+    Diagnostics.barometerAvailable = sensor != null
+    if (sm == null || sensor == null) {
+        trySend(null)
+        awaitClose { }
+        return@callbackFlow
+    }
+    var lastSentMs = 0L
+    val listener = object : SensorEventListener {
+        override fun onSensorChanged(event: SensorEvent) {
+            val hpa = event.values.firstOrNull()?.toDouble() ?: return
+            Diagnostics.barometerEvents.incrementAndGet()
+            Diagnostics.lastBarometerHpa = hpa
+            val now = System.currentTimeMillis()
+            if (now - lastSentMs >= 5_000L) { // air density needs no more than one value per 5 s
+                lastSentMs = now
+                trySend(hpa)
+            }
+        }
+
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
+    }
+    sm.registerListener(listener, sensor, 1_000_000) // 1 Hz requested
+    awaitClose { sm.unregisterListener(listener) }
 }

@@ -17,6 +17,7 @@
 package de.timklge.karooheadwind.datatypes
 
 import android.content.Context
+import de.timklge.karooheadwind.pipeline.Diagnostics
 import android.util.Log
 import androidx.glance.appwidget.ExperimentalGlanceRemoteViewsApi
 import de.timklge.karooheadwind.BuildConfig
@@ -51,6 +52,12 @@ abstract class BaseDataType(
 
     open fun getFormatDataType(): String? = null
 
+    /** Minimum change (display units) before a new value is emitted; 0 = any change. */
+    open val emitThreshold: Double = 0.0
+
+    /** Values are directions (circular difference). */
+    open val emitAngle: Boolean = false
+
     /** The value this field streams for the given inputs; null means "not available". */
     fun computeValue(data: WeatherData?, userProfile: UserProfile, settings: HeadwindSettings): Double? =
         data?.let { getValue(it, userProfile, settings) }
@@ -65,22 +72,21 @@ abstract class BaseDataType(
             }
 
             val refreshRate = windRepository.refreshRateMs()
-            var lastEmitted: StreamState? = null
+            val gate = EmitGate(emitThreshold, emitAngle)
 
             currentWeatherData
                 .throttle(refreshRate)
                 .collect { (data, userProfile, settings) ->
                     val value = computeValue(data, userProfile, settings)
 
-                    val state = if (value != null) {
-                        StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to value)))
-                    } else {
-                        StreamState.NotAvailable
-                    }
-
                     // Emit on change only (SPEC section 3, rule 4)
-                    if (state != lastEmitted) {
-                        lastEmitted = state
+                    if (gate.shouldEmit(value)) {
+                        val state = if (value != null) {
+                            StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to value)))
+                        } else {
+                            StreamState.NotAvailable
+                        }
+                        Diagnostics.countEmit(dataTypeId)
                         emitter.onNext(state)
                     }
             }

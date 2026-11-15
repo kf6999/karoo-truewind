@@ -64,16 +64,20 @@ class HeadwindSpeedDataType(
     override fun startStream(emitter: Emitter<StreamState>) {
         val job = CoroutineScope(Dispatchers.IO).launch {
             val refreshRate = windRepository.refreshRateMs()
+            val gate = EmitGate(EmitGate.SPEED_THRESHOLD)
 
             combine(windRepository.relativeHeadingAndWeather, windRepository.settings, windRepository.sensorHub.userProfile) { (value, data), settings, userProfile ->
                 StreamData(value, data, settings, userProfile.preferredUnit.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL)
             }.throttle(refreshRate)
-                .map { streamData ->
-                    computeValue(streamData)?.let { StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to it))) }
-                        ?: StreamState.NotAvailable
+                .collect { streamData ->
+                    val value = computeValue(streamData)
+                    // Emit when the displayed value moves by >= 0.5 unit (SPEC 3 rule 4)
+                    if (gate.shouldEmit(value)) {
+                        de.timklge.karooheadwind.pipeline.Diagnostics.countEmit(dataTypeId)
+                        emitter.onNext(value?.let { StreamState.Streaming(DataPoint(dataTypeId, mapOf(DataType.Field.SINGLE to it))) }
+                            ?: StreamState.NotAvailable)
+                    }
                 }
-                .distinctUntilChanged()
-                .collect { emitter.onNext(it) }
         }
 
         emitter.setCancellable {

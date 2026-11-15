@@ -254,7 +254,7 @@ abstract class ForecastDataType(private val windRepository: WindRepository, type
                 if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Updating weather forecast view")
 
                 if (allData?.data.isNullOrEmpty()){
-                    emitter.updateView(
+                    emitter.updateViewCounted(dataTypeId, 
                         getErrorWidget(
                             glance,
                             context,
@@ -391,7 +391,7 @@ abstract class ForecastDataType(private val windRepository: WindRepository, type
                     }
                 }
 
-                emitter.updateView(result.remoteViews)
+                emitter.updateViewCounted(dataTypeId, result.remoteViews)
             }
         }
         emitter.setCancellable {

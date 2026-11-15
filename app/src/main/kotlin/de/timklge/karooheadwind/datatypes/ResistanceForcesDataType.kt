@@ -91,12 +91,12 @@ class ResistanceForcesDataType(private val windRepository: WindRepository) : Dat
                     } else {
                         Log.w(KarooHeadwindExtension.TAG, "Invalid rider weight ${it.weight} kg, defaulting to 70 kg")
                         70.0f // Default to 70 kg if weight is invalid
-                    } + DEFAULT_BIKE_WEIGHT
-                }
+                    }.toDouble()
+                }.combine(windRepository.physicsParams) { riderMass, params -> riderMass to params }
 
                 val refreshRate = windRepository.refreshRateMs()
 
-                val windSpeedFlow = windRepository.currentWeather.filterNotNull().map { weatherData ->
+                val windSpeedFlow = windRepository.headlineWeather.filterNotNull().map { weatherData ->
                     weatherData.windSpeed
                 }
 
@@ -105,18 +105,15 @@ class ResistanceForcesDataType(private val windRepository: WindRepository) : Dat
                     val speed: Double,
                     val windSpeed: Double,
                     val actualGrade: Double,
-                    val totalMass: Double
+                    val totalMass: Pair<Double, de.timklge.karooheadwind.pipeline.PhysicsParams>
                 )
 
                 combine(relativeWindDirectionFlow, speedFlow, windSpeedFlow, actualGradeFlow, totalMassFlow) { windDirection, speed, windSpeed, actualGrade, totalMass ->
                     StreamValues(windDirection, speed, windSpeed, actualGrade, totalMass)
                 }.distinctUntilChanged().throttle(refreshRate).map { (windDirection, speed, windSpeed, actualGrade, totalMass) ->
-                    val resistanceForces = RelativeGradeDataType.estimateResistanceForces(
-                        actualGrade = actualGrade,
-                        riderSpeed = speed,
-                        windSpeed = windSpeed,
-                        windDirectionDegrees = windDirection,
-                        totalMass = totalMass
+                    // TrueWind: live air density and configured CdA/Crr/bike weight (upstream constants in upstream mode)
+                    val resistanceForces = de.timklge.karooheadwind.pipeline.Physics.forces(
+                        actualGrade, speed, windSpeed, windDirection, totalMass.first, totalMass.second,
                     )
 
                     if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Resistance Forces: $resistanceForces")
@@ -176,7 +173,7 @@ class ResistanceForcesDataType(private val windRepository: WindRepository) : Dat
                             )
                         }
                     }
-                    emitter.updateView(result.remoteViews)
+                    emitter.updateViewCounted(dataTypeId, result.remoteViews)
                 } else {
                     // Display error message when no resistance forces data
                     emitter.onNext(ShowCustomStreamState("No resistance data", null))

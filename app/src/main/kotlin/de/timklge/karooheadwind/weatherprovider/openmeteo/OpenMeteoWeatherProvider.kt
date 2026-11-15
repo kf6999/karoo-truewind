@@ -79,6 +79,9 @@ class OpenMeteoWeatherProvider : WeatherProvider {
             }
         }.single()
 
+        // TrueWind: count the hourly widget request with the other HTTP traffic (diagnostics)
+        de.timklge.karooheadwind.pipeline.Diagnostics.recordHttp("api.open-meteo.com", (response.body?.size ?: 0).toLong(), response.statusCode !in 200..299)
+
         if (response.statusCode !in 200..299) {
             Log.e(KarooHeadwindExtension.TAG, "OpenMeteo API request failed with status code ${response.statusCode}")
             throw WeatherProviderException(response.statusCode, "OpenMeteo API request failed with status code ${response.statusCode}")

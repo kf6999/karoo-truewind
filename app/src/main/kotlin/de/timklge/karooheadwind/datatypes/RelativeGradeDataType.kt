@@ -35,6 +35,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import de.timklge.karooheadwind.pipeline.Physics
+import de.timklge.karooheadwind.pipeline.PhysicsParams
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
@@ -210,12 +212,12 @@ class RelativeGradeDataType(private val windRepository: WindRepository): DataTyp
                 } else {
                     Log.w(KarooHeadwindExtension.TAG, "Invalid rider weight ${it.weight} kg, defaulting to 70 kg")
                     70.0f // Default to 70 kg if weight is invalid
-                } + DEFAULT_BIKE_WEIGHT
-            }
+                }.toDouble()
+            }.combine(windRepository.physicsParams) { riderMass, params -> riderMass to params }
 
             val refreshRate = windRepository.refreshRateMs()
 
-            val windSpeedFlow = windRepository.currentWeather.filterNotNull().map { weatherData ->
+            val windSpeedFlow = windRepository.headlineWeather.filterNotNull().map { weatherData ->
                 weatherData.windSpeed
             }
 
@@ -224,13 +226,14 @@ class RelativeGradeDataType(private val windRepository: WindRepository): DataTyp
                 val speed: Double,
                 val windSpeed: Double,
                 val actualGrade: Double,
-                val totalMass: Double
+                val totalMass: Pair<Double, PhysicsParams>
             )
 
             return combine(relativeWindDirectionFlow, speedFlow, windSpeedFlow, actualGradeFlow, totalMassFlow) { windDirection, speed, windSpeed, actualGrade, totalMass ->
                 StreamValues(windDirection, speed, windSpeed, actualGrade, totalMass)
             }.distinctUntilChanged().throttle(refreshRate).map { (windDirection, speed, windSpeed, actualGrade, totalMass) ->
-                val relativeGrade = estimateRelativeGrade(actualGrade, speed, windSpeed, windDirection, totalMass)
+                // TrueWind: live air density and configured CdA/Crr/bike weight (upstream constants in upstream mode)
+                val relativeGrade = Physics.relativeGrade(actualGrade, speed, windSpeed, windDirection, totalMass.first, totalMass.second)
 
                 if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Relative grade: $relativeGrade - Wind Direction: $windDirection - Speed: $speed - Wind Speed: $windSpeed - Actual Grade: $actualGrade - Total Mass: $totalMass")
 

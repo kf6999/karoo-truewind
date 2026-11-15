@@ -233,7 +233,7 @@ abstract class LineGraphForecastDataType(private val windRepository: WindReposit
                 if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Updating weather forecast view")
 
                 if (allData?.data.isNullOrEmpty() || headingResponse is HeadingResponse.NoGps || headingResponse is HeadingResponse.NoWeatherData){
-                    emitter.updateView(
+                    emitter.updateViewCounted(dataTypeId, 
                         getErrorWidget(
                             glance,
                             context,
@@ -331,7 +331,7 @@ abstract class LineGraphForecastDataType(private val windRepository: WindReposit
                     }
                 }
 
-                emitter.updateView(result.remoteViews)
+                emitter.updateViewCounted(dataTypeId, result.remoteViews)
             }
         }
         emitter.setCancellable {

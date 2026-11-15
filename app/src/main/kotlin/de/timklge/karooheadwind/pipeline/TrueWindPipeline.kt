@@ -69,6 +69,12 @@ object DebugOverrides {
     @Volatile var position: GeoPoint? = null
 }
 
+/** Handles the app UI and the debug receiver use to reach the running extension (same process). */
+object TrueWindRuntime {
+    @Volatile var pipeline: TrueWindPipeline? = null
+    @Volatile var repository: WindRepository? = null
+}
+
 /** Whether the app's own screen is in the foreground (counts as "visible", SPEC 4.1). */
 object AppVisibility {
     val screenOpen = MutableStateFlow(false)
