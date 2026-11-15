@@ -33,11 +33,39 @@ kotlin {
     }
 }
 
+// WP11 replay harness CLI (TESTING 3). A separate source set so the FIT SDK and the JSON library
+// never reach the app's classpath; the pure parts (metrics, pipelines, seams) live in main under
+// io.github.kf6999.truewind.core.replay.
+val replay: SourceSet by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+val replayImplementation: Configuration by configurations.getting {
+    extendsFrom(configurations.implementation.get())
+}
+sourceSets.test {
+    compileClasspath += replay.output
+    runtimeClasspath += replay.output
+}
+configurations.testImplementation { extendsFrom(replayImplementation) }
+
 dependencies {
+    replayImplementation(libs.kotlinx.serialization.json)
+    replayImplementation(libs.garmin.fit)
     testImplementation(kotlin("test"))
     testImplementation(libs.junit)
 }
 
 tasks.test {
     useJUnit()
+}
+
+// ./gradlew :core:replay --args="--corpus corpus/fixtures --out build/replay/metrics.json"
+// Relative paths resolve against the repository root.
+tasks.register<JavaExec>("replay") {
+    group = "verification"
+    description = "Runs the TrueWind replay harness (TESTING.md section 3)."
+    classpath = replay.runtimeClasspath
+    mainClass.set("io.github.kf6999.truewind.core.replay.cli.ReplayCliKt")
+    workingDir = rootDir
 }

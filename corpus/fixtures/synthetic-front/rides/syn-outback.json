@@ -1,0 +1,7 @@
+{
+  "system_mass_kg": 84,
+  "truth_cda": 0.32,
+  "truth_crr": 0.005,
+  "truth_height_ratio": 0.54,
+  "synthetic": true
+}
