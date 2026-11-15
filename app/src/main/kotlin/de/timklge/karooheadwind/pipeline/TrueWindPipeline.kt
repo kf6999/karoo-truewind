@@ -67,6 +67,8 @@ fun interface EngineFactory {
 object DebugOverrides {
     /** Position used when there is no GPS fix (indoor device checks). */
     @Volatile var position: GeoPoint? = null
+    /** Treat TrueWind fields as visible (debug field observer standing in for a ride page). */
+    val forceVisible = MutableStateFlow(false)
 }
 
 /** Handles the app UI and the debug receiver use to reach the running extension (same process). */
@@ -98,6 +100,10 @@ object TickPolicy {
     fun shouldRun(settings: HeadwindSettings?, fieldVisible: Boolean, screenOpen: Boolean, recording: Boolean): Boolean =
         settings != null && !settings.upstreamCompatibleMode && settings.welcomeDialogAccepted &&
             (fieldVisible || screenOpen || recording)
+
+    /** [pageIds] null = no ride page seen yet; then any running field stream counts as visible. */
+    fun fieldVisible(pageIds: List<String>?, activeStreams: Int): Boolean =
+        if (pageIds == null) activeStreams > 0 else anyFieldVisible(pageIds)
 
     /** True when any element of the page is one of this extension's data types. */
     fun anyFieldVisible(dataTypeIds: List<String>, extensionId: String = KarooHeadwindExtension.EXTENSION_ID): Boolean {
@@ -138,6 +144,8 @@ class TrueWindPipeline(
     private val screenOpen: Flow<Boolean> = AppVisibility.screenOpen,
     private val bikeKeyFlow: Flow<String> = flowOf(DEFAULT_BIKE),
     private val barometer: Flow<Double?> = flowOf(null),
+    private val activeStreams: Flow<Int> = de.timklge.karooheadwind.datatypes.ActiveFields.count,
+    private val forceVisible: Flow<Boolean> = DebugOverrides.forceVisible,
     private val tickIntervalMs: Long = 1_000L,
     private val maxFetchWaitMs: Long = 60_000L,
 ) {
@@ -205,7 +213,11 @@ class TrueWindPipeline(
     fun start(): Job = scope.launch {
         launch { settingsFlow.collect { settings = it; wake.trySend(Unit) } }
         launch { startWith(null, forecastRecordFlow).collect { record = it } }
-        val visible = startWith(false, hub.activeRidePage.map { p -> TickPolicy.anyFieldVisible(p.page.elements.map { it.dataTypeId }) })
+        // A field on the active ride page; before the ride app has shown any page, a field stream
+        // the Karoo (or another consumer) runs counts instead.
+        val pageFields = startWith<List<String>?>(null, hub.activeRidePage.map { p -> p.page.elements.map { it.dataTypeId } })
+        val visible = combine(pageFields, activeStreams, forceVisible) { ids, n, forced -> forced || TickPolicy.fieldVisible(ids, n) }
+            .distinctUntilChanged()
         val rec = startWith(false, hub.rideState.map { it is RideState.Recording })
         launch { visible.collect { fieldVisible = it; wake.trySend(Unit) } }
         launch {

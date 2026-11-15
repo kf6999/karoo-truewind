@@ -168,6 +168,9 @@ class TrueWindMapperTest {
         assertTrue(!TickPolicy.shouldRun(null, true, true, true))
         assertTrue(TickPolicy.anyFieldVisible(listOf("TYPE_EXT::other::x", "TYPE_EXT::truewind::headwind")))
         assertTrue(!TickPolicy.anyFieldVisible(listOf("TYPE_SPEED_ID", "TYPE_EXT::other::x")))
+        assertTrue(TickPolicy.fieldVisible(null, activeStreams = 1), "no ride page seen yet: a running stream counts")
+        assertTrue(!TickPolicy.fieldVisible(null, activeStreams = 0))
+        assertTrue(!TickPolicy.fieldVisible(listOf("TYPE_SPEED_ID"), activeStreams = 3), "a known page without our fields wins")
     }
 
     @Test

@@ -54,8 +54,15 @@ class DebugReceiver : BroadcastReceiver() {
                     loop = intent.getBooleanExtra("loop", true),
                 )
                 "REPLAY_STOP" -> ReplayController.stop()
-                "OBSERVE_START" -> Diagnostics.observeFields(intent.getStringExtra("fields")?.split(',')?.map { it.trim() } ?: Diagnostics.NUMERIC_FIELDS)
-                "OBSERVE_STOP" -> Diagnostics.stopObserving()
+                "OBSERVE_START" -> {
+                    // The observer stands in for a ride page showing these fields (TrueWind tick policy).
+                    de.timklge.karooheadwind.pipeline.DebugOverrides.forceVisible.value = true
+                    Diagnostics.observeFields(intent.getStringExtra("fields")?.split(',')?.map { it.trim() } ?: Diagnostics.NUMERIC_FIELDS)
+                }
+                "OBSERVE_STOP" -> {
+                    de.timklge.karooheadwind.pipeline.DebugOverrides.forceVisible.value = false
+                    Diagnostics.stopObserving()
+                }
                 "DIAG_RESET" -> Diagnostics.reset()
                 "DIAG_DUMP" -> Diagnostics.write()
                 "BATTERY_LOG_START" -> Diagnostics.startBatteryLog(intent.getLongExtra("interval_ms", 60_000L))

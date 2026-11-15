@@ -98,9 +98,11 @@ fields=$(json_get "$OUT/diagnostics.json" "len(d['fields'])")
 with_data=$(json_get "$OUT/diagnostics.json" "sum(1 for f in d['fields'].values() if f.get('value') is not None)")
 check "fields left no-data" "$([[ $fields -gt 0 && $with_data -eq $fields ]] && echo 1 || echo 0)" "$with_data/$fields fields have a value: $(json_get "$OUT/diagnostics.json" "', '.join('%s=%s' % (k, (round(v['value'],2) if v.get('value') is not None else v.get('state'))) for k,v in sorted(d['fields'].items()))")"
 
-fetches=$(grep -c "Got updated weather info" "$OUT/logcat.txt" || true)
-fetch_fail=$(grep -c "Failed to get weather data" "$OUT/logcat.txt" || true)
-check "weather fetch" "$([[ $fetches -gt 0 ]] && echo 1 || echo 0)" "successful=$fetches failed=$fetch_fail (logcat; per-provider counts need the KarooHttp seam)"
+# Upstream-compatible mode logs "Got updated weather info"; TrueWind mode logs one "cycle ok|failed"
+# line per WindEngine cycle with per-provider requests/bytes.
+fetches=$(grep -cE "Got updated weather info|truewind *: cycle ok" "$OUT/logcat.txt" || true)
+fetch_fail=$(grep -cE "Failed to get weather data|truewind *: cycle failed" "$OUT/logcat.txt" || true)
+check "weather fetch" "$([[ $fetches -gt 0 ]] && echo 1 || echo 0)" "successful=$fetches failed=$fetch_fail (logcat)"
 
 http_req=$(json_get "$OUT/diagnostics.json" "d['http']['requests']")
 if [[ "$http_req" -gt 0 ]]; then

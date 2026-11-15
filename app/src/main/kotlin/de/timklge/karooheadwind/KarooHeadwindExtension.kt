@@ -142,7 +142,8 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
     private var updateCheckJob: Job? = null
 
     override val types by lazy {
-        listOf(
+        // Wrapped so the tick policy knows when the Karoo consumes a field (ActiveFields).
+        (listOf(
             HeadwindDirectionDataType(windRepository, applicationContext),
             TailwindAndRideSpeedDataType(windRepository, applicationContext),
             WindDirectionAndSpeedDataTypeCircle(windRepository, applicationContext),
@@ -170,7 +171,7 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
             ResistanceForcesDataType(windRepository),
             CompassDataType(windRepository, applicationContext),
             WindSourceDataType(windRepository),
-        ) + TrueWindFields.numeric(windRepository)
+        ) + TrueWindFields.numeric(windRepository)).map { de.timklge.karooheadwind.datatypes.ActiveFields.track(it) }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)

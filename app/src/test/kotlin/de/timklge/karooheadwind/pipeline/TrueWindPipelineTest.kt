@@ -85,6 +85,7 @@ class TrueWindPipelineTest {
     private class Harness(scope: TestScope, t0: Long, initial: HeadwindSettings) {
         val settings = MutableStateFlow(initial)
         val screen = MutableStateFlow(false)
+        val streams = MutableStateFlow(0)
         val source = Source()
         val provider = ConstantProvider(t0)
         val pipeline = TrueWindPipeline(
@@ -97,7 +98,20 @@ class TrueWindPipelineTest {
             store = InMemoryKeyValueStore(),
             clock = Clock { t0 + scope.testScheduler.currentTime },
             screenOpen = screen,
+            activeStreams = streams,
         )
+    }
+
+    @Test
+    fun fieldStream_beforeAnyRidePage_startsTick() = runTest {
+        val h = Harness(this, t0, trueWind)
+        h.pipeline.start()
+        h.streams.value = 1
+        advanceTimeBy(2_500); runCurrent()
+        assertTrue(h.pipeline.running.value)
+        h.streams.value = 0
+        runCurrent()
+        assertFalse(h.pipeline.running.value)
     }
 
     private val trueWind = HeadwindSettings(welcomeDialogAccepted = true, upstreamCompatibleMode = false)
