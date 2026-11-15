@@ -53,7 +53,12 @@ android {
             isMinifyEnabled = false
         }
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // TrueWind: sign only when the keystore secret is present, so `./gradlew build` works
+            // locally and in fork CI without secrets (it then produces app-release-unsigned.apk,
+            // and the tag release step fails loudly because app-release.apk is missing).
+            if (!System.getenv("KEYSTORE_BASE64").isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
