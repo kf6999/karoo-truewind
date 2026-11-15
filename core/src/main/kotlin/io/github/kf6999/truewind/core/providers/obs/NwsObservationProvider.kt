@@ -185,6 +185,16 @@ class NwsObservationProvider(
         return ObsFetchResult(stations, requests = 2, bytesReceived = bytes)
     }
 
+    /**
+     * Whether NWS covers [center] according to the cached `points` lookup, without network:
+     * true (US), false (the lookup answered 404, outside the US) or null (not looked up yet).
+     * Used to skip US-only requests (alerts, fire perimeters) abroad.
+     */
+    fun cachedCoverage(center: GeoPoint): Boolean? {
+        val entry = synchronized(cache) { cache[cellKey(center, cellKm)] } ?: return null
+        return !entry.negative
+    }
+
     fun pointsUrl(center: GeoPoint): String = "$baseUrl/points/${fmt(center.lat, 4)},${fmt(center.lon, 4)}"
 
     private fun <T> failure(response: HttpResponse, requests: Int, bytes: Long) =

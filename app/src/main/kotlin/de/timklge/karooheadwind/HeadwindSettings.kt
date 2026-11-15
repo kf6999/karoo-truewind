@@ -137,6 +137,32 @@ data class HeadwindSettings(
     val synopticToken: String = "",
     /** Optional Tomorrow.io API key. Never logged. */
     val tomorrowApiKey: String = "",
+    // --- WP14-16: in-ride alerts and finish alert. ---
+    val alertRain: Boolean = true,
+    val alertGust: Boolean = true,
+    /** Gust alert threshold, km/h. */
+    val alertGustKmh: Int = 45,
+    val alertWindShift: Boolean = true,
+    /** NWS severe/extreme alerts (US only). */
+    val alertNws: Boolean = true,
+    val alertStorm: Boolean = true,
+    val alertStormKm: Int = 20,
+    val alertWildfire: Boolean = true,
+    val alertWildfireKm: Int = 15,
+    val alertAqi: Boolean = true,
+    /** Lowest US AQI category that alerts: 1 Moderate, 2 Unhealthy for sensitive groups, 3 Unhealthy. */
+    val alertAqiCategory: Int = 2,
+    /** Start-of-ride 6-hour summary pop-up. */
+    val alertRideSummary: Boolean = true,
+    val finishAlertEnabled: Boolean = false,
+    /** HTTPS ntfy topic URL or webhook. Never logged. */
+    val finishAlertUrl: String = "",
+    /** POST a JSON body instead of ntfy plain text. */
+    val finishAlertJson: Boolean = false,
+    val finishAlertMessage: String = "",
+    /** 60, 30 or 15 minutes before arrival. */
+    val finishAlertMinutes: Int = 30,
+    val finishAlertIncludeLocation: Boolean = false,
 ){
 
     companion object {
@@ -156,7 +182,7 @@ data class HeadwindSettings(
         "HeadwindSettings(welcome=$welcomeDialogAccepted, upstream=$upstreamCompatibleMode, refresh=$refreshIntervalMin, " +
             "round=$roundLocationTo, exposure=$exposure, height=$riderHeightM, cda=$cda, crr=$crr, bike=$bikeWeightKg, " +
             "group=$groupRide, show10m=$showWindAt10m, layers=${listOf(layerEnsemble, layerObservations, layerDownscaling, layerHeadingFusion, layerVirtualSensor)}, " +
-            "provider=$weatherProvider, owm=${openWeatherMapApiKey.isNotBlank()}, synoptic=${synopticToken.isNotBlank()}, tomorrow=${tomorrowApiKey.isNotBlank()})"
+            "provider=$weatherProvider, owm=${openWeatherMapApiKey.isNotBlank()}, synoptic=${synopticToken.isNotBlank()}, tomorrow=${tomorrowApiKey.isNotBlank()}, finishAlert=$finishAlertEnabled)"
 }
 
 /** Exposure presets for rider-height downscaling (SPEC 4.4), mapped to `core.physics.Exposure`. */

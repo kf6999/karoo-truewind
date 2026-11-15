@@ -93,4 +93,24 @@
     <string name="stationDistance_description">Distance to the nearest weather station in use (km or mi)</string>
     <string name="maxWindRide">Max wind this ride</string>
     <string name="maxWindRide_description">Highest wind speed at rider height during this ride</string>
+    <string name="radar">Weather radar</string>
+    <string name="radar_description">RainViewer precipitation radar around you, rider dot and wind arrow. Tap to zoom (6/7/8).</string>
+    <string name="stormDistance">Storm distance (est.)</string>
+    <string name="stormDistance_description">Estimated distance to the nearest storm from radar cores, METAR thunder reports and NWS warnings. Not a lightning detector.</string>
+    <string name="rainBar">Rain next 2 h</string>
+    <string name="rainBar_description">Rain intensity bars for the next two hours (1-min with a Tomorrow.io key, else 15-min)</string>
+    <string name="aqi">Air quality (US AQI)</string>
+    <string name="aqi_description">US air quality index, coloured by EPA category</string>
+    <string name="pm25">PM2.5</string>
+    <string name="pm25_description">Fine particulate matter, ug/m3</string>
+    <string name="ozone">Ozone</string>
+    <string name="ozone_description">Ozone concentration, ug/m3</string>
+    <string name="dewPoint">Dew point</string>
+    <string name="dewPoint_description">Dew point temperature from the forecast</string>
+    <string name="visibility">Visibility</string>
+    <string name="visibility_description">Visibility from the forecast</string>
+    <string name="solarRadiation">Solar radiation</string>
+    <string name="solarRadiation_description">Shortwave solar radiation, W/m2</string>
+    <string name="windChill">Wind chill</string>
+    <string name="windChill_description">Wind chill from air temperature and your air speed (below 10 C)</string>
 </resources>

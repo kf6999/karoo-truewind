@@ -170,9 +170,17 @@ object TrueWindMapper {
             innovationMean = out?.innovationMean,
             effectiveRatio = out?.effectiveRatio,
             sourceText = sourceText(sources, sample.ageMs),
+            windChillC = weather?.temperatureC?.let { tc -> windChill(tc, out?.airSpeedMps) },
+            dewPointC = legacy?.dewPoint,
+            visibilityM = legacy?.visibility,
+            solarRadiationWm2 = legacy?.solarRadiation,
         )
         return WindSnapshot(state, extras)
     }
+
+    /** Wind chill (WP15) at the rider's air speed; the plain temperature above 10 °C, where the index is undefined. */
+    fun windChill(tempC: Double, airSpeedMps: Double?): Double =
+        if (tempC > 10.0) tempC else io.github.kf6999.truewind.core.physics.FeelsLike.windChillC(tempC, kotlin.math.abs(airSpeedMps ?: 0.0) * 3.6)
 
     /** Current weather: fused nowcast scalars, falling back to the hourly widget forecast. */
     fun weatherNow(sample: FusedSample, legacy: WeatherData?, nowMs: Long): WeatherNow? {

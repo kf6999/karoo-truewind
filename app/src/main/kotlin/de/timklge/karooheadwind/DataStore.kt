@@ -279,7 +279,10 @@ fun lerpWeather(
         weatherCode = closestWeatherData.weatherCode,
         isForecast = closestWeatherData.isForecast,
         isNight = closestWeatherData.isNight,
-        uvi = start.uvi + (end.uvi - start.uvi) * factor
+        uvi = start.uvi + (end.uvi - start.uvi) * factor,
+        dewPoint = lerpNullable(start.dewPoint, end.dewPoint, factor),
+        visibility = lerpNullable(start.visibility, end.visibility, factor),
+        solarRadiation = lerpNullable(start.solarRadiation, end.solarRadiation, factor),
     )
 }
 fun lerpWeatherTime(

@@ -35,5 +35,12 @@ data class WeatherData(
     val isForecast: Boolean,
     val isNight: Boolean,
     val uvi: Double,
+    // TrueWind (WP15): Open-Meteo extras; null for providers that do not supply them.
+    /** Dew point, °C. */
+    val dewPoint: Double? = null,
+    /** Visibility, m. */
+    val visibility: Double? = null,
+    /** Shortwave (solar) radiation, W/m². */
+    val solarRadiation: Double? = null,
 )
 

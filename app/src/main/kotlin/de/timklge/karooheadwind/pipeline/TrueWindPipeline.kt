@@ -162,6 +162,20 @@ class TrueWindPipeline(
     @Volatile var lastReport: CycleReport? = null
         private set
 
+    /** End time of the last engine fetch cycle that ran (side fetches align to it: one radio wake). */
+    val lastCycleEndMs = MutableStateFlow<Long?>(null)
+
+    /** Rider position the tick uses (debug override, GPS, last known). */
+    fun riderPosition(): GeoPoint? = currentPosition()
+
+    val isRecording: Boolean get() = recording
+
+    /** Speed stream value, m/s. */
+    val speedMps: Double? get() = speed
+
+    /** The loaded route, if navigating. */
+    val upcomingRoute: UpcomingRoute? get() = route
+
     private val wake = Channel<Unit>(Channel.CONFLATED)
     @Volatile private var forceNext = false
 
@@ -341,6 +355,7 @@ class TrueWindPipeline(
                 if (report.ran) {
                     lastReport = report
                     recordCycle(report, now, end)
+                    lastCycleEndMs.value = end
                 }
                 // A plan that ran carries no nextCheckAtMs: the next time-based check is one interval on.
                 val plannedNext = report.plan.nextCheckAtMs ?: (now + report.plan.intervalMs).takeIf { report.ran }

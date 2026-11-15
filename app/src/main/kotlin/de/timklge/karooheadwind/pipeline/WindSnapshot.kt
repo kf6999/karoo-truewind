@@ -54,6 +54,14 @@ data class WindExtras(
     val effectiveRatio: Double? = null,
     /** Short text for the "Wind source" field, e.g. `HRRR+NBM · KSQL 6 km · 4 min`. */
     val sourceText: String = "",
+    // WP15 extra fields
+    /** Wind chill at the rider's air speed, °C (temperature above 10 °C). */
+    val windChillC: Double? = null,
+    val dewPointC: Double? = null,
+    /** m */
+    val visibilityM: Double? = null,
+    /** Shortwave radiation, W/m². */
+    val solarRadiationWm2: Double? = null,
 ) {
     companion object {
         const val RAIN_UNKNOWN = -1

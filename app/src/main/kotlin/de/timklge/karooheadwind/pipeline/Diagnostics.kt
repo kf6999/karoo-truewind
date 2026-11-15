@@ -81,6 +81,9 @@ object Diagnostics {
     // --- Virtual sensor ---
     @Volatile var virtualSensor: VirtualSensorSummary? = null
 
+    // --- WP13-16 side features (ParityHub) ---
+    @Volatile var parity: Map<String, Any?> = emptyMap()
+
     data class ProviderSummary(
         val id: String,
         val success: Boolean,
@@ -188,6 +191,7 @@ object Diagnostics {
         "lastBarometerHpa" to lastBarometerHpa,
         "headingEvents" to headingEvents.get(),
         "virtualSensor" to virtualSensor,
+        "parity" to parity,
     )
 
     /** For tests. */

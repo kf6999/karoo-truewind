@@ -61,5 +61,8 @@
         <meta-data
             android:name="io.hammerhead.karooext.MANIFEST_URL"
             android:value="https://github.com/kf6999/karoo-truewind/releases/latest/download/manifest.json" />
+        <receiver
+            android:name="de.timklge.karooheadwind.datatypes.RadarZoomReceiver"
+            android:exported="false" />
     </application>
 </manifest>

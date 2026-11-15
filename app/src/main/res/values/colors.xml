@@ -30,4 +30,8 @@
     <color name="hGreen">#008000</color>
     <color name="hOrange">#BB4300</color>
     <color name="hRed">#A30000</color>
+    <!-- TrueWind in-ride alerts (WP14) -->
+    <color name="alert_info">#FF1F5F99</color>
+    <color name="alert_warning">#FFB35900</color>
+    <color name="alert_critical">#FFB00020</color>
 </resources>

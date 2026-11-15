@@ -134,6 +134,9 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
     private lateinit var trueWind: TrueWindPipeline
     private lateinit var http: HttpClient
     private var pipelineScope: CoroutineScope? = null
+    private var parityHub: de.timklge.karooheadwind.pipeline.ParityHub? = null
+    /** One NWS provider across engine rebuilds (keeps the cached station list). */
+    private var nwsProvider: Pair<Boolean, NwsObservationProvider>? = null
     private var connectivityCallback: ConnectivityManager.NetworkCallback? = null
 
     private var updateLastKnownGpsJob: Job? = null
@@ -171,7 +174,8 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
             ResistanceForcesDataType(windRepository),
             CompassDataType(windRepository, applicationContext),
             WindSourceDataType(windRepository),
-        ) + TrueWindFields.numeric(windRepository)).map { de.timklge.karooheadwind.datatypes.ActiveFields.track(it) }
+        ) + TrueWindFields.numeric(windRepository)
+          + de.timklge.karooheadwind.datatypes.ParityFields.all(windRepository) { de.timklge.karooheadwind.pipeline.ParityRuntime.hub }).map { de.timklge.karooheadwind.datatypes.ActiveFields.track(it) }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
@@ -209,6 +213,19 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
             trueWind = trueWind.snapshots,
         )
         TrueWindRuntime.repository = windRepository
+        parityHub =de.timklge.karooheadwind.pipeline.ParityHub(
+            scope = scope,
+            sensorHub = sensorHub,
+            settingsFlow = settingsFlow,
+            pipeline = trueWind,
+            http = http,
+            forecastRecord = streamForecastRecord(),
+            dispatchAlert = { alert -> karooSystem.dispatch(alert) },
+            decoder = de.timklge.karooheadwind.datatypes.BitmapPngDecoder,
+        ).also {
+            de.timklge.karooheadwind.pipeline.ParityRuntime.hub = it
+            it.start()
+        }
         trueWind.start()
         registerConnectivityCallback()
 
@@ -246,11 +263,30 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
                 if (s.layerEnsemble) omSource
                 else ForecastSource(openMeteo, optional = false) { req -> omSource.fetch(req.copy(members = listOf("open-meteo:best_match"))) }
             )
-            if (s.tomorrowApiKey.isNotBlank()) add(ForecastSource.tomorrow(TomorrowForecastProvider(http, s.tomorrowApiKey.trim(), clock)))
+            if (s.tomorrowApiKey.isNotBlank()) {
+                val tomorrow = TomorrowForecastProvider(http, s.tomorrowApiKey.trim(), clock)
+                parityHub?.tomorrow = tomorrow
+                add(ForecastSource.tomorrow(tomorrow))
+            } else parityHub?.tomorrow = null
         }
         val observations = buildList {
-            add(ObservationSource.awc(AwcMetarProvider(http)))
-            add(ObservationSource.nws(NwsObservationProvider(http, clock)))
+            // AWC as ObservationSource.awc, also keeping thunder reports for the storm estimate.
+            val awc = AwcMetarProvider(http)
+            add(ObservationSource(awc.id) { c, r ->
+                val res = awc.fetchMetars(c, r)
+                if (res.error == null) parityHub?.metarThunder?.value = io.github.kf6999.truewind.core.alerts.storm.StationThunder.fromMetars(res.items)
+                io.github.kf6999.truewind.core.providers.obs.ObsFetchResult(
+                    res.items.map { it.observation }.filter { it.speed != null },
+                    res.requests, res.bytesReceived, res.error, res.httpStatus, res.retryAfterSec,
+                )
+            })
+            // NWS trimmed when Synoptic covers the area: one station, two attempts.
+            val synoptic = s.synopticToken.isNotBlank()
+            val nws = nwsProvider?.takeIf { it.first == synoptic }?.second
+                ?: (if (synoptic) NwsObservationProvider(http, clock, maxStations = 1, maxAttempts = 2, stationListLimit = 10)
+                    else NwsObservationProvider(http, clock, stationListLimit = 10)).also { nwsProvider = synoptic to it }
+            parityHub?.nws = nws
+            add(ObservationSource.nws(nws))
             if (s.synopticToken.isNotBlank()) add(ObservationSource.synoptic(SynopticProvider(http, s.synopticToken.trim())))
         }
         val hourly = HourlySource("hourly") { points -> fetchHourlyWidgets(points) }

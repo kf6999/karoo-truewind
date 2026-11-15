@@ -35,6 +35,9 @@ data class OpenMeteoWeatherData(
     @SerialName("weather_code") val weatherCode: Int,
     @SerialName("is_day") val isDay: Int,
     @SerialName("uv_index") val uvi: Double,
+    @SerialName("dew_point_2m") val dewPoint: Double? = null,
+    @SerialName("visibility") val visibility: Double? = null,
+    @SerialName("shortwave_radiation") val solarRadiation: Double? = null,
 ) {
     fun toWeatherData(): WeatherData = WeatherData(
         temperature = temperature,
@@ -50,7 +53,10 @@ data class OpenMeteoWeatherData(
         time = time,
         isForecast = false,
         isNight = isDay == 0,
-        uvi = uvi
+        uvi = uvi,
+        dewPoint = dewPoint,
+        visibility = visibility,
+        solarRadiation = solarRadiation,
     )
 }
 

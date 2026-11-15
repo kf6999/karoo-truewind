@@ -281,4 +281,74 @@
         graphical="false"
         icon="@drawable/wind"
         typeId="maxWindRide" />
+
+    <DataType
+        description="@string/radar_description"
+        displayName="@string/radar"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="radar" />
+
+    <DataType
+        description="@string/stormDistance_description"
+        displayName="@string/stormDistance"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="stormDistance" />
+
+    <DataType
+        description="@string/rainBar_description"
+        displayName="@string/rainBar"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="rainBar" />
+
+    <DataType
+        description="@string/aqi_description"
+        displayName="@string/aqi"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="aqi" />
+
+    <DataType
+        description="@string/pm25_description"
+        displayName="@string/pm25"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="pm25" />
+
+    <DataType
+        description="@string/ozone_description"
+        displayName="@string/ozone"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="ozone" />
+
+    <DataType
+        description="@string/dewPoint_description"
+        displayName="@string/dewPoint"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="dewPoint" />
+
+    <DataType
+        description="@string/visibility_description"
+        displayName="@string/visibility"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="visibility" />
+
+    <DataType
+        description="@string/solarRadiation_description"
+        displayName="@string/solarRadiation"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="solarRadiation" />
+
+    <DataType
+        description="@string/windChill_description"
+        displayName="@string/windChill"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="windChill" />
 </ExtensionInfo>

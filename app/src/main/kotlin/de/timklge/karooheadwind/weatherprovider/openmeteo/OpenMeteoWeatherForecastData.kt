@@ -36,6 +36,9 @@ data class OpenMeteoWeatherForecastData(
     @SerialName("is_day") val isDay: List<Int>,
     @SerialName("relative_humidity_2m") val relativeHumidity: List<Int>,
     @SerialName("uv_index") val uvi: List<Double>,
+    @SerialName("dew_point_2m") val dewPoint: List<Double?>? = null,
+    @SerialName("visibility") val visibility: List<Double?>? = null,
+    @SerialName("shortwave_radiation") val solarRadiation: List<Double?>? = null,
     ) {
     fun toWeatherData(): List<WeatherData> {
         return time.mapIndexed { index, t ->
@@ -54,7 +57,10 @@ data class OpenMeteoWeatherForecastData(
                 surfacePressure = surfacePressure[index],
                 sealevelPressure = sealevelPressure[index],
                 relativeHumidity = relativeHumidity[index],
-                uvi = uvi[index]
+                uvi = uvi[index],
+                dewPoint = dewPoint?.getOrNull(index),
+                visibility = visibility?.getOrNull(index),
+                solarRadiation = solarRadiation?.getOrNull(index),
             )
         }
     }
