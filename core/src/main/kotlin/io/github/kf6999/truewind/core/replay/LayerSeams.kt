@@ -26,15 +26,10 @@ import io.github.kf6999.truewind.core.virtualwind.RiderWindInputs
  * ADAPTER SEAMS — where the accuracy layers plug into the harness (TESTING 3.5).
  *
  *  - 10 m wind (SPEC 4.1–4.3), [TenMeterWindLayer]:
- *      SEAM(WP4/WP8 fusion engine: core.engine.WindEngine + core.fusion + core.schedule) — NOT YET
- *      AVAILABLE. Until it lands, [LayerSeams.ensemble] / [LayerSeams.obs] point at
- *      [ReferenceEnsembleLayer] (SPEC-text stand-in that already uses the production ObsQc).
- *      To plug the engine in: write `WindEngineLayer(env)` implementing [TenMeterWindLayer] that
- *      feeds the engine `env.minutely15` (a core.api.ForecastProvider serving archived 15-min
- *      forecasts) and `env.observations` (a core.api.ObservationProvider that hides the held-out
- *      station and anything newer than `env.clock`), drives time with `env.clock`, and returns the
- *      engine's model10m + confidence. Then assign it to `LayerSeams.ensemble` (observations
- *      disabled) and `LayerSeams.obs`, and set `implementations["ensemble"/"obs"] = "production"`.
+ *      PRODUCTION — [WindEngineLayer] runs core.engine.WindEngine (FetchPlanner, ObsQc,
+ *      MemberWeights, Fusion) against `env.minutely15` / `env.observations` on `env.clock`.
+ *      [ReferenceEnsembleLayer] (the SPEC-text stand-in used before the engine landed) is kept as
+ *      a cross-check; assign it to [LayerSeams.ensemble] / [LayerSeams.obs] to compare.
  *  - Rider height, heading, virtual sensor (SPEC 4.4–4.6), [RiderLayer]: PRODUCTION —
  *      [RiderWindEstimatorLayer] wraps core.virtualwind.RiderWindEstimator (LogLaw, AirDensity,
  *      HeadingEstimator, VirtualWindSensor).
@@ -119,15 +114,15 @@ class RiderWindEstimatorLayer(
 
 /** Factories for each seam. Reassign to plug in production code; [implementations] feeds the report. */
 object LayerSeams {
-    var ensemble: (ReplayEnvironment) -> TenMeterWindLayer = { ReferenceEnsembleLayer(it, useObservations = false) }
-    var obs: (ReplayEnvironment) -> TenMeterWindLayer = { ReferenceEnsembleLayer(it, useObservations = true) }
+    var ensemble: (ReplayEnvironment) -> TenMeterWindLayer = { WindEngineLayer(it, useObservations = false) }
+    var obs: (ReplayEnvironment) -> TenMeterWindLayer = { WindEngineLayer(it, useObservations = true) }
     var rider: (ReplayEnvironment, Boolean, Boolean, Boolean) -> RiderLayer = { env, h, hd, v -> RiderWindEstimatorLayer(env, h, hd, v) }
 
     val implementations: MutableMap<String, String> = defaults()
 
     private fun defaults() = mutableMapOf(
-        "ensemble" to "reference (fusion engine seam open)",
-        "obs" to "reference+ObsQc (fusion engine seam open)",
+        "ensemble" to "production WindEngine (no observations)",
+        "obs" to "production WindEngine",
         "height" to "production RiderWindEstimator",
         "heading" to "production RiderWindEstimator",
         "virtual" to "production RiderWindEstimator",
@@ -135,8 +130,8 @@ object LayerSeams {
 
     /** Restores the defaults (tests). */
     fun reset() {
-        ensemble = { ReferenceEnsembleLayer(it, useObservations = false) }
-        obs = { ReferenceEnsembleLayer(it, useObservations = true) }
+        ensemble = { WindEngineLayer(it, useObservations = false) }
+        obs = { WindEngineLayer(it, useObservations = true) }
         rider = { env, h, hd, v -> RiderWindEstimatorLayer(env, h, hd, v) }
         implementations.clear(); implementations.putAll(defaults())
     }
