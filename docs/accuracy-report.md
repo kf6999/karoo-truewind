@@ -10,7 +10,8 @@ upstream at stations** (Metric A vector RMSE 1.92 vs 1.92 m/s). The tuning work 
 regression of the SPEC-as-written fusion (2.05 -> 1.92 m/s for `+obs`), but the 20% target is
 below what the station data can show: a station's own report from 10 minutes earlier predicts its
 next report with 1.69 m/s vector RMSE. The rider-side layers do help where they are measured
-(Metric B, Metric C). Four of the seven TESTING 3.6 targets are **not met** on the held-out set.
+(Metric B, Metric C). Five of the eight TESTING 3.6 checks in section 6 are **not met** on the
+held-out set.
 
 ## 1. Corpus
 
