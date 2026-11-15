@@ -113,12 +113,20 @@ fetches=$(grep -cE "Got updated weather info|truewind *: cycle ok" "$OUT/logcat.
 fetch_fail=$(grep -cE "Failed to get weather data|truewind *: cycle failed" "$OUT/logcat.txt" || true)
 check "weather fetch" "$([[ $fetches -gt 0 ]] && echo 1 || echo 0)" "successful=$fetches failed=$fetch_fail (logcat)"
 
-http_req=$(json_get "$OUT/diagnostics.json" "d['http']['requests']")
-if [[ "$http_req" -gt 0 ]]; then
-  per=$(json_get "$OUT/diagnostics.json" "d['http']['bytes']/max(1,d['http']['requests'])")
-  check "response size < 15 KB" "$(python3 -I -c "print(1 if $per < 15360 else 0)")" "mean $per bytes over $http_req requests"
+# Data API responses have a 15 KB budget each; radar image tiles (tilecache.rainviewer.com) are
+# budgeted separately at 100 KB per refresh, so they are checked on their own.
+TILE_HOST="tilecache.rainviewer.com"
+api_req=$(json_get "$OUT/diagnostics.json" "sum(v['requests'] for k,v in (d.get('hosts') or {}).items() if k!='$TILE_HOST')")
+api_bytes=$(json_get "$OUT/diagnostics.json" "sum(v['bytes'] for k,v in (d.get('hosts') or {}).items() if k!='$TILE_HOST')")
+tile_bytes=$(json_get "$OUT/diagnostics.json" "((d.get('hosts') or {}).get('$TILE_HOST') or {}).get('bytes',0)")
+if [[ "$api_req" -gt 0 ]]; then
+  per=$((api_bytes / api_req))
+  check "response size < 15 KB" "$([[ $per -lt 15360 ]] && echo 1 || echo 0)" "mean $per bytes over $api_req data requests"
 else
-  warn "response size" "not measured: HTTP counters are 0 until KarooHttp (WP8) calls DebugHooks.counters.httpRequest"
+  warn "response size" "not measured: no data API request fell inside the measurement window"
+fi
+if [[ "$tile_bytes" -gt 0 ]]; then
+  check "radar tiles <= 100 KB" "$([[ $tile_bytes -le 102400 ]] && echo 1 || echo 0)" "$tile_bytes bytes of radar tiles in the window"
 fi
 
 pss=$(json_get "$OUT/diagnostics.json" "d['memory']['total_pss_kb']")
