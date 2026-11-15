@@ -336,3 +336,48 @@ Licensing: upstream is Apache-2.0 — keep `LICENSE`, keep existing copyright he
 3. Current Open-Meteo model IDs for Europe, and whether `minutely_15` honours `models=` for every member or silently interpolates hourly data. (WP2 — record the answer in `ModelRegistry` comments.)
 4. How Open-Meteo counts a 5-model × 4-location × 6-variable request against the daily quota. Measure with the diagnostics counter; target under 1,500 weighted calls per 8-hour ride.
 5. Synoptic free-tier monthly quota today; set the default Synoptic cadence from it.
+
+---
+
+## 9. WindField Ultimate parity (phase 2)
+
+Added after the owner asked for full Ultimate parity. These packages start once WP1 is merged and may run in parallel with WP2–12. Everything stays on-device and keyless unless noted. Endpoints marked ✔ were probed live on 2026-11-14.
+
+### 9.1 Parity matrix
+
+| WindField Ultimate feature | TrueWind approach | Honest gap |
+|---|---|---|
+| 5-min updates, 4 sources, auto-select, averaging | WP2–4, WP8 (5/10/15/30 min setting, ensemble weighting) | none; exceeds |
+| Race Mode (4 h without phone) | 4 h of 15-min steps cached every fetch (§4.1) | none |
+| Radar images every 10 min, zoom | **WP13.** RainViewer public API ✔ (`api.rainviewer.com/public/weather-maps.json`, then 256 px PNG tiles from `tilecache.rainviewer.com{path}/256/{z}/{x}/{y}/2/1_1.png`; an empty tile was 334 bytes). Graphical 2×2 field: 1–4 tiles around the rider, rider dot, heading tick, wind arrow; tap cycles zoom 6/7/8; refresh 10 min; animate last 3 frames only when the field is visible | Coverage and attribution per RainViewer terms (non-commercial, show "RainViewer") |
+| Active wildfire overlay | **WP13.** US: NIFC public ArcGIS perimeter service (keyless; find the current FeatureServer URL at implementation time), query by bbox, draw outline on the radar field; alert if a perimeter is within 15 km | Non-US fires need a NASA FIRMS key (free, not created) |
+| Real-time lightning distance | **WP14.** No free keyless strike feed exists. Approximation: distance to the nearest radar core at or above ~45 dBZ (from the RainViewer tile colour scale) combined with METAR thunderstorm codes (`TS`, `VCTS`, `LTG` remarks) and NWS severe-thunderstorm polygons. Field "Storm distance" with a "est." marker. Provider interface left open for a real strike feed (Tomorrow.io premium, Weatherbit, Xweather) | **Not true strike data.** State this in the field description |
+| Ride insight alerts: rain timing, wildfire, NWS severe weather | **WP14.** `InRideAlert` effects. Rain: first 15-min step ≥ 0.2 mm within 45 min → "Rain in N min"; when raining, "Rain ends in N min". Sharpen with Tomorrow.io 1-minute timeline when a key is set. NWS: `api.weather.gov/alerts/active?point=lat,lon` ✔ every 10 min in the US, alert on new Severe/Extreme events. Wind: gust ≥ configurable threshold; wind shift ≥ 60° expected within 30 min | NWS alerts are US only, as in WindField |
+| Minute-by-minute rain bar | **WP14.** Graphical 2×1 bar chart of the next 60–120 min: 15-min steps from Open-Meteo, 1-min from Tomorrow.io when keyed | 15-min resolution without a key |
+| Start-of-ride 6-hour forecast pop-up | **WP14.** On `RideState.Recording` after Idle: one `InRideAlert` summarising wind trend, temperature range, rain chance for the next 6 h (along the route if loaded) | none |
+| Air quality (AQI, PM2.5, ozone, UV, solar) | **WP15.** Open-Meteo air-quality API ✔ (`air-quality-api.open-meteo.com/v1/air-quality?current=us_aqi,pm2_5,ozone,uv_index`), every 30 min. Fields: AQI (coloured), PM2.5, ozone | Model-based, not PurpleAir sensors; a PurpleAir key could be added later |
+| Extra optional fields | **WP15.** Dew point, visibility, solar radiation, wind chill, feels-like, max wind this ride, last update (min ago), next update (countdown), weather-station distance, effective wind direction, sunrise/sunset are native Karoo fields already. Verify exact Open-Meteo variable names before use | none |
+| Finish alert to a contact | **WP16.** With a route loaded, when time-to-destination first drops under 60/30/15 min (setting), POST once to a user-configured HTTPS URL (ntfy topic or any webhook) with rider-chosen text and ETA. No location in the payload unless the user opts in | Not email; needs the contact to subscribe to the ntfy topic or the user to wire the webhook. No backend |
+| Web ride planner with departure time | **WP16.** In-app "Route weather" screen: 8 points along the loaded route for a chosen start time (now, +1 h … +12 h), wind relative to route bearing, temperature, rain, a ride score; "better start" hint by scanning the next 12 h | On the device, not a website; only for the loaded route |
+| Daily pre-flight briefing email, Strava/RWGPS reposting and awards, trophy case, team kit, bonus Garmin apps | **Not built.** These are WindField's web/account services and need a server and third-party OAuth apps | Out of scope for an on-device extension; FIT developer fields carry the wind data into any platform that reads them |
+
+### 9.2 Additional work packages
+
+| WP | Title | Depends on | Owns | Done when |
+|---|---|---|---|---|
+| 13 | Radar and wildfire field | 1, 8 | `core/providers/radar/`, `datatypes/Radar*`, `screens/Radar*` | Tile maths unit-tested; field renders on the Karoo from live tiles; ≤ 4 tiles (≤ 100 KB) per refresh; no fetch when hidden |
+| 14 | Alerts, rain bar, storm distance, start-of-ride summary | 2, 3, 13 | `core/alerts/`, `datatypes/Rain*`, `datatypes/Storm*` | Alert rules unit-tested with a fake clock (each fires once, with hysteresis); e2e replay shows an alert on a rainy fixture |
+| 15 | Air quality and extra fields | 1 | `core/providers/airquality/`, `datatypes/` additions | Parsers with fixtures; fields listed in `extension_info.xml` |
+| 16 | Finish alert and route weather screen | 2, 9 | `core/route/`, `screens/RouteWeather*`, `FinishAlert*` | Fires exactly once per ride in a fake-clock test; screen shows 8 points for a fixture route |
+
+### 9.3 Keys now available
+
+Stored outside every repo in `~/.config/truewind/keys.env` (mode 600) as `SYNOPTIC_TOKEN` and `TOMORROW_API_KEY`. Agents may `source` that file for live smoke tests and to enter keys into the app on the device over adb. **Never copy the values into the repo, fixtures, logs, commit messages or reports.** Fixtures recorded from keyed APIs must have the key stripped from URLs.
+
+- Synoptic ✔: `https://api.synopticdata.com/v2/stations/latest?radius=<lat>,<lon>,<km>&limit=8&vars=wind_speed,wind_direction,wind_gust&within=30&units=metric&token=…` returned 5 stations within 1.6 km of the test point, observations 1–2 min old, 5.2 KB. Caveats found: `ELEVATION` is in feet; network `MNET_ID` 65 is citizen (CWOP) stations, often roof-mounted and sheltered — weight them below ASOS/AWOS (`MNET_ID` 1) and RAWS (2), and treat a 0.0 speed with 0.0 direction as "calm or sensor idle", not as a north wind.
+- Tomorrow.io ✔: `https://api.tomorrow.io/v4/weather/realtime?location=<lat>,<lon>&units=metric&apikey=…` works; free plan 500/day, 25/hour.
+- Pirate Weather: not created (email-code signup needs the owner). Not required.
+
+### 9.4 End-to-end definition of done
+
+`scripts/e2e.sh` on the connected Karoo 3 passes: build → install → replay-mode ride with every TrueWind field on a page → live fetch from each keyless provider plus Synoptic and Tomorrow.io → assertions from TESTING §4 (T3) → FIT file contains the developer fields → no crash/ANR. Plus `./gradlew build` and the replay accuracy gate (TESTING §3) green on the fixture corpus.
