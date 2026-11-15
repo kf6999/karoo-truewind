@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="io.github.kf6999.truewind.core.math.AnglesTest" tests="20" skipped="0" failures="0" errors="0" timestamp="2026-11-15T06:21:30.423Z" hostname="MacBookPro.verizon.net" time="0.028">
+<testsuite name="io.github.kf6999.truewind.core.math.AnglesTest" tests="20" skipped="0" failures="0" errors="0" timestamp="2026-11-15T10:16:51.518Z" hostname="MacBookPro.verizon.net" time="0.028">
   <properties/>
   <testcase name="lerpAngle_opposite" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.001"/>
   <testcase name="signedAngleDifference_exactly180" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
-  <testcase name="smoothAngle_takesShortArc" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.001"/>
+  <testcase name="smoothAngle_takesShortArc" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.002"/>
   <testcase name="normalize_property_rangeAndIdempotent" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.004"/>
-  <testcase name="lerpAngle_simple" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
+  <testcase name="lerpAngle_simple" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.001"/>
   <testcase name="lerpAngle_negativeInput" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
   <testcase name="normalizeDegrees_values" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
   <testcase name="signedAngleDifference_inputsAbove360" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
   <testcase name="signedAngleDifference_basic" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
-  <testcase name="circularMean_acrossWrap" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.008"/>
+  <testcase name="circularMean_acrossWrap" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.007"/>
   <testcase name="smoothAngle_property_convergesWithoutSwinging" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.002"/>
   <testcase name="lerpAngle_endpoints" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
   <testcase name="lerpAngle_crossesZeroForward" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
   <testcase name="lerpAngle_above360" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
   <testcase name="normalizeSignedDegrees_values" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
   <testcase name="lerpAngle_crossesZeroBackward" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
-  <testcase name="circularMean_weighted" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
-  <testcase name="signedAngleDifference_property_matchesNormalisedDifference" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.008"/>
+  <testcase name="circularMean_weighted" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.001"/>
+  <testcase name="signedAngleDifference_property_matchesNormalisedDifference" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.007"/>
   <testcase name="lerpAngle_shortestPath" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
   <testcase name="circularMean_degenerate" classname="io.github.kf6999.truewind.core.math.AnglesTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>

@@ -1,0 +1,147 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d7f3325e00075b39664041f9beaf8de79b928aa1.001.2",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d7f3325e00075b39664041f9beaf8de79b928aa1.001.2",
+    "@type": "wx:Alert",
+    "id": "urn:oid:2.49.0.1.840.0.d7f3325e00075b39664041f9beaf8de79b928aa1.001.2",
+    "areaDesc": "San Francisco; Coastal North Bay Including Point Reyes National Seashore; San Francisco Peninsula Coast; Northern Monterey Bay; Southern Monterey Bay and Big Sur Coast",
+    "references": [
+     {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f2c8efa4401866902daeeb8dfa3ef9239302450d.001.2",
+      "identifier": "urn:oid:2.49.0.1.840.0.f2c8efa4401866902daeeb8dfa3ef9239302450d.001.2",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "sent": "2026-11-14T17:51:00-08:00"
+     }
+    ],
+    "sent": "2026-11-15T00:29:00-08:00",
+    "effective": "2026-11-15T00:29:00-08:00",
+    "onset": "2026-11-15T00:29:00-08:00",
+    "expires": "2026-11-15T08:30:00-08:00",
+    "ends": "2026-11-15T04:00:00-08:00",
+    "status": "Actual",
+    "messageType": "Update",
+    "category": "Met",
+    "severity": "Moderate",
+    "certainty": "Likely",
+    "urgency": "Expected",
+    "event": "High Surf Warning",
+    "sender": "w-nws.webmaster@noaa.gov",
+    "senderName": "NWS San Francisco CA",
+    "headline": "High Surf Warning issued November 15 at 12:29AM PST until November 15 at 4:00AM PST by NWS San Francisco CA",
+    "description": "* WHAT...For the High Surf Warning, Dangerously large breaking\nwaves of 25 to 35 ft, with occasional sets of 40 to 50 ft at\nfavored breakpoints. For the High Su",
+    "instruction": "Everyone should remain out of the water due to life-threatening\nsurf conditions. Stay off of jetties, piers, and other waterside\ninfrastructure.",
+    "response": "Avoid",
+    "note": null,
+    "parameters": {
+     "AWIPSidentifier": [
+      "CFWMTR"
+     ],
+     "WMOidentifier": [
+      "WHUS46 KMTR 150829"
+     ],
+     "NWSheadline": [
+      "HIGH SURF WARNING REMAINS IN EFFECT UNTIL 4 AM PST EARLY THIS MORNING... ...HIGH SURF ADVISORY IN EFFECT FROM 4 AM EARLY THIS MORNING TO 4 AM PST TUESDAY"
+     ],
+     "BLOCKCHANNEL": [
+      "EAS",
+      "NWEM",
+      "CMAS"
+     ],
+     "VTEC": [
+      "/O.CON.KMTR.SU.W.0001.000000T0000Z-261115T1200Z/"
+     ],
+     "eventEndingTime": [
+      "2026-11-15T04:00:00-08:00"
+     ],
+     "expiredReferences": [
+      "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.6ebf24d167c2570ae30a2917970d82b92742e6b2.001.1,2026-11-14T01:05:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.988379c493882a67dddd4459e7bcc8cbe0076881.001.2,2026-11-13T17:57:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.0632cb6f5b2eb910c29e12ac4f87fc7c178b0297.003.1,2026-11-13T15:53:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.0632cb6f5b2eb910c29e12ac4f87fc7c178b0297.001.2,2026-11-13T15:53:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.f44cdf38b306227a23905cf0f5ed5f8d4854fc84.002.1,2026-11-13T03:44:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.f44cdf38b306227a23905cf0f5ed5f8d4854fc84.001.1,2026-11-13T03:44:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.cdad9736fd52c00007a734100826b65a2f4993b4.002.1,2026-11-12T14:58:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.cdad9736fd52c00007a734100826b65a2f4993b4.001.1,2026-11-12T14:58:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.f24acdc8bab05264fb6a2dc1481bf8cf8e0da56e.002.2,2026-11-11T22:48:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.f24acdc8bab05264fb6a2dc1481bf8cf8e0da56e.001.2,2026-11-11T22:48:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.dcd2d95d071b65ff14157dcba880a1162d3288fc.001.1,2026-11-11T18:09:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.dcd2d95d071b65ff14157dcba880a1162d3288fc.002.1,2026-11-11T18:09:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.4b5be439c18dd1d2d8f62b3a64cbb95f0f6a1b66.002.1,2026-11-11T08:08:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.4b5be439c18dd1d2d8f62b3a64cbb95f0f6a1b66.001.1,2026-11-11T08:08:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.3b178227abcba8935da903554eef89daded876da.002.2,2026-11-11T10:17:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.3b178227abcba8935da903554eef89daded876da.001.2,2026-11-11T10:17:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.750f043d2e3232d94baf2bf959b68cf64bfe15dd.002.1,2026-11-11T00:14:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.750f043d2e3232d94baf2bf959b68cf64bfe15dd.001.1,2026-11-11T00:14:00-08:00"
+     ]
+    },
+    "scope": "Public",
+    "code": "IPAWSv1.0",
+    "language": "en-US",
+    "web": "http://www.weather.gov",
+    "eventCode": {
+     "SAME": [
+      "NWS"
+     ],
+     "NationalWeatherService": [
+      "SUW"
+     ]
+    }
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d7f3325e00075b39664041f9beaf8de79b928aa1.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d7f3325e00075b39664041f9beaf8de79b928aa1.001.1",
+    "@type": "wx:Alert",
+    "id": "urn:oid:2.49.0.1.840.0.d7f3325e00075b39664041f9beaf8de79b928aa1.001.1",
+    "areaDesc": "San Francisco; Coastal North Bay Including Point Reyes National Seashore; San Francisco Peninsula Coast; Northern Monterey Bay; Southern Monterey Bay and Big Sur Coast",
+    "references": [],
+    "sent": "2026-11-15T00:29:00-08:00",
+    "effective": "2026-11-15T00:29:00-08:00",
+    "onset": "2026-11-15T04:00:00-08:00",
+    "expires": "2026-11-15T08:30:00-08:00",
+    "ends": "2026-11-17T04:00:00-08:00",
+    "status": "Actual",
+    "messageType": "Alert",
+    "category": "Met",
+    "severity": "Minor",
+    "certainty": "Likely",
+    "urgency": "Expected",
+    "event": "High Surf Advisory",
+    "sender": "w-nws.webmaster@noaa.gov",
+    "senderName": "NWS San Francisco CA",
+    "headline": "High Surf Advisory issued November 15 at 12:29AM PST until November 17 at 4:00AM PST by NWS San Francisco CA",
+    "description": "* WHAT...For the High Surf Warning, Dangerously large breaking\nwaves of 25 to 35 ft, with occasional sets of 40 to 50 ft at\nfavored breakpoints. For the High Su",
+    "instruction": "Everyone should remain out of the water due to life-threatening\nsurf conditions. Stay off of jetties, piers, and other waterside\ninfrastructure.",
+    "response": "Avoid",
+    "note": null,
+    "parameters": {
+     "AWIPSidentifier": [
+      "CFWMTR"
+     ],
+     "WMOidentifier": [
+      "WHUS46 KMTR 150829"
+     ],
+     "NWSheadline": [
+      "HIGH SURF WARNING REMAINS IN EFFECT UNTIL 4 AM PST EARLY THIS MORNING... ...HIGH SURF ADVISORY IN EFFECT FROM 4 AM EARLY THIS MORNING TO 4 AM PST TUESDAY"
+     ],
+     "BLOCKCHANNEL": [
+      "EAS",
+      "NWEM",
+      "CMAS"
+     ],
+     "VTEC": [
+      "/O.NEW.KMTR.SU.Y.0004.261115T1200Z-261117T1200Z/"
+     ],
+     "eventEndingTime": [
+      "2026-11-17T04:00:00-08:00"
+     ]
+    },
+    "scope": "Public",
+    "code": "IPAWSv1.0",
+    "language": "en-US",
+    "web": "http://www.weather.gov",
+    "eventCode": {
+     "SAME": [
+      "NWS"
+     ],
+     "NationalWeatherService": [
+      "SUY"
+     ]
+    }
+   }
+  }
+ ],
+ "title": "Current watches, warnings, and advisories for 37.7749 N, 122.4194 W",
+ "updated": "2026-11-15T10:11:07+00:00"
+}
