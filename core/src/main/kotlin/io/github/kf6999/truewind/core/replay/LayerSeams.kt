@@ -212,7 +212,14 @@ object ReplayConfigs {
         when {
             n.startsWith("member:") -> MemberOnlyConfig(n.removePrefix("member:"), obs = false)
             n.startsWith("member+obs:") -> MemberOnlyConfig(n.removePrefix("member+obs:"), obs = true)
+            n.startsWith("member-h:") -> MemberOnlyConfig(n.removePrefix("member-h:"), obs = false, hourly = true)
             n == NoWindConfig.name -> NoWindConfig
+            n.startsWith("upstream:round") -> object : ReplayConfig {
+                // Diagnostics: upstream with a different rounding grid (km), e.g. upstream:round0.01.
+                override val name = n
+                override val implementation = mapOf("all" to "upstream-emulation, $n")
+                override fun create(env: ReplayEnvironment): ReplayPipeline = UpstreamPipeline(env, roundKm = n.removePrefix("upstream:round").toDouble())
+            }
             else -> all.firstOrNull { it.name == n } ?: throw IllegalArgumentException("unknown config '$n'; known: ${all.joinToString { it.name }}, member:<model>")
         }
     }
@@ -232,10 +239,10 @@ object NoWindConfig : ReplayConfig {
 }
 
 /** One archived member through the production engine, 10 m wind as rider wind (diagnostics). */
-class MemberOnlyConfig(private val model: String, private val obs: Boolean) : ReplayConfig {
+class MemberOnlyConfig(private val model: String, private val obs: Boolean, private val hourly: Boolean = false) : ReplayConfig {
     private val memberId = if (model.contains(':')) model else "open-meteo:$model"
-    override val name = (if (obs) "member+obs:" else "member:") + model
+    override val name = (if (hourly) "member-h:" else if (obs) "member+obs:" else "member:") + model
     override val implementation = mapOf("ensemble" to "production WindEngine, member $memberId only" + if (obs) " + observations" else "")
     override fun create(env: ReplayEnvironment): ReplayPipeline =
-        LayeredPipeline(env, WindEngineLayer(env, useObservations = obs, onlyMembers = setOf(memberId)), null)
+        LayeredPipeline(env, WindEngineLayer(env, useObservations = obs, onlyMembers = setOf(memberId), forceResolution = if (hourly) Resolution.HOURLY else null), null)
 }

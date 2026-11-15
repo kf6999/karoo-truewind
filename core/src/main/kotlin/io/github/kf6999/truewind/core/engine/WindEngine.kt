@@ -219,13 +219,13 @@ class WindEngine(
                 }
                 val errors = Fusion.scoreMembers(usable, accepted, lastScored, cfg.fusion)
                 scored = errors.size
-                if (errors.isNotEmpty()) {
+                if (errors.isNotEmpty() && cfg.fusion.skillWeighting) {
                     weights.update(errors, now)
                     weightStore.save(rider, weights.export())
                 }
                 weightMap = weights.weightMap(members, now)
             }
-            newSnapshot = Fusion.build(now, usable, weightMap, accepted, cfg.fusion)
+            newSnapshot = Fusion.build(now, usable, weightMap, accepted, cfg.fusion)?.let { averageResiduals(it, now) }
         }
         val success = newSnapshot != null
         if (newSnapshot != null) {
@@ -262,6 +262,36 @@ class WindEngine(
             budget = planner.budgetSnapshot(now),
         )
     }
+
+    /**
+     * [FusionConfig.residualAverageMs]: one 2-minute station report is dominated by gusts, so each
+     * station's residual becomes the mean of its residuals over the window. A report's residual is
+     * taken once, against the blend of the cycle that first saw it.
+     */
+    private fun averageResiduals(s: FusionSnapshot, now: Long): FusionSnapshot {
+        val window = config.fusion.residualAverageMs
+        if (window <= 0L) return s
+        for (i in s.stations.indices) {
+            val r = s.residual(i) ?: continue
+            val o = s.stations[i]
+            val h = residualHistory.getOrPut(Fusion.stationKey(o)) { ArrayList() }
+            if (h.none { it.first == o.timeMs }) h += o.timeMs to r
+        }
+        val iter = residualHistory.values.iterator()
+        while (iter.hasNext()) {
+            val h = iter.next()
+            h.removeAll { now - it.first > window + config.qc.maxAgeMs }
+            if (h.isEmpty()) iter.remove()
+        }
+        return s.withResiduals { i ->
+            val o = s.stations[i]
+            val h = residualHistory[Fusion.stationKey(o)]?.filter { o.timeMs - it.first in 0..window }
+            if (h.isNullOrEmpty()) s.residual(i)
+            else io.github.kf6999.truewind.core.model.WindVector(h.sumOf { it.second.u } / h.size, h.sumOf { it.second.v } / h.size)
+        }
+    }
+
+    private val residualHistory = HashMap<String, MutableList<Pair<Long, io.github.kf6999.truewind.core.model.WindVector>>>()
 
     /** Upstream emulation: the configured member (or the first one) at hourly steps only. */
     private fun upstreamSeries(series: List<ForecastSeries>, rider: GeoPoint): List<ForecastSeries> {

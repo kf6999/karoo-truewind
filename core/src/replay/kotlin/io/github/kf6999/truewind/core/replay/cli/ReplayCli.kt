@@ -141,6 +141,7 @@ private fun applySetting(kv: String) {
     val e = LayerSeams.engineConfig
     val f = e.fusion
     val q = e.qc
+    val before = LayerSeams.engineConfig to LayerSeams.riderConfig
     LayerSeams.engineConfig = when (key) {
         "fusion.halfLifeMin" -> e.copy(fusion = f.copy(halfLifeMs = minutes()))
         "fusion.epsilon" -> e.copy(fusion = f.copy(epsilon = d()))
@@ -149,6 +150,10 @@ private fun applySetting(kv: String) {
         "fusion.priorPseudoWeight" -> e.copy(fusion = f.copy(priorPseudoWeight = d()))
         "fusion.residualDistanceScaleKm" -> e.copy(fusion = f.copy(residualDistanceScaleKm = d()))
         "fusion.residualAgeScaleMin" -> e.copy(fusion = f.copy(residualAgeScaleMs = minutes()))
+        "fusion.residualAverageMin" -> e.copy(fusion = f.copy(residualAverageMs = minutes()))
+        "fusion.skillWeighting" -> e.copy(fusion = f.copy(skillWeighting = value.toBoolean()))
+        "fusion.spec" -> e.copy(fusion = io.github.kf6999.truewind.core.fusion.FusionConfig.SPEC_4_3)
+        "fusion.memberAnchorMin" -> e.copy(fusion = f.copy(memberAnchorStepMs = minutes()))
         "fusion.memberHoldMin" -> e.copy(fusion = f.copy(memberHoldMs = minutes()))
         "fusion.priors" -> e.copy(fusion = f.copy(priors = parsePriors(value)))
         "qc.maxAgeMin" -> e.copy(qc = q.copy(maxAgeMs = minutes()))
@@ -167,8 +172,10 @@ private fun applySetting(kv: String) {
         "rider.heightM" -> r.copy(riderHeightM = d())
         else -> r
     }
-    require(key.startsWith("fusion.") || key.startsWith("qc.") || key.startsWith("engine.") || key.startsWith("planner.") || key.startsWith("rider.")) { "unknown setting $key" }
+    require(key in KNOWN_SETTINGS || before != (LayerSeams.engineConfig to LayerSeams.riderConfig)) { "unknown or no-op setting $kv" }
 }
+
+private val KNOWN_SETTINGS = setOf("fusion.priors")
 
 /** `hrrr:1.2;nbm:1.0` → priors by case-insensitive substring of the member id (first match wins, else 1.0). */
 private fun parsePriors(spec: String): io.github.kf6999.truewind.core.fusion.MemberPriors {

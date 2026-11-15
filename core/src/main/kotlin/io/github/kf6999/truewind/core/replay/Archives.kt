@@ -131,6 +131,13 @@ class ArchiveForecastProvider(
     override val id: String = "archive-${resolution.name.lowercase()}",
     /** Members served when the request names none (`best_match` emulation for upstream). */
     private val defaultMembers: List<String> = listOf("open-meteo:best_match"),
+    /**
+     * Steps served relative to the request time, like the live API: the app asks for
+     * `past_minutely_15=2&forecast_minutely_15=16` (−30 min … +4 h); upstream's hourly call starts
+     * at the current hour. Without this the archive would hand the pipeline data it never sees live.
+     */
+    private val pastMs: Long = if (resolution == Resolution.MINUTELY_15) 30 * 60_000L else 60 * 60_000L,
+    private val futureMs: Long = if (resolution == Resolution.MINUTELY_15) 4 * 3_600_000L else 12 * 3_600_000L,
 ) : ForecastProvider {
     var requests = 0
         private set
@@ -139,8 +146,12 @@ class ArchiveForecastProvider(
         requests++
         val members = request.members.ifEmpty { defaultMembers }
         val failed = mutableListOf<String>()
+        val lo = request.nowMs - pastMs
+        val hi = request.nowMs + futureMs
         val series = members.flatMap { m ->
-            val perPoint = request.points.mapNotNull { archive.seriesAt(m, resolution, it) }
+            val perPoint = request.points.mapNotNull { p ->
+                archive.seriesAt(m, resolution, p)?.let { s -> s.copy(steps = s.steps.filter { it.timeMs in lo..hi }) }
+            }
             if (perPoint.isEmpty() || perPoint.all { s -> s.steps.all { it.wind10m == null } }) failed += m
             perPoint
         }
