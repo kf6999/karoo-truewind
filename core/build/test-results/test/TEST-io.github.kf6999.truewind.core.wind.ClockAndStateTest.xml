@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.github.kf6999.truewind.core.wind.ClockAndStateTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-15T06:21:30.467Z" hostname="MacBookPro.verizon.net" time="0.002">
+  <properties/>
+  <testcase name="manualClock" classname="io.github.kf6999.truewind.core.wind.ClockAndStateTest" time="0.0"/>
+  <testcase name="placeholder" classname="io.github.kf6999.truewind.core.wind.ClockAndStateTest" time="0.001"/>
+  <testcase name="systemClockIsWallTime" classname="io.github.kf6999.truewind.core.wind.ClockAndStateTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

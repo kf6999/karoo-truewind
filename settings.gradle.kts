@@ -60,5 +60,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Karoo TrueWind"
 include("app")
+include(":core")
 include(":client")
 include(":client-example")
