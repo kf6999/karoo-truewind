@@ -34,6 +34,8 @@ kotlin {
 }
 
 dependencies {
+    // JSON tree parsing only (no compiler plugin needed): provider parsers in core/providers.
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(kotlin("test"))
     testImplementation(libs.junit)
 }
