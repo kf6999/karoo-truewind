@@ -270,6 +270,16 @@ class RainBarDataType(private val repo: WindRepository, private val hub: () -> P
 internal fun isVisible(repo: WindRepository, dataTypeId: String): Boolean =
     repo.sensorHub.activeRidePage.replayCache.firstOrNull()?.page?.elements?.any { it.dataTypeId == dataTypeId } == true
 
+/** Radar animation steps (pure): last [FRAMES] cached frames at 1 frame/s, then hold the newest [HOLD_TICKS] ticks. */
+object RadarAnimation {
+    const val FRAMES = 3
+    const val HOLD_TICKS = 5
+
+    /** (frameIdx, holdTicks) -> next state, called once per 1 s tick with [count] >= 2 frames. */
+    fun next(frameIdx: Int, holdTicks: Int, count: Int): Pair<Int, Int> =
+        if (frameIdx >= count - 1) { if (holdTicks + 1 >= HOLD_TICKS) 0 to 0 else frameIdx to holdTicks + 1 } else (frameIdx + 1) to 0
+}
+
 /** Per-view zoom state for the radar field; cycled by [RadarZoomReceiver]. */
 object RadarZoomRegistry {
     val ZOOMS = listOf(6, 7, 8)
@@ -375,7 +385,7 @@ class RadarDataType(private val repo: WindRepository, private val hub: () -> Par
         val tap: PendingIntent,
         val zoom: MutableStateFlow<Int>,
     ) {
-        val policy = RadarFramePolicy<ByteArray>(clock, keepFrames = 1)
+        val policy = RadarFramePolicy<ByteArray>(clock, keepFrames = RadarAnimation.FRAMES)
         var plan: TilePlan? = null
         var planZoom = -1
         var bases: List<Pair<Long, Bitmap>> = emptyList()
@@ -443,11 +453,10 @@ class RadarDataType(private val repo: WindRepository, private val hub: () -> Par
                 frameIdx = bases.size - 1
                 holdTicks = 0
             }
-            // Animation: oldest -> newest at 1 frame/s, hold the newest for 3 s.
+            // Animation: cached frames (never fetched for this), oldest -> newest at 1 frame/s, hold the newest ~5 s.
             if (bases.size > 1) {
-                if (frameIdx == bases.size - 1) {
-                    if (++holdTicks >= 3) { frameIdx = 0; holdTicks = 0 }
-                } else frameIdx++
+                val st = RadarAnimation.next(frameIdx, holdTicks, bases.size)
+                frameIdx = st.first; holdTicks = st.second
             }
             val (frameTime, base) = bases[frameIdx.coerceIn(0, bases.size - 1)]
             val snap = repo.snapshot.value
@@ -467,7 +476,7 @@ class RadarDataType(private val repo: WindRepository, private val hub: () -> Par
                 windFromDeg = wind?.takeIf { it.speed > 0.3 }?.directionFromDeg,
                 windText = windText,
                 label = "z$planZoom · ${age}m${if (bases.size > 1) " ${frameIdx + 1}/${bases.size}" else ""}",
-                fires = emptyList(), // wildfire overlay deferred
+                fires = hub.fires.value, // perimeters the wildfire alert already fetched (US); none -> nothing drawn
             )
             display(RadarRenderer.drawOverlay(base, drawPlan, overlay, dark))
         }
