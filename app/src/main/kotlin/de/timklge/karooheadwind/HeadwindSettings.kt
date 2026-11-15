@@ -17,6 +17,7 @@
 package de.timklge.karooheadwind
 
 import de.timklge.karooheadwind.datatypes.GpsCoordinates
+import io.github.kf6999.truewind.core.physics.Exposure
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -42,6 +43,8 @@ enum class TemperatureUnit(val id: String, val label: String, val unitDisplay: S
 }
 
 enum class RoundLocationSetting(val id: String, val label: String, val km: Int){
+    // TrueWind: "Exact" added; default changed to 1 km (SPEC 4.1 location privacy).
+    EXACT("exact", "Exact", 0),
     KM_1("1 km", "1 km", 1),
     KM_2("2 km", "2 km", 2),
     KM_3("3 km", "3 km", 3),
@@ -99,7 +102,7 @@ enum class RefreshRate(val id: String, val k2Ms: Long, val k3Ms: Long) {
 @Serializable
 data class HeadwindSettings(
     val welcomeDialogAccepted: Boolean = false,
-    val roundLocationTo: RoundLocationSetting = RoundLocationSetting.KM_3,
+    val roundLocationTo: RoundLocationSetting = RoundLocationSetting.KM_1,
     val forecastedKmPerHour: Int = 20,
     val forecastedMilesPerHour: Int = 12,
     val lastUpdateRequested: Long? = null,
@@ -109,6 +112,30 @@ data class HeadwindSettings(
     val refreshRate: RefreshRate = RefreshRate.STANDARD,
     val windUnit: WindUnit? = null,
     val enableUpdateNotifications: Boolean = true,
+    // --- TrueWind additions (SPEC 4, 5). All have defaults so upstream settings JSON decodes unchanged. ---
+    /** Keeps karoo-headwind's computation: one provider, hourly steps, 10 m wind as rider wind. */
+    val upstreamCompatibleMode: Boolean = false,
+    /** Fetch refresh interval, minutes: 5/10/15/30. */
+    val refreshIntervalMin: Int = 10,
+    val exposure: ExposureSetting = ExposureSetting.MIXED,
+    /** Rider torso height, m (0.9..1.5). */
+    val riderHeightM: Double = 1.2,
+    val cda: Double = 0.32,
+    val crr: Double = 0.005,
+    val bikeWeightKg: Double = 9.0,
+    /** Drafting cannot be detected; disables the virtual wind sensor. */
+    val groupRide: Boolean = false,
+    /** Headline fields show the 10 m wind instead of rider-height wind. */
+    val showWindAt10m: Boolean = false,
+    val layerEnsemble: Boolean = true,
+    val layerObservations: Boolean = true,
+    val layerDownscaling: Boolean = true,
+    val layerHeadingFusion: Boolean = true,
+    val layerVirtualSensor: Boolean = true,
+    /** Optional Synoptic Data token (non-commercial Open Access). Never logged. */
+    val synopticToken: String = "",
+    /** Optional Tomorrow.io API key. Never logged. */
+    val tomorrowApiKey: String = "",
 ){
 
     companion object {
@@ -122,5 +149,41 @@ data class HeadwindSettings(
     fun getWindUnit(isImperial: Boolean): WindUnit {
         return windUnit ?: defaultWindUnit(isImperial)
     }
+
+    /** Never prints API keys (settings objects end up in debug logs). */
+    override fun toString(): String =
+        "HeadwindSettings(welcome=$welcomeDialogAccepted, upstream=$upstreamCompatibleMode, refresh=$refreshIntervalMin, " +
+            "round=$roundLocationTo, exposure=$exposure, height=$riderHeightM, cda=$cda, crr=$crr, bike=$bikeWeightKg, " +
+            "group=$groupRide, show10m=$showWindAt10m, layers=${listOf(layerEnsemble, layerObservations, layerDownscaling, layerHeadingFusion, layerVirtualSensor)}, " +
+            "provider=$weatherProvider, owm=${openWeatherMapApiKey.isNotBlank()}, synoptic=${synopticToken.isNotBlank()}, tomorrow=${tomorrowApiKey.isNotBlank()})"
 }
+
+/** Exposure presets for rider-height downscaling (SPEC 4.4), mapped to `core.physics.Exposure`. */
+enum class ExposureSetting(val label: String, val exposure: Exposure) {
+    OPEN("Open (coast, plains)", Exposure.OPEN),
+    MIXED("Mixed (farmland, hedges)", Exposure.MIXED),
+    SHELTERED("Sheltered (suburb, trees)", Exposure.SHELTERED),
+    URBAN_FOREST("Urban / forest", Exposure.URBAN_FOREST),
+}
+
+/** CdA presets (SPEC 4.6), m². */
+enum class CdaPreset(val label: String, val cda: Double) {
+    HOODS("Road, hoods", 0.32),
+    DROPS("Road, drops", 0.28),
+    TT("TT / aero bars", 0.23),
+    GRAVEL("Gravel", 0.36),
+    MTB("MTB", 0.45),
+}
+
+/** Crr presets by surface (SPEC 4.6). */
+enum class CrrPreset(val label: String, val crr: Double) {
+    SMOOTH("Smooth asphalt", 0.004),
+    ROAD("Average road", 0.005),
+    ROUGH("Rough road", 0.007),
+    GRAVEL("Gravel", 0.010),
+    OFFROAD("Off-road / MTB", 0.015),
+}
+
+/** Refresh interval options (SPEC 4.1). */
+val REFRESH_INTERVAL_OPTIONS_MIN = listOf(5, 10, 15, 30)
 

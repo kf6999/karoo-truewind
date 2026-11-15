@@ -172,7 +172,8 @@ fun gpsCoordinateFlow(
     return concatenatedFlow
         .combine(settings) { gps, settings -> gps to settings }
         .map { (gps, settings) ->
-            gps?.round(settings.roundLocationTo.km.toDouble())
+            // TrueWind: "Exact" (0 km) sends the position unrounded.
+            if (settings.roundLocationTo.km <= 0) gps else gps?.round(settings.roundLocationTo.km.toDouble())
         }
         .dropNullsIfNullEncountered()
 }
