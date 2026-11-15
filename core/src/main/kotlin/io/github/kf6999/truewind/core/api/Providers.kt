@@ -126,6 +126,13 @@ data class Observation(
     /** Anemometer height above ground, m. METAR is assumed 10 m. */
     val sensorHeightM: Double = 10.0,
     val temperatureC: Double? = null,
+    /**
+     * Relative trust in this station, 0..1, used as a weight by QC and fusion. 1.0 for ASOS/AWOS
+     * airport sensors and RAWS; lower for citizen (CWOP) stations, which are often sheltered.
+     */
+    val reliability: Double = 1.0,
+    /** Station network as named by the provider (e.g. `ASOS`, `RAWS`, `CWOP`, Synoptic `MNET_ID`); null if unknown. */
+    val network: String? = null,
 )
 
 /** An observation source (AWC METAR, NWS, Synoptic). */

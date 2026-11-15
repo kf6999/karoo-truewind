@@ -1,0 +1,226 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "id": "https://api.weather.gov/stations/CO100",
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -106.83597,
+     39.19571
+    ]
+   },
+   "properties": {
+    "@id": "https://api.weather.gov/stations/CO100",
+    "@type": "wx:ObservationStation",
+    "elevation": {
+     "unitCode": "wmoUnit:m",
+     "value": 2418.8928
+    },
+    "stationIdentifier": "CO100",
+    "name": "082W04010RWS1RHS at Cemetry Ln Aspen",
+    "timeZone": "America/Denver",
+    "provider": "MesoWest",
+    "subProvider": "CDOT",
+    "distance": {
+     "unitCode": "wmoUnit:m",
+     "value": 817.77876960303
+    },
+    "bearing": {
+     "unitCode": "wmoUnit:degree_(angle)",
+     "value": 294
+    },
+    "forecast": "https://api.weather.gov/zones/forecast/COZ010",
+    "county": "https://api.weather.gov/zones/county/COC097",
+    "fireWeatherZone": "https://api.weather.gov/zones/fire/COZ205"
+   }
+  },
+  {
+   "id": "https://api.weather.gov/stations/KASE",
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -106.87051,
+     39.22992
+    ]
+   },
+   "properties": {
+    "@id": "https://api.weather.gov/stations/KASE",
+    "@type": "wx:ObservationStation",
+    "elevation": {
+     "unitCode": "wmoUnit:m",
+     "value": 2338.7304
+    },
+    "stationIdentifier": "KASE",
+    "name": "Aspen-Pitkin County Airport",
+    "timeZone": "America/Denver",
+    "provider": "ASOS-HFM",
+    "subProvider": "",
+    "distance": {
+     "unitCode": "wmoUnit:m",
+     "value": 5565.0967611841
+    },
+    "bearing": {
+     "unitCode": "wmoUnit:degree_(angle)",
+     "value": 318
+    },
+    "forecast": "https://api.weather.gov/zones/forecast/COZ010",
+    "county": "https://api.weather.gov/zones/county/COC097",
+    "fireWeatherZone": "https://api.weather.gov/zones/fire/COZ205"
+   }
+  },
+  {
+   "id": "https://api.weather.gov/stations/CO101",
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -107.02609,
+     39.35902
+    ]
+   },
+   "properties": {
+    "@id": "https://api.weather.gov/stations/CO101",
+    "@type": "wx:ObservationStation",
+    "elevation": {
+     "unitCode": "wmoUnit:m",
+     "value": 2033.9304
+    },
+    "stationIdentifier": "CO101",
+    "name": "082E02370RWS1SEC at 2 Rivers Rd Basalt",
+    "timeZone": "America/Denver",
+    "provider": "MesoWest",
+    "subProvider": "CDOT",
+    "distance": {
+     "unitCode": "wmoUnit:m",
+     "value": 25194.066456865
+    },
+    "bearing": {
+     "unitCode": "wmoUnit:degree_(angle)",
+     "value": 317
+    },
+    "forecast": "https://api.weather.gov/zones/forecast/COZ010",
+    "county": "https://api.weather.gov/zones/county/COC097",
+    "fireWeatherZone": "https://api.weather.gov/zones/fire/COZ205"
+   }
+  },
+  {
+   "id": "https://api.weather.gov/stations/E0538",
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -107.22167,
+     39.39633
+    ]
+   },
+   "properties": {
+    "@id": "https://api.weather.gov/stations/E0538",
+    "@type": "wx:ObservationStation",
+    "elevation": {
+     "unitCode": "wmoUnit:m",
+     "value": 1883.411016
+    },
+    "stationIdentifier": "E0538",
+    "name": "EW0538 Carbondale",
+    "timeZone": "America/Denver",
+    "provider": "APRSWXNET",
+    "subProvider": "",
+    "distance": {
+     "unitCode": "wmoUnit:m",
+     "value": 40795.980894517
+    },
+    "bearing": {
+     "unitCode": "wmoUnit:degree_(angle)",
+     "value": 303
+    },
+    "forecast": "https://api.weather.gov/zones/forecast/COZ008",
+    "county": "https://api.weather.gov/zones/county/COC045",
+    "fireWeatherZone": "https://api.weather.gov/zones/fire/COZ205"
+   }
+  },
+  {
+   "id": "https://api.weather.gov/stations/KEGE",
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -106.91667,
+     39.65
+    ]
+   },
+   "properties": {
+    "@id": "https://api.weather.gov/stations/KEGE",
+    "@type": "wx:ObservationStation",
+    "elevation": {
+     "unitCode": "wmoUnit:m",
+     "value": 1993.0872
+    },
+    "stationIdentifier": "KEGE",
+    "name": "Eagle County Regional",
+    "timeZone": "America/Denver",
+    "provider": "ASOS-HFM",
+    "subProvider": "",
+    "distance": {
+     "unitCode": "wmoUnit:m",
+     "value": 51423.661569819
+    },
+    "bearing": {
+     "unitCode": "wmoUnit:degree_(angle)",
+     "value": 351
+    },
+    "forecast": "https://api.weather.gov/zones/forecast/COZ008",
+    "county": "https://api.weather.gov/zones/county/COC037",
+    "fireWeatherZone": "https://api.weather.gov/zones/fire/COZ205"
+   }
+  },
+  {
+   "id": "https://api.weather.gov/stations/CO090",
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -107.14419,
+     39.61137
+    ]
+   },
+   "properties": {
+    "@id": "https://api.weather.gov/stations/CO090",
+    "@type": "wx:ObservationStation",
+    "elevation": {
+     "unitCode": "wmoUnit:m",
+     "value": 1883.9688
+    },
+    "stationIdentifier": "CO090",
+    "name": "070E12820RWS1RHS - 0.3 mi W of Bair Ranch Rest Area",
+    "timeZone": "America/Denver",
+    "provider": "MesoWest",
+    "subProvider": "CDOT",
+    "distance": {
+     "unitCode": "wmoUnit:m",
+     "value": 53929.774848129
+    },
+    "bearing": {
+     "unitCode": "wmoUnit:degree_(angle)",
+     "value": 329
+    },
+    "forecast": "https://api.weather.gov/zones/forecast/COZ008",
+    "county": "https://api.weather.gov/zones/county/COC045",
+    "fireWeatherZone": "https://api.weather.gov/zones/fire/COZ205"
+   }
+  }
+ ],
+ "observationStations": [
+  "https://api.weather.gov/stations/CO100",
+  "https://api.weather.gov/stations/KASE",
+  "https://api.weather.gov/stations/CO101",
+  "https://api.weather.gov/stations/E0538",
+  "https://api.weather.gov/stations/KEGE",
+  "https://api.weather.gov/stations/CO090"
+ ],
+ "pagination": {
+  "next": "https://api.weather.gov/stations?id%5B0%5D=ABAUT&id%5B1%5D=ALXC2&id%5B2%5D=BBRC2&id%5B3%5D=BCRU1&id%5B4%5D=BIVU1&id%5B5%5D=BREU1&id%5B6%5D=CAGMS&id%5B7%5D=CAVLP&id%5B8%5D=CCRU1&id%5B9%5D=CMEC2&id%5B10%5D=CO054&id%5B11%5D=CO084&id%5B12%5D=CO089&id%5B13%5D=CO090&id%5B14%5D=CO092&id%5B15%5D=CO095&id%5B16%5D=CO096&id%5B17%5D=CO097&id%5B18%5D=CO098&id%5B19%5D=CO099&id%5B20%5D=CO100&id%5B21%5D=CO101&id%5B22%5D=CO102&id%5B23%5D=CO118&id%5B24%5D=CPTC2&id%5B25%5D=CSU81&id%5B26%5D=CSU89&id%5B27%5D=DIAU1&id%5B28%5D=DNOC2&id%5B29%5D=DRAC2&id%5B30%5D=E0538&id%5B31%5D=EDGUT&id%5B32%5D=G3823&id%5B33%5D=GDRC2&id%5B34%5D=HCKC2&id%5B35%5D=HMEC2&id%5B36%5D=JAYC2&id%5B37%5D=JCRC2&id%5B38%5D=K5SM&id%5B39%5D=KAGU1&id%5B40%5D=KAIB&id%5B41%5D=KAJZ&id%5B42%5D=KASE&id%5B43%5D=KBDG&id%5B44%5D=KCAG&id%5B45%5D=KCEZ&id%5B46%5D=KCNY&id%5B47%5D=KCYS&id%5B48%5D=KDRO&id%5B49%5D=KEEO&id%5B50%5D=KEGE&id%5B51%5D=KGJT&id%5B52%5D=KGUC&id%5B53%5D=KHDN&id%5B54%5D=KMTJ&id%5B55%5D=KMYP&id%5B56%5D=KPRU1&id%5B57%5D=KPSO&id%5B58%5D=KRIL&id%5B59%5D=KSBS&id%5B60%5D=KTEX&id%5B61%5D=KVEL&id%5B62%5D=LDRC2&id%5B63%5D=LODC2&id%5B64%5D=LPRC2&id%5B65%5D=MITC2&id%5B66%5D=MOAB&id%5B67%5D=MOKC2&id%5B68%5D=NLPU1&id%5B69%5D=PIRC2&id%5B70%5D=SAWC2&id%5B71%5D=STORM&id%5B72%5D=SURC2&id%5B73%5D=TS654&id%5B74%5D=UINU1&id%5B75%5D=UPRU1&id%5B76%5D=USWU1&id%5B77%5D=UTSAL&id%5B78%5D=WHBU1&id%5B79%5D=WNTU1&cursor=eyJzIjo1MDB9"
+ }
+}

@@ -1,0 +1,266 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.040c0f4610d06fdd9d27398231b4ff0fa99c3af5.001.1",
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -96.09,
+       27.6
+      ],
+      [
+       -96.11,
+       27.66
+      ],
+      [
+       -96.01,
+       27.72
+      ],
+      [
+       -95.61,
+       27.72
+      ],
+      [
+       -95.54,
+       27.66
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.040c0f4610d06fdd9d27398231b4ff0fa99c3af5.001.1",
+    "@type": "wx:Alert",
+    "id": "urn:oid:2.49.0.1.840.0.040c0f4610d06fdd9d27398231b4ff0fa99c3af5.001.1",
+    "areaDesc": "Waters from Port Aransas to Matagorda Ship Channel from 20 to 60 NM",
+    "references": [],
+    "sent": "2026-11-15T03:59:00-06:00",
+    "effective": "2026-11-15T03:59:00-06:00",
+    "onset": "2026-11-15T03:59:00-06:00",
+    "expires": "2026-11-15T05:00:00-06:00",
+    "ends": "2026-11-15T05:00:00-06:00",
+    "status": "Actual",
+    "messageType": "Alert",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Likely",
+    "urgency": "Immediate",
+    "event": "Special Marine Warning",
+    "sender": "w-nws.webmaster@noaa.gov",
+    "senderName": "NWS Corpus Christi TX",
+    "headline": "Special Marine Warning issued November 15 at 3:59AM CST until November 15 at 5:00AM CST by NWS Corpus Christi TX",
+    "description": "SMWCRP\n\nThe National Weather Service in Corpus Christi has issued a\n\n* Special Marine Warning for...\nWaters from Port Aransas to Matagorda Ship Channel from 20 ",
+    "instruction": "Move to safe harbor until hazardous weather passes.",
+    "response": "Avoid",
+    "note": null,
+    "parameters": {
+     "AWIPSidentifier": [
+      "SMWCRP"
+     ],
+     "WMOidentifier": [
+      "WHUS54 KCRP 150959"
+     ],
+     "eventMotionDescription": [
+      "2026-11-15T09:58:00-00:00...storm...281DEG...17KT...27.62,-95.97"
+     ],
+     "maxWindGust": [
+      "40 knots"
+     ],
+     "BLOCKCHANNEL": [
+      "EAS",
+      "NWEM",
+      "CMAS"
+     ],
+     "EAS-ORG": [
+      "WXR"
+     ],
+     "VTEC": [
+      "/O.NEW.KCRP.MA.W.0070.261115T0959Z-261115T1100Z/"
+     ],
+     "eventEndingTime": [
+      "2026-11-15T05:00:00-06:00"
+     ]
+    },
+    "scope": "Public",
+    "code": "IPAWSv1.0",
+    "language": "en-US",
+    "web": "http://www.weather.gov",
+    "eventCode": {
+     "SAME": [
+      "SMW"
+     ],
+     "NationalWeatherService": [
+      "MAW"
+     ]
+    }
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0d65e200af510ff5731d36ae25dd069dd8b46891.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0d65e200af510ff5731d36ae25dd069dd8b46891.001.1",
+    "@type": "wx:Alert",
+    "id": "urn:oid:2.49.0.1.840.0.0d65e200af510ff5731d36ae25dd069dd8b46891.001.1",
+    "areaDesc": "Robeson; Bladen; Columbus; Inland Pender; Inland Brunswick; Marlboro; Darlington; Dillon; Florence; Marion; Williamsburg; Inland Georgetown; Central Horry; Northern Horry",
+    "references": [
+     {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.91ad530c199fd2f9d2e98f912c96ce80c56b8b1d.001.1",
+      "identifier": "urn:oid:2.49.0.1.840.0.91ad530c199fd2f9d2e98f912c96ce80c56b8b1d.001.1",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "sent": "2026-11-14T13:46:00-05:00"
+     }
+    ],
+    "sent": "2026-11-15T04:31:00-05:00",
+    "effective": "2026-11-15T04:31:00-05:00",
+    "onset": "2026-11-15T04:31:00-05:00",
+    "expires": "2026-11-15T09:00:00-05:00",
+    "ends": "2026-11-15T09:00:00-05:00",
+    "status": "Actual",
+    "messageType": "Update",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Likely",
+    "urgency": "Expected",
+    "event": "Freeze Warning",
+    "sender": "w-nws.webmaster@noaa.gov",
+    "senderName": "NWS Wilmington NC",
+    "headline": "Freeze Warning issued November 15 at 4:31AM EST until November 15 at 9:00AM EST by NWS Wilmington NC",
+    "description": "* WHAT...Sub-freezing temperatures as low as 28 along with areas of\nfrost.\n\n* WHERE...Portions of southeast North Carolina and northeast South\nCarolina.\n\n* WHEN",
+    "instruction": "Take steps now to protect tender plants from the cold.",
+    "response": "Execute",
+    "note": null,
+    "parameters": {
+     "AWIPSidentifier": [
+      "NPWILM"
+     ],
+     "WMOidentifier": [
+      "WWUS72 KILM 150931"
+     ],
+     "NWSheadline": [
+      "FREEZE WARNING REMAINS IN EFFECT UNTIL 9 AM EST THIS MORNING"
+     ],
+     "BLOCKCHANNEL": [
+      "EAS",
+      "NWEM",
+      "CMAS"
+     ],
+     "VTEC": [
+      "/O.CON.KILM.FZ.W.0004.000000T0000Z-261115T1400Z/"
+     ],
+     "eventEndingTime": [
+      "2026-11-15T09:00:00-05:00"
+     ],
+     "expiredReferences": [
+      "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.74611a32f722da83bddf68b04dd557fdc827bdba.002.1,2026-11-14T07:51:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.74611a32f722da83bddf68b04dd557fdc827bdba.001.2,2026-11-14T07:51:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.5a1e057d6de3246a5f288e4d1d889ee9c6297613.002.1,2026-11-14T01:43:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.5a1e057d6de3246a5f288e4d1d889ee9c6297613.001.1,2026-11-14T01:43:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.93a6e0c381a4ee514323c39dce4688f47d34e9a8.003.2,2026-11-14T00:06:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.93a6e0c381a4ee514323c39dce4688f47d34e9a8.002.2,2026-11-14T00:06:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.93a6e0c381a4ee514323c39dce4688f47d34e9a8.001.3,2026-11-14T00:06:00-05:00"
+     ]
+    },
+    "scope": "Public",
+    "code": "IPAWSv1.0",
+    "language": "en-US",
+    "web": "http://www.weather.gov",
+    "eventCode": {
+     "SAME": [
+      "NWS"
+     ],
+     "NationalWeatherService": [
+      "FZW"
+     ]
+    }
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e9d111315d10f24ea7236fb367de3767b09ad22e.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e9d111315d10f24ea7236fb367de3767b09ad22e.001.1",
+    "@type": "wx:Alert",
+    "id": "urn:oid:2.49.0.1.840.0.e9d111315d10f24ea7236fb367de3767b09ad22e.001.1",
+    "areaDesc": "Waters from Cape Shoalwater WA to Cape Falcon OR from 10 to 60 nm; Waters from Cape Falcon to Cape Foulweather OR from 10 to 60 nm; Waters from Cape Foulweather to Florence OR from 10 to 60 nm",
+    "references": [
+     {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.07da6c26d67cfd19621f2b4078f89644fd6943d8.001.2",
+      "identifier": "urn:oid:2.49.0.1.840.0.07da6c26d67cfd19621f2b4078f89644fd6943d8.001.2",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "sent": "2026-11-14T12:15:00-08:00"
+     },
+     {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ed18bb5e9e2621a4dcf8bbc8ed54d4fa0a2fc7c4.001.1",
+      "identifier": "urn:oid:2.49.0.1.840.0.ed18bb5e9e2621a4dcf8bbc8ed54d4fa0a2fc7c4.001.1",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "sent": "2026-11-14T17:05:00-08:00"
+     },
+     {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.53bb39f3059c285a5152933f7977392abc7e37dd.001.2",
+      "identifier": "urn:oid:2.49.0.1.840.0.53bb39f3059c285a5152933f7977392abc7e37dd.001.2",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "sent": "2026-11-14T12:38:00-08:00"
+     }
+    ],
+    "sent": "2026-11-15T00:34:00-08:00",
+    "effective": "2026-11-15T00:34:00-08:00",
+    "onset": "2026-11-15T00:34:00-08:00",
+    "expires": "2026-11-15T16:45:00-08:00",
+    "ends": "2026-11-15T04:00:00-08:00",
+    "status": "Actual",
+    "messageType": "Update",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Observed",
+    "urgency": "Immediate",
+    "event": "Storm Warning",
+    "sender": "w-nws.webmaster@noaa.gov",
+    "senderName": "NWS Portland OR",
+    "headline": "Storm Warning issued November 15 at 12:34AM PST until November 15 at 4:00AM PST by NWS Portland OR",
+    "description": "* WHAT...For the Storm Warning, seas 16 to 21 ft at 15 seconds\nand southwest winds 20 to 30 kt with gusts up to 48 kt. For\nthe Hazardous Seas Warning, very stee",
+    "instruction": "A Storm Warning means winds of 48 to 63 knots are imminent or\noccurring. Recreational boaters should remain in port, or take\nshelter until winds and waves subsi",
+    "response": "Avoid",
+    "note": null,
+    "parameters": {
+     "AWIPSidentifier": [
+      "MWWPQR"
+     ],
+     "WMOidentifier": [
+      "WHUS76 KPQR 150834"
+     ],
+     "NWSheadline": [
+      "STORM WARNING REMAINS IN EFFECT UNTIL 4 AM PST EARLY THIS MORNING... ...HAZARDOUS SEAS WARNING NOW IN EFFECT FROM 4 AM EARLY THIS MORNING TO 10 PM PST MONDAY"
+     ],
+     "BLOCKCHANNEL": [
+      "EAS",
+      "NWEM",
+      "CMAS"
+     ],
+     "VTEC": [
+      "/O.CON.KPQR.SR.W.0003.000000T0000Z-261115T1200Z/"
+     ],
+     "eventEndingTime": [
+      "2026-11-15T04:00:00-08:00"
+     ],
+     "expiredReferences": [
+      "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.ca099f89c43a528e10692e9d85d49fadb78de47e.003.2,2026-11-14T01:01:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.e65e96431b4d18437d3db743045b2a26544079ec.003.2,2026-11-13T22:00:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.63aa2e36efb4c509f815f566425018719e4b6c0f.001.4,2026-11-13T12:34:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.d89177951efe1c7486d28fd734544d94a883c5d5.003.2,2026-11-13T19:44:00-08:00"
+     ]
+    },
+    "scope": "Public",
+    "code": "IPAWSv1.0",
+    "language": "en-US",
+    "web": "http://www.weather.gov",
+    "eventCode": {
+     "SAME": [
+      "NWS"
+     ],
+     "NationalWeatherService": [
+      "SRW"
+     ]
+    }
+   }
+  }
+ ],
+ "title": "Current watches, warnings, and advisories",
+ "updated": "2026-11-15T10:12:54+00:00"
+}
