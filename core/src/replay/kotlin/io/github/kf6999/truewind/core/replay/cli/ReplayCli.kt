@@ -38,6 +38,9 @@ TrueWind replay harness (docs/TESTING.md section 3)
                   add a ride to a downloaded corpus whose truth wind is its station observations
   describe        --corpus DIR   print bbox/time of every ride (input for tools/download)
   fit2csv IN.fit OUT.csv          convert a FIT ride to the corpus CSV ride format
+  live-smoke [--point LAT,LON]    one live request per provider via the production core classes
+                                  (keys from SYNOPTIC_TOKEN / TOMORROW_API_KEY env, never printed)
+  fit-devfields IN.fit            list the developer field names in a FIT file (device smoke check)
 """
 
 fun main(args: Array<String>) {
@@ -55,6 +58,11 @@ fun main(args: Array<String>) {
             "synthesize-ride" -> synthesizeRide(opts)
             "describe" -> describe(opts)
             "fit2csv" -> fit2csv(File(opts.positional[0]), File(opts.positional[1]))
+            "live-smoke" -> {
+                val (lat, lon) = (opts.one("point") ?: "37.62,-122.37").split(',').map { it.toDouble() }
+                exitProcess(if (LiveSmoke.run(GeoPoint(lat, lon)) == 0) 0 else 1)
+            }
+            "fit-devfields" -> println(ReportJson.write(CorpusLoader.developerFieldNames(File(opts.positional[0]))))
             "help", "--help" -> println(USAGE)
             else -> { System.err.println(USAGE); exitProcess(2) }
         }

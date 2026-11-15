@@ -170,6 +170,15 @@ object CorpusLoader {
         return Ride(id = f.name.removeSuffix(".fit"), samples = withBearing, systemMassKg = weight?.let { it + 9.0 }, source = f.name)
     }
 
+    /** Names of the developer fields declared in a FIT file (FieldDescription messages). */
+    fun developerFieldNames(f: File): List<String> {
+        val names = mutableListOf<String>()
+        val broadcaster = MesgBroadcaster()
+        broadcaster.addListener { m: com.garmin.fit.FieldDescriptionMesg -> m.getFieldName(0)?.let { names += it } }
+        f.inputStream().buffered().use { Decode().read(it, broadcaster) }
+        return names.distinct()
+    }
+
     private const val SEMICIRCLE = 180.0 / 2147483648.0
 
     /* ------------------------------------------------------------------ forecasts */
