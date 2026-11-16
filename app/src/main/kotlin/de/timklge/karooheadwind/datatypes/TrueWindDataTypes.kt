@@ -214,6 +214,6 @@ class WindSourceDataType(private val windRepository: WindRepository) : DataTypeI
     companion object {
         fun sourceLabel(s: WindSnapshot): String = if (s.extras.upstreamMode) {
             s.state.sources.models.joinToString("+").ifEmpty { "--" }
-        } else s.extras.sourceText.ifEmpty { "--" } + if (s.extras.band != null) " · ${s.state.confidence}%" else ""
+        } else s.extras.sourceText.ifEmpty { "--" } + if (s.extras.band != null && s.extras.offline == null) " · ${s.state.confidence}%" else ""
     }
 }

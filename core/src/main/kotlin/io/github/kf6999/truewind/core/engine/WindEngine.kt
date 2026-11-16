@@ -111,7 +111,7 @@ class WindEngine(
     private val forecastSources: List<ForecastSource>,
     private val observationSources: List<ObservationSource> = emptyList(),
     private val hourlySource: HourlySource? = null,
-    store: KeyValueStore = InMemoryKeyValueStore(),
+    private val store: KeyValueStore = InMemoryKeyValueStore(),
     config: WindEngineConfig = WindEngineConfig(),
 ) {
     val config: WindEngineConfig = if (config.upstreamEmulation) {
@@ -130,6 +130,9 @@ class WindEngine(
     private var weightsLoaded = false
     private val lastScored = HashMap<String, Long>()
     private var lastAccepted: List<Observation> = emptyList()
+
+    /** Newest series per forecast member (id -> fetch time, series), kept so a failing member does not drop out of the blend. */
+    private val memberCache = HashMap<String, Pair<Long, List<ForecastSeries>>>()
 
     @Volatile
     private var snapshot: FusionSnapshot? = null
@@ -201,13 +204,23 @@ class WindEngine(
             outcomes += st.toOutcome(hourlySource.id, st.error == null)
         }
 
+        val freshSeries = series.toList()
+        if (!cfg.upstreamEmulation && freshSeries.isNotEmpty()) {
+            // Members that failed this cycle (e.g. Open-Meteo down, Tomorrow.io up) stay in the blend
+            // with their last series for the cache window; members that answered replace theirs.
+            val freshIds = freshSeries.map { it.memberId }.toSet()
+            for (id in freshIds) memberCache[id] = now to freshSeries.filter { it.memberId == id }
+            memberCache.entries.removeAll { (id, v) -> id !in freshIds && now - v.first > cfg.sample.cacheWindowMs }
+            for ((id, v) in memberCache) if (id !in freshIds) series += v.second
+        }
         val usable = if (cfg.upstreamEmulation) upstreamSeries(series, rider) else series
         val hasRider = usable.any { haversineKm(it.location, rider) <= cfg.fusion.seriesMatchKm }
 
         var weightList: List<Pair<String, Double>> = snapshot?.weights ?: emptyList()
         var scored = 0
         var newSnapshot: FusionSnapshot? = null
-        if (hasRider) {
+        var usedWeights: Map<String, Double> = emptyMap()
+        if (hasRider && freshSeries.isNotEmpty()) {
             val members = usable.map { it.memberId }.distinct()
             val weightMap: Map<String, Double>
             if (cfg.upstreamEmulation) {
@@ -225,6 +238,7 @@ class WindEngine(
                 }
                 weightMap = weights.weightMap(members, now)
             }
+            usedWeights = weightMap
             newSnapshot = Fusion.build(now, usable, weightMap, accepted, cfg.fusion)?.let { averageResiduals(it, now) }
         }
         val success = newSnapshot != null
@@ -232,6 +246,7 @@ class WindEngine(
             snapshot = newSnapshot
             weightList = newSnapshot.weights
             lastAccepted = accepted
+            persist(CachedCycle(now, rider, usedWeights, usable, accepted, memberCache.mapValues { it.value.first }))
         }
 
         val atCycle = snapshot?.sample(now, rider, cfg.sample.copy(intervalMs = plan.intervalMs))
@@ -261,6 +276,40 @@ class WindEngine(
             sampleAtCycle = atCycle,
             budget = planner.budgetSnapshot(now),
         )
+    }
+
+    private suspend fun persist(c: CachedCycle) {
+        try {
+            store.put(CycleCacheCodec.KEY, CycleCacheCodec.encode(c))
+        } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Persistence is best effort; the in-memory snapshot is unaffected.
+        }
+    }
+
+    /**
+     * Rebuilds the fused snapshot from the last persisted successful cycle (service start with no
+     * network). Only when there is no snapshot yet, the cache is younger than [maxAgeMs] and the
+     * rider is within [maxDistanceKm] of where it was fetched. Returns whether a snapshot was restored.
+     */
+    suspend fun restore(nowMs: Long, rider: GeoPoint, maxAgeMs: Long = RESTORE_MAX_AGE_MS, maxDistanceKm: Double = 100.0): Boolean {
+        if (snapshot != null || config.upstreamEmulation) return false
+        val c = try {
+            CycleCacheCodec.decode(store.get(CycleCacheCodec.KEY))
+        } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } ?: return false
+        if (nowMs - c.fetchedAtMs > maxAgeMs || c.fetchedAtMs > nowMs + 5 * 60_000L) return false
+        if (haversineKm(c.rider, rider) > maxDistanceKm) return false
+        val rebuilt = Fusion.build(c.fetchedAtMs, c.series, c.weights, c.observations, config.fusion)
+            ?.let { averageResiduals(it, c.fetchedAtMs) } ?: return false
+        snapshot = rebuilt
+        lastAccepted = c.observations
+        for ((id, t) in c.memberFetchedAtMs) memberCache[id] = t to c.series.filter { it.memberId == id }
+        return true
     }
 
     /**
@@ -319,8 +368,10 @@ class WindEngine(
     /** Current member weights (highest first) for the diagnostics page. */
     fun memberWeights(): List<Pair<String, Double>> = snapshot?.weights ?: emptyList()
 
-    private companion object {
-        const val HOUR_MS = 60 * 60_000L
+    companion object {
+        private const val HOUR_MS = 60 * 60_000L
+        /** A persisted cycle older than this is not restored (SPEC 4.1: values are withdrawn after 6 h). */
+        const val RESTORE_MAX_AGE_MS = 6 * 60 * 60_000L
     }
 }
 

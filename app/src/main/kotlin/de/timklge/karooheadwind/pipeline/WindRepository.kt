@@ -68,12 +68,18 @@ class WindRepository(
     /** TrueWind-mode snapshots ([TrueWindPipeline.snapshots]); null = upstream computation only. */
     private val trueWind: Flow<WindSnapshot?>? = null,
 ) {
+    private companion object { const val FORECAST_ROLL_MS = 60_000L }
+
     private val sharing = SharingStarted.WhileSubscribed(SensorHub.STOP_TIMEOUT_MS, 0)
 
     val settings: SharedFlow<HeadwindSettings> = settingsSource.distinctUntilChanged().shareIn(scope, sharing, replay = 1)
     val widgetSettings: SharedFlow<HeadwindWidgetSettings> = widgetSettingsSource.distinctUntilChanged().shareIn(scope, sharing, replay = 1)
     val forecastRecord: SharedFlow<ForecastRecord> = forecastRecordSource.distinctUntilChanged().shareIn(scope, sharing, replay = 1)
-    val forecastResponse: Flow<WeatherDataResponse?> = forecastRecord.map { it.response }.distinctUntilChanged()
+    /** The saved hourly forecast, rolled forward to now once a minute (see [rollForecastForward]) so it survives a long offline spell. */
+    val forecastResponse: Flow<WeatherDataResponse?> = combine(
+        forecastRecord.map { it.response }.distinctUntilChanged(),
+        flow { while (true) { emit(Unit); delay(FORECAST_ROLL_MS) } },
+    ) { response, _ -> rollForecastForward(response, clock.nowMs()) }.distinctUntilChanged()
 
     /** Rider position after privacy rounding; null until a first position is known. */
     val location: SharedFlow<GpsCoordinates?> = gpsCoordinateFlow(

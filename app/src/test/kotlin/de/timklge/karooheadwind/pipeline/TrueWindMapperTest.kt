@@ -180,4 +180,34 @@ class TrueWindMapperTest {
         val r = TickPolicy.roundForFetch(p, settings.copy(roundLocationTo = de.timklge.karooheadwind.RoundLocationSetting.KM_1))
         assertTrue(r != p && abs(r.lat - p.lat) < 0.01 && abs(r.lon - p.lon) < 0.02)
     }
+
+    // ---- field fixes: temperature realism, offline text --------------------------------------------------
+
+    @Test
+    fun temperatureIsLapseRateCorrectedToRiderElevation() {
+        assertEquals(20.0 - 6.5 * 0.2, TrueWindMapper.correctedTemperatureC(20.0, 460.0, 660.0)!!, 1e-9, "200 m higher: 1.3 C colder")
+        assertEquals(20.0 + 6.5 * 0.2, TrueWindMapper.correctedTemperatureC(20.0, 460.0, 260.0)!!, 1e-9, "200 m lower: warmer")
+        assertEquals(20.0, TrueWindMapper.correctedTemperatureC(20.0, null, 660.0)!!, 1e-9)
+        assertEquals(20.0, TrueWindMapper.correctedTemperatureC(20.0, 460.0, null)!!, 1e-9)
+        assertNull(TrueWindMapper.correctedTemperatureC(null, 460.0, 660.0))
+        // The corrected value is what the snapshot shows and what feels-like and air density use.
+        val s = sample().copy(weather = WeatherScalars(temperatureC = 15.0, relativeHumidityPct = 50.0, surfacePressureHpa = 960.0,
+            sealevelPressureHpa = 1012.0, gridElevationM = 460.0))
+        val snap = map(sample = s, t = inputs().copy(elevationM = 1060.0))
+        assertEquals(15.0 - 6.5 * 0.6, snap.state.weather!!.temperatureC, 1e-9)
+        assertNotNull(snap.extras.feelsLikeC)
+    }
+
+    @Test
+    fun offlineTextAndDnsHint() {
+        assertEquals("OFFLINE 2h 40m · cached", TrueWindMapper.offlineText((2 * 60 + 40) * 60_000L))
+        assertEquals("OFFLINE 12m · cached", TrueWindMapper.offlineText(12 * 60_000L))
+        assertTrue(TrueWindMapper.isNoInternetError("Http error: Unable to resolve host \"api.open-meteo.com\": No address associated with hostname"))
+        assertTrue(TrueWindMapper.isNoInternetError("java.net.ConnectException: Failed to connect to /1.2.3.4:443"))
+        assertTrue(!TrueWindMapper.isNoInternetError("HTTP 429"))
+        assertTrue(!TrueWindMapper.isNoInternetError(null))
+        val snap = TrueWindMapper.toSnapshot(sample(), null, inputs(), settings, legacy = null, lastUpdateMs = null, nextUpdateMs = null,
+            maxWindThisRide = null, rainInMin = null, offline = OfflineInfo(160 * 60_000L, noInternet = true))
+        assertEquals("OFFLINE 2h 40m · cached", snap.extras.sourceText)
+    }
 }

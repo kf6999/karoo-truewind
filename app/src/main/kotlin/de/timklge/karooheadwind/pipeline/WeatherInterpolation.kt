@@ -89,3 +89,25 @@ fun currentWeatherAt(weatherData: WeatherDataResponse?, location: GpsCoordinates
     val forLocation = weatherForLocation(weatherData, location) ?: return null
     return lerpWeatherTime(forLocation.forecasts, forLocation.current, nowMs)
 }
+
+/**
+ * The hourly widget forecast as it should be shown at [nowMs]: while the phone link is down the
+ * saved response keeps ageing, and the forecast widgets (which show the first entries and skip
+ * those older than an hour) would run out of entries after about three hours. For a single-location
+ * response the entries more than an hour old are dropped and `current` is replaced by the weather
+ * interpolated to now, so the widgets keep showing the hours ahead from the cache. Responses along
+ * a route (one location per hour of riding) are returned unchanged, as are fresh ones.
+ */
+fun rollForecastForward(response: WeatherDataResponse?, nowMs: Long): WeatherDataResponse? {
+    if (response == null || response.data.size != 1) return response
+    val loc = response.data.first()
+    val cutoffSec = (nowMs - 60 * 60_000L) / 1000
+    val forecasts = loc.forecasts ?: return response
+    if (loc.current.time >= cutoffSec && forecasts.none { it.time < cutoffSec }) return response
+    val current = try {
+        lerpWeatherTime(forecasts, loc.current, nowMs).copy(time = nowMs / 1000)
+    } catch (e: Exception) {
+        loc.current
+    }
+    return response.copy(data = listOf(loc.copy(current = current, forecasts = forecasts.filter { it.time >= cutoffSec })))
+}

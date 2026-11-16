@@ -75,6 +75,14 @@ object DiagnosticsText {
                     (p.httpStatus?.let { ", HTTP $it" } ?: "") + (p.error?.let { ", $it" } ?: ""))
             }
         })
+        d.offlineText?.let { t -> add("Connectivity" to listOfNotNull(t, d.offlineHint)) }
+        d.temperatures?.let { t ->
+            add("Temperature" to listOf(
+                "Model (grid): ${temp(t.modelC)}",
+                "Corrected to rider elevation: ${temp(t.correctedC)}",
+                "Karoo sensor: ${temp(t.sensorC)}",
+            ))
+        }
         add("Schedule" to listOf(
             "Last success: ${d.lastSuccessfulCycleMs?.let { ago(now, it) } ?: "never"}",
             "Next check: ${d.nextCheckAtMs?.let { inMin(now, it) } ?: "on change"}",
@@ -100,6 +108,7 @@ object DiagnosticsText {
         ))
     }
 
+    private fun temp(v: Double?) = v?.let { String.format(Locale.US, "%.1f °C", it) } ?: "--"
     private fun f1(v: Double) = String.format(Locale.US, "%.1f", v)
     private fun pct(v: Double) = String.format(Locale.US, "%.0f%%", v * 100)
     private fun kb(b: Long) = if (b < 1024) "$b B" else String.format(Locale.US, "%.1f KB", b / 1024.0)

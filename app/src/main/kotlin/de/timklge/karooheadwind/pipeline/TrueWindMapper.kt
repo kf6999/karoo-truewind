@@ -88,7 +88,7 @@ object TrueWindMapper {
             gpsAccuracyM = t.gpsAccuracyM,
             karooHeadingDeg = if (headingFusion) t.karooHeadingDeg else null,
             routeBearingDeg = if (headingFusion) t.routeBearingDeg else null,
-            temperatureC = sample.weather?.temperatureC,
+            temperatureC = correctedTemperatureC(sample.weather?.temperatureC, sample.weather?.gridElevationM, t.elevationM),
             relativeHumidityPct = sample.weather?.relativeHumidityPct,
             modelSurfacePressureHpa = sample.weather?.surfacePressureHpa,
             modelElevationM = sample.weather?.gridElevationM,
@@ -115,6 +115,7 @@ object TrueWindMapper {
         nextUpdateMs: Long?,
         maxWindThisRide: Double?,
         rainInMin: Int?,
+        offline: OfflineInfo? = null,
     ): WindSnapshot {
         val model10m = sample.model10m
         val downscale = settings.layerDownscaling
@@ -136,7 +137,7 @@ object TrueWindMapper {
             else -> sample.status
         }
         val sources = sample.sources.copy(virtualSensorActive = out?.virtualSensorActive == true)
-        val weather = weatherNow(sample, legacy, t.nowMs)
+        val weather = weatherNow(sample, legacy, t.nowMs, t.elevationM)
         val state = WindState(
             timeMs = t.nowMs,
             model10m = model10m,
@@ -169,13 +170,43 @@ object TrueWindMapper {
             headingSource = out?.headingSource?.name,
             innovationMean = out?.innovationMean,
             effectiveRatio = out?.effectiveRatio,
-            sourceText = sourceText(sources, sample.ageMs),
+            sourceText = if (offline != null) offlineText(offline.ageMs) else sourceText(sources, sample.ageMs),
             windChillC = weather?.temperatureC?.let { tc -> windChill(tc, out?.airSpeedMps) },
             dewPointC = legacy?.dewPoint,
             visibilityM = legacy?.visibility,
             solarRadiationWm2 = legacy?.solarRadiation,
+            offline = offline,
         )
         return WindSnapshot(state, extras)
+    }
+
+    /** Standard lapse rate, °C per metre of climb. */
+    const val LAPSE_RATE_C_PER_M = 0.0065
+
+    /**
+     * Model temperature moved from the forecast grid cell's elevation to the rider's elevation at
+     * -6.5 °C per 1000 m (limited to 2000 m either way). Unchanged when either elevation is unknown.
+     */
+    fun correctedTemperatureC(modelC: Double?, gridElevationM: Double?, riderElevationM: Double?): Double? {
+        if (modelC == null) return null
+        if (gridElevationM == null || riderElevationM == null || !gridElevationM.isFinite() || !riderElevationM.isFinite()) return modelC
+        return modelC - LAPSE_RATE_C_PER_M * (riderElevationM - gridElevationM).coerceIn(-2000.0, 2000.0)
+    }
+
+    /** `OFFLINE 2h 40m · cached` for the "Wind source" field. */
+    fun offlineText(ageMs: Long): String {
+        val min = (ageMs / 60_000L).coerceAtLeast(0)
+        val age = if (min < 60) "${min}m" else "${min / 60}h ${min % 60}m"
+        return "OFFLINE $age · cached"
+    }
+
+    const val NO_INTERNET_HINT = "No internet: check the Hammerhead phone app is connected"
+
+    /** Whether a transport error means "no network" (DNS or connect failure) rather than a server problem. */
+    fun isNoInternetError(error: String?): Boolean {
+        val e = error?.lowercase() ?: return false
+        return listOf("unable to resolve host", "no address associated", "unknownhost", "failed to connect", "connectexception",
+            "network is unreachable", "no route to host").any { it in e }
     }
 
     /** Wind chill (WP15) at the rider's air speed; the plain temperature above 10 °C, where the index is undefined. */
@@ -183,13 +214,13 @@ object TrueWindMapper {
         if (tempC > 10.0) tempC else io.github.kf6999.truewind.core.physics.FeelsLike.windChillC(tempC, kotlin.math.abs(airSpeedMps ?: 0.0) * 3.6)
 
     /** Current weather: fused nowcast scalars, falling back to the hourly widget forecast. */
-    fun weatherNow(sample: FusedSample, legacy: WeatherData?, nowMs: Long): WeatherNow? {
+    fun weatherNow(sample: FusedSample, legacy: WeatherData?, nowMs: Long, riderElevationM: Double? = null): WeatherNow? {
         val w = sample.weather
         val wind = sample.model10m
         if (wind == null && legacy == null) return null
         return WeatherNow(
             timeSec = nowMs / 1000,
-            temperatureC = w?.temperatureC ?: legacy?.temperature ?: return null,
+            temperatureC = correctedTemperatureC(w?.temperatureC, w?.gridElevationM, riderElevationM) ?: legacy?.temperature ?: return null,
             relativeHumidityPct = (w?.relativeHumidityPct ?: legacy?.relativeHumidity?.toDouble() ?: 0.0).roundToInt(),
             precipitationMm = w?.precipitationMm ?: legacy?.precipitation ?: 0.0,
             precipitationProbabilityPct = legacy?.precipitationProbability,

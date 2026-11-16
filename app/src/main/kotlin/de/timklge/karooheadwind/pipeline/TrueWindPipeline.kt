@@ -197,6 +197,8 @@ class TrueWindPipeline(
     @Volatile private var karooHeading: Double? = null
     @Volatile private var elevation: Double? = null
     @Volatile private var pressureHpa: Double? = null
+    @Volatile private var sensorTempC: Double? = null
+    private var restoreTriedFor: WindEngine? = null
     @Volatile private var riderMass: Double? = null
     @Volatile private var route: UpcomingRoute? = null
     @Volatile private var bikeKey: String = DEFAULT_BIKE
@@ -300,6 +302,7 @@ class TrueWindPipeline(
             }
         }
         launch { barometer.collect { pressureHpa = it } }
+        launch { hub.stream(DataType.Type.TEMPERATURE).collect { sensorTempC = it.single() } }
 
         launch { fetchLoop() }
         try {
@@ -338,6 +341,14 @@ class TrueWindPipeline(
                 val eng = engineFor(s)
                 val now = clock.nowMs()
                 val pos = currentPosition()
+                if (pos != null && restoreTriedFor !== eng) {
+                    // Service start (or a rebuilt engine) with no snapshot: show the last successful cycle while the first fetch runs.
+                    restoreTriedFor = eng
+                    if (eng.restore(now, pos)) {
+                        Diagnostics.lastSuccessfulCycleMs = Diagnostics.lastSuccessfulCycleMs ?: eng.latestSnapshot?.fetchedAtMs
+                        Log.i(KarooHeadwindExtension.TAG, "restored cached cycle fetched ${(now - (eng.latestSnapshot?.fetchedAtMs ?: now)) / 60_000} min ago")
+                    }
+                }
                 val r = route
                 val ctx = CycleContext(
                     nowMs = now,
@@ -478,8 +489,18 @@ class TrueWindPipeline(
             w
         }
 
+        val rep = lastReport
+        val offline = if (rep != null && !rep.success && sample.ageMs != null && sample.model10m != null) {
+            OfflineInfo(sample.ageMs!!, noInternet = rep.providers.any { !it.success && TrueWindMapper.isNoInternetError(it.error) })
+        } else null
+        Diagnostics.offlineText = offline?.let { TrueWindMapper.offlineText(it.ageMs) }
+        Diagnostics.offlineHint = if (offline?.noInternet == true) TrueWindMapper.NO_INTERNET_HINT else null
+        val modelTemp = sample.weather?.temperatureC
+        Diagnostics.temperatures = Diagnostics.TemperatureComparison(
+            modelTemp, TrueWindMapper.correctedTemperatureC(modelTemp, sample.weather?.gridElevationM, elevation), sensorTempC,
+        )
         val provisional = TrueWindMapper.toSnapshot(sample, out, inputs, s, legacy, Diagnostics.lastSuccessfulCycleMs,
-            Diagnostics.nextCheckAtMs, maxWind, rain)
+            Diagnostics.nextCheckAtMs, maxWind, rain, offline)
         if (recording) {
             provisional.headline?.speed?.let { v -> maxWind = max(maxWind ?: 0.0, v) }
         }

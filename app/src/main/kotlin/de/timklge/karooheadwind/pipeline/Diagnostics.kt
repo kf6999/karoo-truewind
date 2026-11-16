@@ -72,6 +72,13 @@ object Diagnostics {
     @Volatile var stationsInUse: List<StationSummary> = emptyList()
     @Volatile var positionSource: String = "none"
 
+    /** Set while the last cycle failed and cached values are shown: `OFFLINE 2h 40m · cached`. */
+    @Volatile var offlineText: String? = null
+    /** Hint shown with [offlineText] when the transport error is a DNS/connect failure. */
+    @Volatile var offlineHint: String? = null
+    /** Temperature comparison at the rider: forecast-grid model value, lapse-rate corrected value, Karoo sensor. */
+    @Volatile var temperatures: TemperatureComparison? = null
+
     // --- Sensors ---
     val barometerEvents = AtomicLong()
     @Volatile var barometerAvailable: Boolean? = null
@@ -105,6 +112,8 @@ object Diagnostics {
         val requests: Int,
         val bytes: Long,
     )
+
+    data class TemperatureComparison(val modelC: Double?, val correctedC: Double?, val sensorC: Double?)
 
     data class StationSummary(val id: String, val source: String, val distanceKm: Double, val ageMin: Double, val speedMs: Double?)
 
@@ -191,6 +200,9 @@ object Diagnostics {
         "lastBarometerHpa" to lastBarometerHpa,
         "headingEvents" to headingEvents.get(),
         "virtualSensor" to virtualSensor,
+        "offline" to offlineText,
+        "offlineHint" to offlineHint,
+        "temperatures" to temperatures,
         "parity" to parity,
     )
 
@@ -199,6 +211,6 @@ object Diagnostics {
         listOf(httpRequests, httpBytes, httpErrors, httpTimeouts, httpGzipBodies, httpGzipDecodedByTransport, ticks,
             tickNanosTotal, tickNanosMax, stateEmits, cycles, cyclesSucceeded, barometerEvents, headingEvents, requestsToday).forEach { it.set(0) }
         httpRequestsByHost.clear(); httpBytesByHost.clear(); emits.clear(); viewUpdates.clear()
-        lastCycle = null; lastSuccessfulCycleMs = null; nextCheckAtMs = null
+        lastCycle = null; lastSuccessfulCycleMs = null; nextCheckAtMs = null; offlineText = null; offlineHint = null; temperatures = null
     }
 }

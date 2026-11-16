@@ -62,11 +62,20 @@ data class WindExtras(
     val visibilityM: Double? = null,
     /** Shortwave radiation, W/m². */
     val solarRadiationWm2: Double? = null,
+    /** Set while the last fetch cycle failed and the values come from cache. */
+    val offline: OfflineInfo? = null,
 ) {
     companion object {
         const val RAIN_UNKNOWN = -1
     }
 }
+
+/**
+ * The fetch cycles are failing and the values come from the cache.
+ * [ageMs] is the age of the cached data; [noInternet] is set when the transport error is a DNS or
+ * connect failure (no network at all), as opposed to an HTTP error from a reachable server.
+ */
+data class OfflineInfo(val ageMs: Long, val noInternet: Boolean)
 
 /** What the data types consume: the core state plus [extras]. */
 data class WindSnapshot(val state: WindState, val extras: WindExtras = WindExtras()) {
