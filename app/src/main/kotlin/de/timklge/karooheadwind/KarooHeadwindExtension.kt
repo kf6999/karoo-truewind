@@ -183,6 +183,7 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
         super.onCreate()
 
         karooSystem = KarooSystemService(applicationContext)
+        io.github.kf6999.truewind.core.alerts.AlertText.twelveHour = !android.text.format.DateFormat.is24HourFormat(applicationContext)
         ServiceStatusSingleton.getInstance().setServiceStatus(true)
 
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

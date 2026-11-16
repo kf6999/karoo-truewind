@@ -134,7 +134,7 @@ class FinishAlertMachine(private val config: FinishAlertConfig) {
         fun buildRequest(config: FinishAlertConfig, nowMs: Long, timeToDestinationMs: Long, position: GeoPoint?): HttpRequest {
             val etaMs = nowMs + timeToDestinationMs
             val minutes = ceil(timeToDestinationMs / 60_000.0).toInt()
-            val etaClock = DateTimeFormatter.ofPattern("HH:mm").withZone(config.zone).format(Instant.ofEpochMilli(etaMs))
+            val etaClock = io.github.kf6999.truewind.core.alerts.AlertText.clock(etaMs, config.zone)
             val loc = position?.takeIf { config.includeLocation }
             val text = buildString {
                 append("ETA $etaClock (about $minutes min).")

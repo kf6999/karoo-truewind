@@ -46,7 +46,7 @@ object RouteWeatherModel {
 
     fun offsetLabel(h: Int) = if (h == 0) "Now" else "+$h h"
 
-    private fun clock(ms: Long, zone: ZoneId) = DateTimeFormatter.ofPattern("HH:mm").withZone(zone).format(Instant.ofEpochMilli(ms))
+    private fun clock(ms: Long, zone: ZoneId) = io.github.kf6999.truewind.core.alerts.AlertText.clock(ms, zone)
 
     fun rows(plan: RouteWeatherPlan, u: RouteWeatherUnits, zone: ZoneId = ZoneId.systemDefault()): List<RouteWeatherRow> =
         plan.samples.map { s ->

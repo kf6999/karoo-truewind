@@ -54,12 +54,8 @@ import java.util.Locale
 import kotlin.math.absoluteValue
 import kotlin.math.ceil
 
-fun getShortDateFormatter(): DateTimeFormatter = DateTimeFormatter.ofPattern(
-    when (Locale.getDefault().country) {
-        "US" -> "MM/dd"
-        else -> "dd.MM"
-    }
-).withZone(ZoneId.systemDefault())
+fun getShortDateFormatter(): DateTimeFormatter =
+    DateTimeFormatter.ofPattern(de.timklge.karooheadwind.util.DisplayPrefs.shortDatePattern()).withZone(ZoneId.systemDefault())
 
 fun getWeatherIcon(interpretation: WeatherInterpretation, isNight: Boolean): Int {
     return when (interpretation){

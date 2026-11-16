@@ -26,6 +26,6 @@ fun getTimeFormatter(context: Context): DateTimeFormatter {
     return if (is24HourFormat) {
         DateTimeFormatter.ofPattern("HH:mm")
     } else {
-        DateTimeFormatter.ofPattern("h a")
+        DateTimeFormatter.ofPattern("h a", java.util.Locale.US)
     }
 }

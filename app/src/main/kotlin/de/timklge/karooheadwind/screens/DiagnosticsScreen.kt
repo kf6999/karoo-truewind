@@ -108,7 +108,10 @@ object DiagnosticsText {
         ))
     }
 
-    private fun temp(v: Double?) = v?.let { String.format(Locale.US, "%.1f °C", it) } ?: "--"
+    private fun temp(v: Double?) = v?.let {
+        if (de.timklge.karooheadwind.util.DisplayPrefs.imperial) String.format(Locale.US, "%.0f °F", it * 9 / 5 + 32)
+        else String.format(Locale.US, "%.1f °C", it)
+    } ?: "--"
     private fun f1(v: Double) = String.format(Locale.US, "%.1f", v)
     private fun pct(v: Double) = String.format(Locale.US, "%.0f%%", v * 100)
     private fun kb(b: Long) = if (b < 1024) "$b B" else String.format(Locale.US, "%.1f KB", b / 1024.0)

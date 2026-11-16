@@ -146,13 +146,19 @@ fun TrueWindSettingsScreen(onFinish: () -> Unit) {
         Toggle("Start-of-ride 6 h summary", settings.alertRideSummary) { v -> edit { it.copy(alertRideSummary = v) } }
         Toggle("Rain starting / stopping", settings.alertRain) { v -> edit { it.copy(alertRain = v) } }
         Toggle("Strong gusts", settings.alertGust) { v -> edit { it.copy(alertGust = v) } }
-        NumberField("Gust threshold", settings.alertGustKmh.toDouble(), "km/h", 15.0..120.0) { v -> edit { it.copy(alertGustKmh = v.toInt()) } }
+        val imperial = de.timklge.karooheadwind.util.DisplayPrefs.imperial
+        val mi = 1.609344
+        fun shown(km: Int) = if (imperial) kotlin.math.round(km / mi) else km.toDouble()
+        fun stored(v: Double) = if (imperial) kotlin.math.round(v * mi).toInt() else v.toInt()
+        val distUnit = if (imperial) "mi" else "km"
+        val distRange = if (imperial) 1.0..62.0 else 2.0..100.0
+        NumberField("Gust threshold", shown(settings.alertGustKmh), if (imperial) "mph" else "km/h", if (imperial) 9.0..75.0 else 15.0..120.0) { v -> edit { it.copy(alertGustKmh = stored(v)) } }
         Toggle("Wind shift", settings.alertWindShift) { v -> edit { it.copy(alertWindShift = v) } }
         Toggle("NWS severe weather (US)", settings.alertNws) { v -> edit { it.copy(alertNws = v) } }
         Toggle("Storm nearby (estimate)", settings.alertStorm) { v -> edit { it.copy(alertStorm = v) } }
-        NumberField("Storm distance", settings.alertStormKm.toDouble(), "km", 2.0..100.0) { v -> edit { it.copy(alertStormKm = v.toInt()) } }
+        NumberField("Storm distance", shown(settings.alertStormKm), distUnit, distRange) { v -> edit { it.copy(alertStormKm = stored(v)) } }
         Toggle("Wildfire nearby (US)", settings.alertWildfire) { v -> edit { it.copy(alertWildfire = v) } }
-        NumberField("Wildfire distance", settings.alertWildfireKm.toDouble(), "km", 2.0..100.0) { v -> edit { it.copy(alertWildfireKm = v.toInt()) } }
+        NumberField("Wildfire distance", shown(settings.alertWildfireKm), distUnit, distRange) { v -> edit { it.copy(alertWildfireKm = stored(v)) } }
         Toggle("Air quality", settings.alertAqi) { v -> edit { it.copy(alertAqi = v) } }
         NumberField("AQI category (1 moderate .. 5 hazardous)", settings.alertAqiCategory.toDouble(), "", 1.0..5.0) { v -> edit { it.copy(alertAqiCategory = v.toInt()) } }
 

@@ -435,8 +435,16 @@ object AlertText {
     @Volatile
     var zone: java.time.ZoneId = java.time.ZoneId.systemDefault()
 
-    fun hhmm(t: Long): String =
-        java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(zone).format(java.time.Instant.ofEpochMilli(t))
+    /** 12-hour clock (`3:05 PM`) instead of `15:05`; the app sets it from the device's time setting. */
+    @Volatile
+    var twelveHour: Boolean = false
+
+    fun hhmm(t: Long): String = clock(t, zone)
+
+    /** Clock time in [zone], in the 12- or 24-hour style of [twelveHour]. */
+    fun clock(t: Long, zone: java.time.ZoneId): String =
+        java.time.format.DateTimeFormatter.ofPattern(if (twelveHour) "h:mm a" else "HH:mm", Locale.US)
+            .withZone(zone).format(java.time.Instant.ofEpochMilli(t))
 
     private val POINTS = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW")
 

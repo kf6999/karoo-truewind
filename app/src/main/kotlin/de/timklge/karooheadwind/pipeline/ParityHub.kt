@@ -188,7 +188,12 @@ class ParityHub(
     fun start(): Job = scope.launch {
         launch { settingsFlow.collect { settings = it } }
         launch { forecastRecord.collect { record = it } }
-        launch { sensorHub.userProfile.collect { profile = it } }
+        launch {
+            sensorHub.userProfile.collect {
+                profile = it
+                de.timklge.karooheadwind.util.DisplayPrefs.imperial = it.preferredUnit.distance == UserProfile.PreferredUnit.UnitType.IMPERIAL
+            }
+        }
         launch {
             var prev: RideState? = null
             sensorHub.rideState.collect { st ->
