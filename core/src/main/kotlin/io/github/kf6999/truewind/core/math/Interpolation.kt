@@ -58,6 +58,26 @@ fun lerp(start: WindVector, end: WindVector, factor: Double): WindVector =
     WindVector(lerp(start.u, end.u, factor), lerp(start.v, end.v, factor))
 
 /**
+ * Time interpolation of wind that keeps the speed: the direction comes from the u/v lerp, the speed
+ * is the lerp of the two speeds. Plain u/v lerp across a direction change dips towards zero (a
+ * 3 m/s wind turning 180 degrees would pass through 0 m/s). At an exact reversal the nearer end
+ * decides the direction.
+ */
+fun lerpKeepingSpeed(start: WindVector, end: WindVector, factor: Double): WindVector {
+    val speed = lerp(start.speed, end.speed, factor)
+    val v = lerp(start, end, factor)
+    val m = v.speed
+    return when {
+        m > 1e-6 -> v * (speed / m)
+        speed <= 1e-9 -> WindVector.ZERO
+        else -> {
+            val nearer = if (factor < 0.5) start else end
+            if (nearer.speed > 1e-9) nearer * (speed / nearer.speed) else WindVector.ZERO
+        }
+    }
+}
+
+/**
  * Interpolation factor of [t] between [t0] and [t1], clamped to [0, 1]. Returns 0 when
  * `t0 == t1` (karoo-headwind's `lerpWeatherTime` divides by zero there; the app keeps that
  * expression verbatim for WP1 parity, new code should use this function).

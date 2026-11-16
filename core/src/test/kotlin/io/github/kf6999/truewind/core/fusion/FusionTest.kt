@@ -63,18 +63,47 @@ class FusionTest {
     }
 
     @Test
-    fun blendIsWeightedInUV_notInAngles() {
-        // From north and from south at equal weight: u/v blend is calm, an angle average would be 90°/270°.
+    fun opposingMembers_keepTheMeanSpeed_notCancelToCalm() {
+        // 3 m/s from 270 and 3 m/s from 90 at equal weight: the vector mean is 0, the speed must stay 3.
         val snap = build(
             listOf(
-                series("a", HOME) { WindVector.fromSpeedDirection(5.0, 0.0) },
-                series("b", HOME) { WindVector.fromSpeedDirection(5.0, 180.0) },
+                series("a", HOME) { WindVector.fromSpeedDirection(3.0, 270.0) },
+                series("b", HOME) { WindVector.fromSpeedDirection(3.0, 90.0) },
             )
         )
         val s = snap.sample(T0, HOME)
-        assertClose(0.0, s.model10m!!.speed, 1e-9)
-        assertClose(5.0, s.spread!!, 1e-9)
-        assertFalse(s.directionReliable)
+        assertClose(3.0, s.model10m!!.speed, 1e-9)
+        assertClose(3.0, s.spread!!, 1e-9)
+    }
+
+    @Test
+    fun blendSpeedIsWeightedMeanOfMemberSpeeds_directionFromVectorMean() {
+        // 4 m/s from north and 2 m/s from east, equal weight: mean speed 3, direction of the vector mean.
+        val snap = build(
+            listOf(
+                series("a", HOME) { WindVector.fromSpeedDirection(4.0, 0.0) },
+                series("b", HOME) { WindVector.fromSpeedDirection(2.0, 90.0) },
+            )
+        )
+        val m = snap.sample(T0, HOME).model10m!!
+        assertClose(3.0, m.speed, 1e-9)
+        val vec = WindVector.fromSpeedDirection(4.0, 0.0) + WindVector.fromSpeedDirection(2.0, 90.0)
+        assertClose(vec.directionFromDeg, m.directionFromDeg, 1e-6)
+    }
+
+    @Test
+    fun timeInterpolationAcrossAReversal_keepsSpeed() {
+        val snap = build(
+            listOf(
+                series("a", HOME, step = 60 * MIN) { t ->
+                    WindVector.fromSpeedDirection(3.0, if (t <= T0) 270.0 else 90.0)
+                }
+            )
+        )
+        for (m in listOf(0L, 10L, 30L, 45L)) {
+            val s = snap.sample(T0 + m * MIN, HOME).model10m!!.speed
+            assertTrue(s > 2.9, "speed $s at +$m min")
+        }
     }
 
     @Test
@@ -284,7 +313,8 @@ class FusionTest {
 
         // Age cap 30; fresh co-located obs with a 2 m/s residual: −20, no "no obs" deduction.
         val withObs = build(pair, listOf(obs("K1", HOME, T0, WindVector(5.0, 1.0)))).sample(T0, HOME)
-        assertClose(20.0, withObs.confidenceBreakdown.residual, 1e-9)
+        // Blend speed is now the mean of member speeds (3.18), not |mean vector| (3.16): residual ~1.98 m/s.
+        assertClose(20.0, withObs.confidenceBreakdown.residual, 0.5)
         assertClose(0.0, withObs.confidenceBreakdown.noObservation)
         assertEquals(70, withObs.confidence)
 

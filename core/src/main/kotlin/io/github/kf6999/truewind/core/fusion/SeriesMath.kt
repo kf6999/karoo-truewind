@@ -20,10 +20,11 @@ import io.github.kf6999.truewind.core.api.ForecastSeries
 import io.github.kf6999.truewind.core.api.ForecastStep
 import io.github.kf6999.truewind.core.math.haversineKm
 import io.github.kf6999.truewind.core.math.lerp
+import io.github.kf6999.truewind.core.math.lerpKeepingSpeed
 import io.github.kf6999.truewind.core.model.GeoPoint
 import io.github.kf6999.truewind.core.model.WindVector
 
-/** Time interpolation helpers over one member's [ForecastSeries]. All linear in u/v. */
+/** Time interpolation helpers over one member's [ForecastSeries]. Wind is interpolated with [lerpKeepingSpeed] (speed linear, direction from u/v). */
 internal object SeriesMath {
     /**
      * Wind at [t], linearly interpolated between the neighbouring steps that have wind; held
@@ -39,7 +40,7 @@ internal object SeriesMath {
         val p = prev
         val n = next
         return when {
-            p != null && n != null -> lerp(p.wind10m!!, n.wind10m!!, (t - p.timeMs).toDouble() / (n.timeMs - p.timeMs))
+            p != null && n != null -> lerpKeepingSpeed(p.wind10m!!, n.wind10m!!, (t - p.timeMs).toDouble() / (n.timeMs - p.timeMs))
             p != null -> if (t - p.timeMs <= holdMs) p.wind10m else null
             n != null -> if (n.timeMs - t <= holdMs) n.wind10m else null
             else -> null
@@ -75,7 +76,7 @@ internal object SeriesMath {
         val n = next
         if (left == null || n == null) return windAt(series, t, holdMs)
         if (left.timeMs == t) return left.wind10m
-        return lerp(left.wind10m!!, n.wind10m!!, (t - left.timeMs).toDouble() / (n.timeMs - left.timeMs))
+        return lerpKeepingSpeed(left.wind10m!!, n.wind10m!!, (t - left.timeMs).toDouble() / (n.timeMs - left.timeMs))
     }
 
 

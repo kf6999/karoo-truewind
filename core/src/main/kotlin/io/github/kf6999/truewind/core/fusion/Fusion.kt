@@ -19,6 +19,7 @@ package io.github.kf6999.truewind.core.fusion
 import io.github.kf6999.truewind.core.api.ForecastSeries
 import io.github.kf6999.truewind.core.api.Observation
 import io.github.kf6999.truewind.core.math.haversineKm
+import io.github.kf6999.truewind.core.math.lerpKeepingSpeed
 import io.github.kf6999.truewind.core.model.GeoPoint
 import io.github.kf6999.truewind.core.model.SourceSummary
 import io.github.kf6999.truewind.core.model.Status
@@ -176,8 +177,32 @@ class FusionSnapshot internal constructor(
 
     /** Blend at forecast point [pointIndex], time [t] (no correction). */
     fun blendAt(pointIndex: Int, t: Long): WindVector? {
-        val (iu, iv) = interp(u, pointIndex, t) to interp(v, pointIndex, t)
-        return if (iu.isNaN() || iv.isNaN()) null else WindVector(iu, iv)
+        return interpWind(pointIndex, t)
+    }
+
+    /** Wind at [t] from the grid: direction from u/v, speed linear between steps (no dip across a turn). */
+    private fun interpWind(pointIndex: Int, t: Long): WindVector? {
+        val base = pointIndex * nSteps
+        if (nSteps == 1 || t <= gridStartMs || (t - gridStartMs).toDouble() / stepMs >= nSteps - 1) {
+            val i = if (nSteps == 1 || t <= gridStartMs) 0 else nSteps - 1
+            val dir = if (i == 0) +1 else -1
+            var k = i
+            while (k in 0 until nSteps) {
+                if (!u[base + k].isNaN() && !v[base + k].isNaN()) return WindVector(u[base + k], v[base + k])
+                k += dir
+            }
+            return null
+        }
+        val pos = (t - gridStartMs).toDouble() / stepMs
+        val i0 = floor(pos).toInt()
+        val f = pos - i0
+        val w0 = if (u[base + i0].isNaN() || v[base + i0].isNaN()) null else WindVector(u[base + i0], v[base + i0])
+        val w1 = if (u[base + i0 + 1].isNaN() || v[base + i0 + 1].isNaN()) null else WindVector(u[base + i0 + 1], v[base + i0 + 1])
+        return when {
+            w0 == null -> w1
+            w1 == null -> w0
+            else -> lerpKeepingSpeed(w0, w1, f)
+        }
     }
 
     fun nearestPoint(p: GeoPoint): Int {
@@ -228,10 +253,7 @@ class FusionSnapshot internal constructor(
         if (ageMs > params.maxHoldMs) return FusedSample.noData(nowMs).copy(ageMs = ageMs)
 
         val p = nearestPoint(rider)
-        val bu = interp(u, p, nowMs)
-        val bv = interp(v, p, nowMs)
-        if (bu.isNaN() || bv.isNaN()) return FusedSample.noData(nowMs).copy(ageMs = ageMs)
-        val blend = WindVector(bu, bv)
+        val blend = interpWind(p, nowMs) ?: return FusedSample.noData(nowMs).copy(ageMs = ageMs)
 
         // Residual correction and nearest station (SPEC 4.3).
         var sumK = 0.0
@@ -438,14 +460,36 @@ object Fusion {
                 if (sw <= 0.0) continue
                 var bu = 0.0
                 var bv = 0.0
+                var meanSpeed = 0.0
+                var topK = -1
                 for (k in group.indices) if (ws[k] > 0.0) {
                     bu += ws[k] / sw * mu[k]
                     bv += ws[k] / sw * mv[k]
+                    meanSpeed += ws[k] / sw * hypot(mu[k], mv[k])
+                    if (topK < 0 || ws[k] > ws[topK]) topK = k
+                }
+                // Direction from the weighted vector mean, speed from the weighted mean of the member
+                // speeds: members that disagree in direction must not cancel each other's speed.
+                val meanU = bu
+                val meanV = bv
+                val vecSpeed = hypot(bu, bv)
+                if (vecSpeed > 1e-6) {
+                    bu *= meanSpeed / vecSpeed
+                    bv *= meanSpeed / vecSpeed
+                } else {
+                    val tops = hypot(mu[topK], mv[topK])
+                    if (tops > 1e-9) {
+                        bu = mu[topK] * meanSpeed / tops
+                        bv = mv[topK] * meanSpeed / tops
+                    } else {
+                        bu = 0.0
+                        bv = 0.0
+                    }
                 }
                 var var2 = 0.0
                 for (k in group.indices) if (ws[k] > 0.0) {
-                    val du = mu[k] - bu
-                    val dv = mv[k] - bv
+                    val du = mu[k] - meanU
+                    val dv = mv[k] - meanV
                     var2 += ws[k] / sw * (du * du + dv * dv)
                 }
                 spread[idx] = sqrt(var2)
