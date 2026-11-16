@@ -323,6 +323,14 @@ class TrueWindPipeline(
         return null
     }
 
+    /**
+     * The barometric elevation, only while the position is a live GPS fix: the elevation is always where
+     * the device is, so with a last-known or debug position it belongs to a different place than the
+     * forecast point and must not drive the temperature/pressure correction.
+     */
+    private fun elevationAtPosition(): Double? =
+        if (DebugOverrides.position == null && livePosition != null) elevation else null
+
     private fun engineFor(s: HeadwindSettings): WindEngine {
         val key = TickPolicy.engineKey(s)
         val current = engine
@@ -353,7 +361,7 @@ class TrueWindPipeline(
                 val ctx = CycleContext(
                     nowMs = now,
                     rider = pos?.let { TickPolicy.roundForFetch(it, s) },
-                    riderElevationM = elevation,
+                    riderElevationM = elevationAtPosition(),
                     recording = recording,
                     visible = fieldVisible || appScreenOpen,
                     routeHash = r?.routePolyline?.hashCode()?.toLong(),
@@ -458,7 +466,7 @@ class TrueWindPipeline(
         val est = ensureEstimator(s)
         val inputs = TickInputs(
             nowMs = now, position = pos, gpsCourseDeg = gpsCourse, gpsAccuracyM = gpsAccuracy, speedMps = speed,
-            karooHeadingDeg = karooHeading, routeBearingDeg = route?.let { routeBearingAt(it) }, elevationM = elevation,
+            karooHeadingDeg = karooHeading, routeBearingDeg = route?.let { routeBearingAt(it) }, elevationM = elevationAtPosition(),
             sensorPressureHpa = pressureHpa, powerW = power, power3sW = power3s, cadenceRpm = cadence, gradePercent = grade,
             riderMassKg = riderMass,
         )
@@ -497,7 +505,7 @@ class TrueWindPipeline(
         Diagnostics.offlineHint = if (offline?.noInternet == true) TrueWindMapper.NO_INTERNET_HINT else null
         val modelTemp = sample.weather?.temperatureC
         Diagnostics.temperatures = Diagnostics.TemperatureComparison(
-            modelTemp, TrueWindMapper.correctedTemperatureC(modelTemp, sample.weather?.gridElevationM, elevation), sensorTempC,
+            modelTemp, TrueWindMapper.correctedTemperatureC(modelTemp, sample.weather?.gridElevationM, elevationAtPosition()), sensorTempC,
         )
         val provisional = TrueWindMapper.toSnapshot(sample, out, inputs, s, legacy, Diagnostics.lastSuccessfulCycleMs,
             Diagnostics.nextCheckAtMs, maxWind, rain, offline)

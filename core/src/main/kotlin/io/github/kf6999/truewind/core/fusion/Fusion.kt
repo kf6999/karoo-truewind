@@ -468,12 +468,14 @@ object Fusion {
                 var bu = 0.0
                 var bv = 0.0
                 var meanSpeed = 0.0
+                // Highest-weighted member that is not calm: the direction fallback when the vectors cancel.
                 var topK = -1
                 for (k in group.indices) if (ws[k] > 0.0) {
                     bu += ws[k] / sw * mu[k]
                     bv += ws[k] / sw * mv[k]
-                    meanSpeed += ws[k] / sw * hypot(mu[k], mv[k])
-                    if (topK < 0 || ws[k] > ws[topK]) topK = k
+                    val sp = hypot(mu[k], mv[k])
+                    meanSpeed += ws[k] / sw * sp
+                    if (sp > 1e-9 && (topK < 0 || ws[k] > ws[topK])) topK = k
                 }
                 // Direction from the weighted vector mean, speed from the weighted mean of the member
                 // speeds: members that disagree in direction must not cancel each other's speed.
@@ -483,15 +485,13 @@ object Fusion {
                 if (vecSpeed > 1e-6) {
                     bu *= meanSpeed / vecSpeed
                     bv *= meanSpeed / vecSpeed
-                } else {
+                } else if (topK >= 0) {
                     val tops = hypot(mu[topK], mv[topK])
-                    if (tops > 1e-9) {
-                        bu = mu[topK] * meanSpeed / tops
-                        bv = mv[topK] * meanSpeed / tops
-                    } else {
-                        bu = 0.0
-                        bv = 0.0
-                    }
+                    bu = mu[topK] * meanSpeed / tops
+                    bv = mv[topK] * meanSpeed / tops
+                } else {
+                    bu = 0.0 // every member calm
+                    bv = 0.0
                 }
                 var var2 = 0.0
                 for (k in group.indices) if (ws[k] > 0.0) {

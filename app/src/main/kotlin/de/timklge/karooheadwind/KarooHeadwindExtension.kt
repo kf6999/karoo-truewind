@@ -293,6 +293,10 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
         val config = WindEngineConfig(
             planner = FetchPlannerConfig.forRefreshMinutes(s.refreshIntervalMin),
             useObservations = s.layerObservations,
+            memberAllowed = { id ->
+                if (id.startsWith("open-meteo:")) s.layerEnsemble || id == "open-meteo:best_match"
+                else s.tomorrowApiKey.isNotBlank()
+            },
         )
         if (BuildConfig.DEBUG) Log.d(TAG, "Engine: forecast=${forecast.map { it.id }} obs=${observations.map { it.id }} settings=$s")
         return WindEngine(forecast, observations, hourly, DataStoreKeyValueStore(applicationContext.engineDataStore), config)

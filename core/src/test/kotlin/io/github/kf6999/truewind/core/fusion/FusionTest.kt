@@ -77,6 +77,20 @@ class FusionTest {
     }
 
     @Test
+    fun calmTopMember_withOpposingOthers_keepsTheMeanSpeed() {
+        // 40% calm, 30% + 30% opposing 5 m/s: vectors cancel and the top member is calm; speed stays 3.
+        val snap = build(
+            listOf(
+                series("a", HOME) { WindVector(0.0, 0.0) },
+                series("b", HOME) { WindVector.fromSpeedDirection(5.0, 270.0) },
+                series("c", HOME) { WindVector.fromSpeedDirection(5.0, 90.0) },
+            ),
+            weights = mapOf("a" to 0.4, "b" to 0.3, "c" to 0.3),
+        )
+        assertClose(3.0, snap.sample(T0, HOME).model10m!!.speed, 1e-9)
+    }
+
+    @Test
     fun blendSpeedIsWeightedMeanOfMemberSpeeds_directionFromVectorMean() {
         // 4 m/s from north and 2 m/s from east, equal weight: mean speed 3, direction of the vector mean.
         val snap = build(

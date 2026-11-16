@@ -93,6 +93,24 @@ class CycleCacheTest {
     }
 
     @Test
+    fun restore_dropsMembersTheCurrentSettingsCannotProduce() = runBlocking {
+        val store = InMemoryKeyValueStore()
+        val a = Member("a", WindVector(4.0, 0.0), 20.0)
+        val b = Member("b", WindVector(2.0, 0.0), 18.0)
+        assertTrue(WindEngine(listOf(ForecastSource(a), ForecastSource(b)), store = store).runCycleIfDue(ctx(T0)).success)
+
+        val onlyA = WindEngine(listOf(ForecastSource(a.also { it.down = true })), store = store,
+            config = WindEngineConfig(memberAllowed = { it == "a:m" }))
+        assertTrue(onlyA.restore(T0 + MIN, HOME))
+        val s = onlyA.sample(T0 + MIN, HOME)
+        assertEquals(4.0, s.model10m!!.speed, 1e-6)
+        assertEquals(listOf("a:m"), s.sources.models)
+
+        val none = WindEngine(listOf(ForecastSource(a)), store = store, config = WindEngineConfig(memberAllowed = { false }))
+        assertFalse(none.restore(T0 + MIN, HOME))
+    }
+
+    @Test
     fun failingMemberStaysInBlend_whileAnotherSourceAnswers() = runBlocking {
         val om = Member("open-meteo", WindVector(4.0, 0.0), 20.0)
         val tm = Member("tomorrow", WindVector(2.0, 0.0), 18.0)

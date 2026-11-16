@@ -57,6 +57,11 @@ data class WindEngineConfig(
     /** Per-layer switch (SPEC 4): use observations for weighting and residual correction. */
     val useObservations: Boolean = true,
     /**
+     * Forecast members the current settings can produce; null = any. [WindEngine.restore] drops
+     * cached members outside it (ensemble switched off, provider key removed since the cache was written).
+     */
+    val memberAllowed: ((String) -> Boolean)? = null,
+    /**
      * Upstream Headwind emulation for the replay baseline: one forecast source, member
      * [upstreamMemberId] only, hourly steps linearly interpolated, no observations, planner in
      * upstream mode (also set [FetchPlannerConfig.upstreamEmulation]; [WindEngine] does it for you).
@@ -304,11 +309,20 @@ class WindEngine(
         } ?: return false
         if (nowMs - c.fetchedAtMs > maxAgeMs || c.fetchedAtMs > nowMs + 5 * 60_000L) return false
         if (haversineKm(c.rider, rider) > maxDistanceKm) return false
-        val rebuilt = Fusion.build(c.fetchedAtMs, c.series, c.weights, c.observations, config.fusion)
+        // The cache may predate a settings change: keep only what the current settings would fetch.
+        val allowed = config.memberAllowed
+        val series = if (allowed == null) c.series else c.series.filter { allowed(it.memberId) }
+        if (series.isEmpty()) return false
+        val weights = if (allowed == null) c.weights else c.weights.filterKeys(allowed)
+        val observations = if (config.useObservations) c.observations else emptyList()
+        val rebuilt = Fusion.build(c.fetchedAtMs, series, weights, observations, config.fusion)
             ?.let { averageResiduals(it, c.fetchedAtMs) } ?: return false
         snapshot = rebuilt
-        lastAccepted = c.observations
-        for ((id, t) in c.memberFetchedAtMs) memberCache[id] = t to c.series.filter { it.memberId == id }
+        lastAccepted = observations
+        for ((id, t) in c.memberFetchedAtMs) {
+            val own = series.filter { it.memberId == id }
+            if (own.isNotEmpty()) memberCache[id] = t to own
+        }
         return true
     }
 

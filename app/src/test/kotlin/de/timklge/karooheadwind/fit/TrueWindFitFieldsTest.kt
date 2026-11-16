@@ -89,8 +89,15 @@ class TrueWindFitFieldsTest {
                 ),
                 status = Status.OK, riderHeadingDeg = 0.0,
             ),
-            WindExtras(upstreamMode = false),
+            WindExtras(upstreamMode = false, gust10m = 7.0),
         )
+        // The fused vector is the source: no weather (temperature missing) keeps the wind, and an
+        // expired fused sample writes no wind even when the hourly forecast still has some.
+        val noWeather = HeadwindFitFileWriter.buildRecordValuesFor(90.0, tw.copy(state = tw.state.copy(weather = null)))
+        assertEquals(5.0, noWeather.valueOf(HeadwindFitFileWriter.WIND_SPEED)!!, 1e-9)
+        val expired = HeadwindFitFileWriter.buildRecordValuesFor(90.0, tw.copy(state = tw.state.copy(model10m = null, rider = null)))
+        assertEquals(null, expired.valueOf(HeadwindFitFileWriter.WIND_SPEED))
+        assertEquals(null, expired.valueOf(HeadwindFitFileWriter.WIND_GUST))
         val v = HeadwindFitFileWriter.buildRecordValuesFor(90.0, tw) + HeadwindFitFileWriter.buildTrueWindRecordValues(tw)
         assertEquals(5.0, v.valueOf(HeadwindFitFileWriter.WIND_SPEED)!!, 1e-9)
         assertEquals(7.0, v.valueOf(HeadwindFitFileWriter.WIND_GUST)!!, 1e-9)

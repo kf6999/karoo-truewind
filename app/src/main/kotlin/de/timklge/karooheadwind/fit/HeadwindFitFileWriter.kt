@@ -146,6 +146,19 @@ class HeadwindFitFileWriter(
          * rider-height wind the rider actually feels.
          */
         fun buildRecordValuesFor(relativeAngle: Double?, snapshot: WindSnapshot): List<FieldValue> {
+            if (!snapshot.isPlaceholder && !snapshot.extras.upstreamMode) {
+                // TrueWind: straight from the fused vector, so an expired sample writes nothing (the hourly
+                // widget forecast must not pose as fused wind) and missing temperature does not drop the wind.
+                val fused = snapshot.state.model10m
+                val basis = if (snapshot.extras.showWindAt10m) fused else snapshot.state.rider ?: fused
+                return buildRecordValues(
+                    relativeAngle = relativeAngle,
+                    windSpeed = fused?.speed,
+                    windDirection = fused?.directionFromDeg,
+                    windGust = if (fused != null) snapshot.extras.gust10m else null,
+                    headwindBasisSpeed = basis?.speed,
+                )
+            }
             val w10 = snapshot.weatherData()
             return buildRecordValues(
                 relativeAngle = relativeAngle,
