@@ -76,6 +76,36 @@ class TrueWindFitFieldsTest {
     }
 
     @Test
+    fun standardWindFields_are10m_riderFieldsAreDownscaled() {
+        val tw = WindSnapshot(
+            WindState(
+                timeMs = 1_794_657_600_000L, model10m = WindVector.fromSpeedDirection(5.0, 270.0),
+                rider = WindVector.fromSpeedDirection(2.7, 270.0), gustRider = 3.0, headwind = null, crosswind = null,
+                relativeDirectionDeg = null, confidence = 80, sources = SourceSummary(), ageMs = 1000L, airDensity = 1.2,
+                weather = io.github.kf6999.truewind.core.model.WeatherNow(
+                    timeSec = 1, temperatureC = 20.0, relativeHumidityPct = 40, precipitationMm = 0.0,
+                    precipitationProbabilityPct = null, cloudCoverPct = 0.0, sealevelPressureHpa = 1013.0, surfacePressureHpa = 1000.0,
+                    windSpeed = 5.0, windDirectionDeg = 270.0, windGusts = 7.0, weatherCode = 0, isForecast = true, isNight = false, uvi = 0.0,
+                ),
+                status = Status.OK, riderHeadingDeg = 0.0,
+            ),
+            WindExtras(upstreamMode = false),
+        )
+        val v = HeadwindFitFileWriter.buildRecordValuesFor(90.0, tw) + HeadwindFitFileWriter.buildTrueWindRecordValues(tw)
+        assertEquals(5.0, v.valueOf(HeadwindFitFileWriter.WIND_SPEED)!!, 1e-9)
+        assertEquals(7.0, v.valueOf(HeadwindFitFileWriter.WIND_GUST)!!, 1e-9)
+        assertEquals(2.7, v.valueOf(HeadwindFitFileWriter.RIDER_WIND_SPEED)!!, 1e-9)
+    }
+
+    @Test
+    fun defaultSettings_downscaleToRiderHeight_ratio054() {
+        val st = de.timklge.karooheadwind.HeadwindSettings()
+        assertTrue(st.layerDownscaling)
+        val ratio = io.github.kf6999.truewind.core.physics.LogLaw.ratio(st.exposure.exposure, st.riderHeightM)
+        assertEquals(0.54, ratio, 0.005)
+    }
+
+    @Test
     fun recordValues_invalidMeasurementOmitted_upstreamModeEmpty() {
         assertNull(HeadwindFitFileWriter.buildTrueWindRecordValues(snapshot(measured = null)).valueOf(HeadwindFitFileWriter.MEASURED_HEADWIND))
         assertTrue(HeadwindFitFileWriter.buildTrueWindRecordValues(snapshot(upstream = true)).isEmpty())

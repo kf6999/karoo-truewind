@@ -140,19 +140,37 @@ class HeadwindFitFileWriter(
             }
         }
 
+        /**
+         * Standard record fields for [snapshot]: `wind_speed`/`wind_direction`/`wind_gust` are the fused
+         * 10 m values (the rider-height values go to `rider_wind_*`); `headwind_speed` follows the
+         * rider-height wind the rider actually feels.
+         */
+        fun buildRecordValuesFor(relativeAngle: Double?, snapshot: WindSnapshot): List<FieldValue> {
+            val w10 = snapshot.weatherData()
+            return buildRecordValues(
+                relativeAngle = relativeAngle,
+                windSpeed = w10?.windSpeed,
+                windDirection = w10?.windDirection,
+                windGust = w10?.windGusts,
+                headwindBasisSpeed = snapshot.headlineWeatherData()?.windSpeed,
+            )
+        }
+
         fun buildRecordValues(
             relativeAngle: Double?,
             windSpeed: Double?,
             windDirection: Double?,
             windGust: Double?,
+            /** Speed the headwind component is taken from (rider-height wind); defaults to [windSpeed]. */
+            headwindBasisSpeed: Double? = windSpeed,
         ): List<FieldValue> {
             return buildList {
                 if (windSpeed != null) add(FieldValue(WIND_SPEED, windSpeed))
                 if (windDirection != null) add(FieldValue(WIND_DIRECTION, windDirection))
                 if (windGust != null) add(FieldValue(WIND_GUST, windGust))
 
-                if (relativeAngle != null && windSpeed != null) {
-                    val headwindSpeed = cos(Math.toRadians(relativeAngle + 180)) * windSpeed
+                if (relativeAngle != null && headwindBasisSpeed != null) {
+                    val headwindSpeed = cos(Math.toRadians(relativeAngle + 180)) * headwindBasisSpeed
                     add(FieldValue(HEADWIND_SPEED, headwindSpeed))
 
                     val headwindDirection = if (relativeAngle < 0) relativeAngle + 360 else relativeAngle
@@ -166,14 +184,9 @@ class HeadwindFitFileWriter(
         val sources = WindSources()
         return CoroutineScope(Dispatchers.IO).launch {
             launch {
-                combine(windRepository.relativeHeadingAndWeather, windRepository.snapshot) { (heading, weather), snapshot ->
+                combine(windRepository.relativeHeadingAndWeather, windRepository.snapshot) { (heading, _), snapshot ->
                     sources.add(snapshot)
-                    buildRecordValues(
-                        relativeAngle = (heading as? HeadingResponse.Value)?.diff,
-                        windSpeed = weather?.windSpeed,
-                        windDirection = weather?.windDirection,
-                        windGust = weather?.windGusts,
-                    ) + buildTrueWindRecordValues(snapshot)
+                    buildRecordValuesFor((heading as? HeadingResponse.Value)?.diff, snapshot) + buildTrueWindRecordValues(snapshot)
                 }
                     .throttle(1_000L)
                     .collect { values ->
