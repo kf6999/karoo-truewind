@@ -133,6 +133,19 @@ data class FusionConfig(
      * set), are not used. Members whose 15-min values are interpolated from hourly are unchanged.
      */
     val memberAnchorStepMs: Long = 60 * 60_000L,
+    /**
+     * Stations with reliability at or below this (CWOP citizen stations) feed the wind residual only
+     * when an ASOS/AWOS/RAWS-class station (reliability >= [referenceReliability]) within
+     * [lowReliabilityReferenceKm] reports a speed within [lowReliabilityAgreeMs] of theirs.
+     */
+    val lowReliabilityMax: Double = 0.4,
+    val referenceReliability: Double = 0.95,
+    val lowReliabilityReferenceKm: Double = 30.0,
+    val lowReliabilityAgreeMs: Double = 1.5,
+    /** A 0.0 m/s report from a non-ASOS/AWOS station counts as "no wind data" for the residual. */
+    val calmNonAirportIsNoData: Boolean = true,
+    /** The residual correction may lower the blended speed by at most this fraction. */
+    val maxResidualSpeedReduction: Double = 0.5,
     /** Blend grid resolution. */
     val stepMs: Long = 15 * 60_000L,
     /** "No observation within 30 km / 30 min" for confidence. */
@@ -152,6 +165,9 @@ data class FusionConfig(
             skillWeighting = true,
             residualDistanceScaleKm = 15.0,
             residualAverageMs = 0L,
+            calmNonAirportIsNoData = false,
+            lowReliabilityMax = -1.0,
+            maxResidualSpeedReduction = 1.0,
             memberAnchorStepMs = 0L,
             priors = MemberPriors.SPEC,
         )

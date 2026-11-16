@@ -272,8 +272,8 @@ class FusionTest {
 
     @Test
     fun lowReliabilityStation_correctsLess() {
-        val snap = build(listOf(series("a", HOME) { WindVector(3.0, 0.0) }), listOf(obs("CW1", HOME, T0, WindVector(5.0, 0.0), reliability = 0.3)))
-        assertClose(3.6, snap.sample(T0, HOME).model10m!!.u, 1e-9)
+        val snap = build(listOf(series("a", HOME) { WindVector(3.0, 0.0) }), listOf(obs("CW1", HOME, T0, WindVector(5.0, 0.0), reliability = 0.5)))
+        assertClose(4.0, snap.sample(T0, HOME).model10m!!.u, 1e-9)
     }
 
     @Test
@@ -361,5 +361,52 @@ class FusionTest {
     @Test
     fun noUsableSeries_buildReturnsNull() {
         assertNull(Fusion.build(T0, listOf(series("a", HOME) { null }), mapOf("a" to 1.0), emptyList()))
+    }
+
+    // ---- residual hardening (field fix) --------------------------------------------------------
+
+    private fun cwop(id: String, at: io.github.kf6999.truewind.core.model.GeoPoint, wind: WindVector?, t: Long = T0) =
+        obs(id, at, t, wind, speed = wind?.speed ?: 0.0).copy(source = "synoptic", reliability = 0.4, network = "CWOP")
+
+    private val calmBlendSeries get() = listOf(series("a", HOME) { WindVector.fromSpeedDirection(5.0, 270.0) })
+
+    @Test
+    fun calmCitizenStations_doNotDragWindToZero() {
+        val cw = (1..4).map { cwop("C$it", offset(HOME, 0.5 * it), WindVector.ZERO) }
+        val s = build(calmBlendSeries, cw).sample(T0, HOME)
+        assertClose(5.0, s.model10m!!.speed, 1e-9)
+        assertClose(0.0, s.correction!!.speed, 1e-9)
+    }
+
+    @Test
+    fun citizenStation_countsOnlyWithAnAgreeingAirportStation() {
+        val cw = cwop("C1", offset(HOME, 1.0), WindVector.fromSpeedDirection(3.5, 270.0))
+        val agreeing = obs("KAAA", offset(HOME, 10.0), T0, WindVector.fromSpeedDirection(4.0, 270.0))
+        val disagreeing = obs("KAAA", offset(HOME, 10.0), T0, WindVector.fromSpeedDirection(6.0, 270.0))
+        assertTrue(build(calmBlendSeries, listOf(cw)).sample(T0, HOME).correction!!.speed < 1e-9)
+        // CWOP alone contributes nothing; with an agreeing airport it contributes (the airport itself also does).
+        val withAgree = build(calmBlendSeries, listOf(cw, agreeing))
+        val idx = withAgree.stations.indexOfFirst { it.stationId == "C1" }
+        assertNotNull(withAgree.residual(idx))
+        val withDisagree = build(calmBlendSeries, listOf(cw, disagreeing))
+        assertNull(withDisagree.residual(withDisagree.stations.indexOfFirst { it.stationId == "C1" }))
+        assertNull(build(calmBlendSeries, listOf(cw)).residual(0))
+    }
+
+    @Test
+    fun residualCannotReduceBlendBeyondHalf() {
+        // Airport reports calm 0.0 m/s at the rider against a 5 m/s blend: correction capped at -50%.
+        val s = build(calmBlendSeries, listOf(obs("KAAA", HOME, T0, WindVector.ZERO, speed = 0.0))).sample(T0, HOME)
+        assertClose(2.5, s.model10m!!.speed, 1e-9)
+    }
+
+    @Test
+    fun twoHourOldObservation_changesOutputByUnder5Percent() {
+        val snap = build(calmBlendSeries, listOf(obs("KAAA", HOME, T0 - 5 * MIN, WindVector.fromSpeedDirection(0.5, 270.0))))
+        val fresh = snap.sample(T0, HOME).model10m!!.speed
+        val old = snap.sample(T0 + 120 * MIN, HOME).model10m!!.speed
+        val blend = snap.sample(T0 + 120 * MIN, HOME).blend!!.speed
+        assertTrue(fresh < blend * 0.7, "fresh obs should pull noticeably ($fresh vs $blend)")
+        assertTrue(kotlin.math.abs(old - blend) / blend < 0.05, "2 h old obs moved output $old vs blend $blend")
     }
 }

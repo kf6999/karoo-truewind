@@ -24,6 +24,7 @@ import io.github.kf6999.truewind.core.model.GeoPoint
 import io.github.kf6999.truewind.core.model.SourceSummary
 import io.github.kf6999.truewind.core.model.Status
 import io.github.kf6999.truewind.core.model.WindVector
+import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.ceil
@@ -284,14 +285,20 @@ class FusionSnapshot internal constructor(
         } else {
             WindVector.ZERO
         }
-        val model10m = blend + correction
+        // The residual may take away at most maxResidualSpeedReduction of the blended speed.
+        val floorSpeed = blend.speed * (1.0 - config.maxResidualSpeedReduction)
+        val raw = blend + correction
+        val model10m = if (raw.speed < floorSpeed - 1e-9) {
+            if (raw.speed > 1e-9) raw * (floorSpeed / raw.speed) else blend * (1.0 - config.maxResidualSpeedReduction)
+        } else raw
+        val correctionApplied = model10m - blend
 
         val sp = interp(spread, p, nowMs).let { if (it.isNaN()) 0.0 else it }
         val cc = config.confidence
         val intervalMin = params.intervalMs / 60_000.0
         val breakdown = ConfidenceBreakdown(
             spread = min(cc.spreadCap, cc.spreadPointsPerMs * sp),
-            residual = min(cc.residualCap, cc.residualPointsPerMs * correction.speed),
+            residual = min(cc.residualCap, cc.residualPointsPerMs * correctionApplied.speed),
             noObservation = if (anyNearFresh) 0.0 else cc.noObservationPoints,
             age = min(cc.ageCap, max(0.0, ageMs / 60_000.0 - intervalMin) * cc.agePointsPerMinute),
         )
@@ -328,7 +335,7 @@ class FusionSnapshot internal constructor(
             ),
             ageMs = ageMs,
             blend = blend,
-            correction = correction,
+            correction = correctionApplied,
             spread = sp,
             confidenceBreakdown = breakdown,
             beyondHorizon = beyond,
@@ -533,6 +540,7 @@ object Fusion {
         val rv = DoubleArray(observations.size)
         val has = BooleanArray(observations.size)
         for ((i, o) in observations.withIndex()) {
+            if (!usableForResidual(o, observations, config)) continue
             val pi = snapshotNoResiduals.nearestPoint(o.location)
             if (haversineKm(points[pi], o.location) > config.obsNearKm) continue
             val b = snapshotNoResiduals.blendAt(pi, o.timeMs) ?: continue
@@ -554,6 +562,27 @@ object Fusion {
             fetchedAtMs, sortedWeights, points, start, step, n, u, v, gust, spread, temp, rh, precip, cloud,
             sfcP, mslP, code, gridElev, observations, ru, rv, has, config,
         )
+    }
+
+    private fun isAsosAwos(o: Observation): Boolean =
+        o.source == "awc" || o.network?.let { n -> n.contains("ASOS", true) || n.contains("AWOS", true) } == true
+
+    /**
+     * Whether [o] may contribute to the wind residual. A 0.0 m/s report from anything but an
+     * ASOS/AWOS is no data; a low-reliability (CWOP) station needs an agreeing reference station
+     * within [FusionConfig.lowReliabilityReferenceKm].
+     */
+    internal fun usableForResidual(o: Observation, all: List<Observation>, config: FusionConfig): Boolean {
+        val speed = o.speed ?: return false
+        if (config.calmNonAirportIsNoData && speed <= 0.05 && !isAsosAwos(o)) return false
+        if (o.reliability <= config.lowReliabilityMax) {
+            return all.any { r ->
+                r !== o && r.reliability >= config.referenceReliability && r.speed != null &&
+                    haversineKm(r.location, o.location) <= config.lowReliabilityReferenceKm &&
+                    abs(r.speed - speed) <= config.lowReliabilityAgreeMs
+            }
+        }
+        return true
     }
 
     /** Magnitude helper for diagnostics. */

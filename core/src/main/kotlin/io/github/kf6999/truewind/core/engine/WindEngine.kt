@@ -286,7 +286,8 @@ class WindEngine(
         return s.withResiduals { i ->
             val o = s.stations[i]
             val h = residualHistory[Fusion.stationKey(o)]?.filter { o.timeMs - it.first in 0..window }
-            if (h.isNullOrEmpty()) s.residual(i)
+            if (s.residual(i) == null) null // gated out (calm/CWOP): history must not resurrect it
+            else if (h.isNullOrEmpty()) s.residual(i)
             else io.github.kf6999.truewind.core.model.WindVector(h.sumOf { it.second.u } / h.size, h.sumOf { it.second.v } / h.size)
         }
     }
