@@ -42,6 +42,7 @@ class WeatherForecastDataType(windRepository: WindRepository) : ForecastDataType
         isNight: Boolean,
         windUnit: WindUnit,
         uvi: Double,
+        columnWidthDp: Int?,
     ) {
         Weather(
             arrowBitmap = arrowBitmap,
@@ -58,6 +59,7 @@ class WeatherForecastDataType(windRepository: WindRepository) : ForecastDataType
             distance = distance,
             isImperial = isImperial,
             isNight = isNight,
+            columnWidthDp = columnWidthDp,
         )
     }
 

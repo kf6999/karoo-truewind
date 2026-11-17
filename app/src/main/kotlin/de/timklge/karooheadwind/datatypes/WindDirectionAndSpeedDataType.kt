@@ -118,7 +118,7 @@ class WindDirectionAndSpeedDataType(
             emitter.onNext(ShowCustomStreamState("", null))
 
             val refreshRate = windRepository.refreshRateMs()
-            flow.filter { it.isVisible }.throttle(refreshRate).collect { streamData ->
+            flow.filter { it.isVisible }.throttle(refreshRate).combine(if (config.preview) kotlinx.coroutines.flow.flowOf(null) else windRepository.badgeFlow()) { sd, b -> sd to b }.collect { (streamData, badge) ->
                 if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Updating wind speed and direction view")
 
                 val value = (streamData.headingResponse as? HeadingResponse.Value)?.diff
@@ -162,6 +162,8 @@ class WindDirectionAndSpeedDataType(
                         interpolateWindColor(windSpeedInKmh, true, context),
                         wideMode = config.gridSize.first == 60,
                         preview = config.preview,
+                        badge = badge,
+                        arrowSize = arrowSizeDp(config, context.resources.displayMetrics.density, config.gridSize.first == 60),
                     )
                 }
 

@@ -98,7 +98,8 @@ abstract class ForecastDataType(private val windRepository: WindRepository, type
         isImperial: Boolean,
         isNight: Boolean,
         windUnit: WindUnit,
-        uvi: Double
+        uvi: Double,
+        columnWidthDp: Int?,
     )
 
     @OptIn(ExperimentalGlanceRemoteViewsApi::class)
@@ -250,7 +251,14 @@ abstract class ForecastDataType(private val windRepository: WindRepository, type
         val viewJob = CoroutineScope(Dispatchers.IO).launch {
             emitter.onNext(ShowCustomStreamState("", null))
 
-            dataFlow.filter { it.isVisible }.collect { (allData, settingsAndProfile, widgetSettings, headingResponse, upcomingRoute) ->
+            val badgeFlow = if (config.preview) kotlinx.coroutines.flow.flowOf(null) else windRepository.badgeFlow()
+            // Three columns share the field width (minus the 1 dp dividers); a 1x1 cell shows one.
+            val columns = if (config.gridSize.first == 30) 1 else 3
+            val density = context.resources.displayMetrics.density
+            val columnWidth = config.viewSize.first.takeIf { it > 0 && density > 0f }?.let { ((it / density - 2 * (columns - 1)) / columns).toInt() - 2 }
+
+            dataFlow.filter { it.isVisible }.combine(badgeFlow) { d, b -> d to b }.collect { (streamData, badge) ->
+                val (allData, settingsAndProfile, widgetSettings, headingResponse, upcomingRoute) = streamData
                 if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Updating weather forecast view")
 
                 if (allData?.data.isNullOrEmpty()){
@@ -266,6 +274,7 @@ abstract class ForecastDataType(private val windRepository: WindRepository, type
                 }
 
                 val result = glance.compose(context, DpSize.Unspecified) {
+                  androidx.glance.layout.Box(modifier = GlanceModifier.fillMaxSize()) {
                     var modifier = GlanceModifier.fillMaxSize()
 
                     if (!config.preview) modifier = modifier.clickable(onClick = actionRunCallback<CycleHoursAction>())
@@ -353,7 +362,8 @@ abstract class ForecastDataType(private val windRepository: WindRepository, type
                                     isImperial = settingsAndProfile.isImperial,
                                     isNight = data.current.isNight,
                                     windUnit = windUnit,
-                                    uvi = data.current.uvi
+                                    uvi = data.current.uvi,
+                                    columnWidthDp = columnWidth,
                                 )
 
                                 previousDate = formattedDate
@@ -382,13 +392,16 @@ abstract class ForecastDataType(private val windRepository: WindRepository, type
                                     isImperial = settingsAndProfile.isImperial,
                                     isNight = weatherData?.isNight == true,
                                     windUnit = windUnit,
-                                    uvi = weatherData?.uvi ?: 0.0
+                                    uvi = weatherData?.uvi ?: 0.0,
+                                    columnWidthDp = columnWidth,
                                 )
 
                                 previousDate = formattedDate
                             }
                         }
                     }
+                    StatusBadge(badge)
+                  }
                 }
 
                 emitter.updateViewCounted(dataTypeId, result.remoteViews)

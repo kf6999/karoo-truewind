@@ -91,9 +91,11 @@ class HeadwindDirectionDataType(
         val bearing: Double,
         val speed: Double?,
         val isVisible: Boolean,
-        val style: ArrowStyle = ArrowStyle.SOLID,
-        val grey: Boolean = false,
+        val decor: ArrowDecor = ArrowDecor(),
     )
+
+    /** How the arrow is drawn: head/tail colour, grey when unreliable, corner badge. */
+    data class ArrowDecor(val headwindMs: Double? = null, val grey: Boolean = false, val badge: String? = null)
 
     private fun previewFlow(): Flow<DirectionAndSpeed> {
         return flow {
@@ -135,12 +137,12 @@ class HeadwindDirectionDataType(
                 emitAll(windRepository.sensorHub.stream(DataType.dataTypeId(KarooHeadwindExtension.EXTENSION_ID, "headwindSpeed")).map { (it as? StreamState.Streaming)?.dataPoint?.singleValue ?: 0.0 })
             }
 
-            val styleFlow = flow {
-                emit(ArrowStyle.SOLID to false)
-                emitAll(windRepository.readySnapshot.map { arrowStyleOf(it) }.distinctUntilChanged())
+            val decorFlow = flow {
+                emit(ArrowDecor())
+                emitAll(windRepository.readySnapshot.map { decorOf(it) }.distinctUntilChanged())
             }
-            combine(directionFlow.filterNotNull(), speedFlow, windRepository.sensorHub.isVisible(dataTypeId), styleFlow) { direction, speed, isVisible, style ->
-                DirectionAndSpeed(direction, speed, isVisible, style.first, style.second)
+            combine(directionFlow.filterNotNull(), speedFlow, windRepository.sensorHub.isVisible(dataTypeId), decorFlow) { direction, speed, isVisible, decor ->
+                DirectionAndSpeed(direction, speed, isVisible, decor)
             }
         }
 
@@ -168,8 +170,9 @@ class HeadwindDirectionDataType(
                         windSpeed.roundToInt().toString(),
                         preview = config.preview,
                         wideMode = false,
-                        arrowStyle = streamData.style,
-                        grey = streamData.grey,
+                        grey = streamData.decor.grey,
+                        arrowColor = streamData.decor.headwindMs?.let { headwindArrowColor(it, context) },
+                        badge = streamData.decor.badge,
                     )
                 }
 
@@ -184,15 +187,19 @@ class HeadwindDirectionDataType(
     }
 
     companion object {
-        /** Confidence styling (SPEC 5): solid/dashed/dotted for high/medium/low; grey when STALE. */
-        fun arrowStyleOf(s: de.timklge.karooheadwind.pipeline.WindSnapshot): Pair<ArrowStyle, Boolean> {
-            val style = when (s.extras.band) {
-                io.github.kf6999.truewind.core.fusion.ConfidenceBand.MEDIUM -> ArrowStyle.DASHED
-                io.github.kf6999.truewind.core.fusion.ConfidenceBand.LOW -> ArrowStyle.DOTTED
-                else -> ArrowStyle.SOLID
-            }
+        /**
+         * Arrow decoration from the snapshot. Grey when STALE or the direction is unreliable (calm);
+         * confidence and data age go to the corner badge instead of a dashed/dotted arrow.
+         * Headwind is rounded to 0.5 m/s so the colour does not re-render the view on every tick.
+         */
+        fun decorOf(s: de.timklge.karooheadwind.pipeline.WindSnapshot): ArrowDecor {
             val grey = s.state.status == io.github.kf6999.truewind.core.model.Status.STALE || !s.extras.directionReliable
-            return style to grey
+            val heading = (s.relativeHeadingResponse() as? HeadingResponse.Value)?.diff
+            val speed = s.headline?.speed
+            val headwind = if (heading != null && speed != null) {
+                Math.round(io.github.kf6999.truewind.core.wind.RelativeWind.headwind(heading, speed) * 2) / 2.0
+            } else null
+            return ArrowDecor(headwind, grey, FieldStatus.badge(s))
         }
 
         /** Relative wind bearing in [0, 360) for the arrow, or a negative error code. */

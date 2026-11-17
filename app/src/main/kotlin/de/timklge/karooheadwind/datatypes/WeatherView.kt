@@ -40,7 +40,6 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.layout.wrapContentWidth
 import androidx.glance.preview.ExperimentalGlancePreviewApi
-import androidx.glance.text.FontFamily
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
@@ -71,6 +70,20 @@ fun getWeatherIcon(interpretation: WeatherInterpretation, isNight: Boolean): Int
     }
 }
 
+/**
+ * Rain text for a forecast column: probability when it is worth noting (>= 20 %), else the amount
+ * when there is any, else null. [precipitation] is already in the user's unit (mm or in).
+ */
+fun rainLabel(precipitation: Double, precipitationProbability: Int?, isImperial: Boolean?): String? = when {
+    precipitationProbability != null && precipitationProbability >= 20 -> "Rain ${precipitationProbability}%"
+    precipitationProbability == null && precipitation >= (if (isImperial == true) 0.01 else 0.1) ->
+        if (isImperial == true) String.format(Locale.US, "%.2f in", precipitation) else String.format(Locale.US, "%.1f mm", precipitation)
+    else -> null
+}
+
+/** `12` or `12-18` when the gust is higher. */
+fun windLabel(windSpeed: Int, windGusts: Int): String = if (windGusts > windSpeed) "$windSpeed-$windGusts" else "$windSpeed"
+
 @OptIn(ExperimentalGlancePreviewApi::class)
 @Composable
 fun Weather(
@@ -89,12 +102,18 @@ fun Weather(
     dateLabel: String? = null,
     singleDisplay: Boolean = false,
     isImperial: Boolean?,
-    isNight: Boolean
+    isNight: Boolean,
+    /** Column width in the forecast strip; null = 86 dp. */
+    columnWidthDp: Int? = null,
 ) {
 
-    val fontSize = if (singleDisplay) 19f else 14f
+    val fontSize = if (singleDisplay) 19f else 16f
+    val textColor = ColorProvider(Color.Black, Color.White)
+    val rainColor = ColorProvider(Color(0xFF1565C0), Color(0xFF64B5F6))
+    val size = TextUnit(fontSize, TextUnitType.Sp)
+    val smallSize = TextUnit(fontSize - 2f, TextUnitType.Sp)
 
-    Column(modifier = if (singleDisplay) GlanceModifier.fillMaxSize().padding(1.dp) else GlanceModifier.fillMaxHeight().padding(1.dp).width(86.dp), horizontalAlignment = rowAlignment) {
+    Column(modifier = if (singleDisplay) GlanceModifier.fillMaxSize().padding(1.dp) else GlanceModifier.fillMaxHeight().padding(1.dp).width((columnWidthDp ?: 86).dp), horizontalAlignment = rowAlignment) {
         Row(modifier = GlanceModifier.defaultWeight().wrapContentWidth(), horizontalAlignment = rowAlignment, verticalAlignment = Alignment.CenterVertically) {
             Image(
                 modifier = GlanceModifier.defaultWeight().wrapContentWidth().padding(1.dp),
@@ -105,96 +124,51 @@ fun Weather(
         }
 
         if (dateLabel != null && !singleDisplay){
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = dateLabel,
-                    style = TextStyle(
-                        color = ColorProvider(Color.Black, Color.White),
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = TextUnit(fontSize, TextUnitType.Sp)
-                    )
-                )
-            }
+            Text(text = dateLabel, style = TextStyle(color = textColor, fontWeight = FontWeight.Medium, fontSize = smallSize))
         }
 
         if (distance != null && !singleDisplay && isImperial != null){
             val distanceInUserUnit = (distance / (if(!isImperial) 1000.0 else 1609.34)).toInt()
-            val label = "${distanceInUserUnit.absoluteValue}${if(!isImperial) "km" else "mi"}"
-            val text = if(distanceInUserUnit > 0){
-                "In $label"
-            } else {
-                "$label ago"
-            }
+            val label = "${distanceInUserUnit.absoluteValue} ${if(!isImperial) "km" else "mi"}"
+            val text = if(distanceInUserUnit > 0) "In $label" else "$label ago"
 
             if (distanceInUserUnit != 0){
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = text,
-                        style = TextStyle(
-                            color = ColorProvider(Color.Black, Color.White),
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = TextUnit(fontSize, TextUnitType.Sp)
-                        )
-                    )
-                }
+                Text(text = text, style = TextStyle(color = textColor, fontWeight = FontWeight.Medium, fontSize = smallSize))
             }
         }
 
+        // Time and temperature: the two things read first.
         Row(verticalAlignment = Alignment.CenterVertically, horizontalAlignment = rowAlignment) {
-            if (timeLabel != null){
-                Text(
-                    text = timeLabel,
-                    style = TextStyle(color = ColorProvider(Color.Black, Color.White), fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace, fontSize = TextUnit(fontSize, TextUnitType.Sp))
-                )
-
+            if (dateLabel != null && singleDisplay){
+                Text(text = dateLabel, style = TextStyle(color = textColor, fontWeight = FontWeight.Medium, fontSize = size))
                 Spacer(modifier = GlanceModifier.width(5.dp))
             }
-
-            Image(
-                modifier = if (singleDisplay) GlanceModifier.height(20.dp).width(16.dp) else GlanceModifier.height(16.dp).width(12.dp).padding(1.dp),
-                provider = ImageProvider(R.drawable.thermometer),
-                contentDescription = "Temperature",
-                contentScale = ContentScale.Fit,
-            )
-
+            if (timeLabel != null){
+                Text(text = timeLabel, style = TextStyle(color = textColor, fontWeight = FontWeight.Medium, fontSize = size))
+                Spacer(modifier = GlanceModifier.width(5.dp))
+            }
             Text(
                 text = "${temperature}${temperatureUnit.unitDisplay}",
-                style = TextStyle(color = ColorProvider(Color.Black, Color.White), fontFamily = FontFamily.Monospace, fontSize = TextUnit(fontSize, TextUnitType.Sp), textAlign = TextAlign.Center)
+                style = TextStyle(color = textColor, fontWeight = FontWeight.Bold, fontSize = size, textAlign = TextAlign.Center)
             )
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalAlignment = rowAlignment, modifier = GlanceModifier.fillMaxWidth()) {
-            if (dateLabel != null && singleDisplay){
-                Text(
-                    text = "$dateLabel",
-                    style = TextStyle(color = ColorProvider(Color.Black, Color.White),
-                        fontFamily = FontFamily.Monospace, fontSize = TextUnit(fontSize, TextUnitType.Sp))
-                )
-
-                Spacer(modifier = GlanceModifier.width(5.dp))
-            }
-
-            val precipitationProbabilityLabel = if (precipitationProbability != null) "${precipitationProbability}% " else ""
-            Text(
-                text = "${precipitationProbabilityLabel}${ceil(precipitation).toInt().coerceIn(0..9)}",
-                style = TextStyle(color = ColorProvider(Color.Black, Color.White), fontFamily = FontFamily.Monospace, fontSize = TextUnit(fontSize, TextUnitType.Sp))
-            )
-
-            Spacer(modifier = GlanceModifier.width(5.dp))
-
+        // Wind: arrow (direction the wind blows to) and speed-gust.
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalAlignment = rowAlignment) {
             Image(
-                modifier = if (singleDisplay) GlanceModifier.height(20.dp).width(16.dp) else GlanceModifier.height(16.dp).width(12.dp).padding(1.dp),
+                modifier = if (singleDisplay) GlanceModifier.height(20.dp).width(18.dp) else GlanceModifier.height(18.dp).width(16.dp).padding(1.dp),
                 provider = ImageProvider(getArrowBitmapByBearing(arrowBitmap, windBearing + 180)),
                 contentDescription = "Current wind direction",
                 contentScale = ContentScale.Fit,
-                colorFilter = ColorFilter.tint(ColorProvider(Color.Black, Color.White))
+                colorFilter = ColorFilter.tint(textColor)
             )
+            Text(text = windLabel(windSpeed, windGusts), style = TextStyle(color = textColor, fontWeight = FontWeight.Bold, fontSize = size))
+        }
 
-            Text(
-                text = "$windSpeed,${windGusts}",
-                style = TextStyle(color = ColorProvider(Color.Black, Color.White), fontFamily = FontFamily.Monospace, fontSize = TextUnit(fontSize, TextUnitType.Sp))
-            )
+        // Rain only when there is some; a blank line keeps the columns aligned.
+        val rain = rainLabel(precipitation, precipitationProbability, isImperial)
+        if (rain != null || !singleDisplay) {
+            Text(text = rain ?: " ", maxLines = 1, style = TextStyle(color = rainColor, fontWeight = FontWeight.Bold, fontSize = smallSize))
         }
     }
 }

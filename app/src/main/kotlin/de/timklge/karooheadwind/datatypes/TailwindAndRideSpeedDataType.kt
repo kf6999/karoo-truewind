@@ -197,7 +197,7 @@ class TailwindAndRideSpeedDataType(
             emitter.onNext(ShowCustomStreamState("", null))
 
             val refreshRate = windRepository.refreshRateMs()
-            flow.throttle(refreshRate).collect { streamData ->
+            flow.throttle(refreshRate).combine(if (config.preview) kotlinx.coroutines.flow.flowOf(null) else windRepository.badgeFlow()) { sd, b -> sd to b }.collect { (streamData, badge) ->
                 if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Updating headwind direction view")
 
                 val value = (streamData.headingResponse as? HeadingResponse.Value)?.diff
@@ -272,6 +272,8 @@ class TailwindAndRideSpeedDataType(
                         dayColor = nightColor,
                         preview = config.preview,
                         wideMode = wideMode,
+                        badge = badge,
+                        arrowSize = arrowSizeDp(config, context.resources.displayMetrics.density, wideMode),
                     )
                 }
 

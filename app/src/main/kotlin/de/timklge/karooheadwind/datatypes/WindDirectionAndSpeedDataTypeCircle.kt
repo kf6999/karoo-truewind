@@ -107,7 +107,7 @@ class WindDirectionAndSpeedDataTypeCircle(
         val viewJob = CoroutineScope(Dispatchers.IO).launch {
             val refreshRate = windRepository.refreshRateMs()
 
-            flow.filter { it.isVisible }.throttle(refreshRate).collect { streamData ->
+            flow.filter { it.isVisible }.throttle(refreshRate).combine(if (config.preview) kotlinx.coroutines.flow.flowOf(null) else windRepository.badgeFlow()) { sd, b -> sd to b }.collect { (streamData, badge) ->
                 if (BuildConfig.DEBUG) Log.d(KarooHeadwindExtension.TAG, "Updating headwind direction view")
 
                 val value = (streamData.headingResponse as? HeadingResponse.Value)?.diff
@@ -133,7 +133,9 @@ class WindDirectionAndSpeedDataTypeCircle(
                         config.textSize,
                         windSpeedUserUnit.roundToInt().toString(),
                         preview = config.preview,
-                        wideMode = false
+                        wideMode = false,
+                        arrowColor = headwindArrowColor(io.github.kf6999.truewind.core.wind.RelativeWind.headwind(value, streamData.windSpeed), context),
+                        badge = badge,
                     )
                 }
 

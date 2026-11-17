@@ -41,7 +41,6 @@ import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
-import androidx.glance.text.FontFamily
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -105,6 +104,24 @@ fun getArrowBitmapByBearing(baseBitmap: Bitmap, bearing: Int): Bitmap {
     return bitmap
 }
 
+/**
+ * Arrow size for the split layouts, in dp, from the field's real size: the arrow grows with the
+ * field instead of staying 40-50 dp. Null when the view size is unknown (preview).
+ */
+fun arrowSizeDp(config: io.hammerhead.karooext.models.ViewConfig, density: Float, wide: Boolean): Int? {
+    val (w, h) = config.viewSize
+    if (w <= 0 || h <= 0 || density <= 0f) return null
+    val px = if (wide) minOf(w * 0.5f, h * 0.62f) else minOf(w * 0.42f, h * 0.9f)
+    return (px / density - 10f).toInt().coerceIn(32, 160)
+}
+
+/**
+ * Head/tail colour for the arrow: green tailwind, neutral cross/light, orange to red headwind
+ * (same scale as the tailwind field). [headwindMs] is + into the rider.
+ */
+fun headwindArrowColor(headwindMs: Double, context: android.content.Context): androidx.glance.unit.ColorProvider =
+    ColorProvider(interpolateWindColor(headwindMs * 3.6, false, context), interpolateWindColor(headwindMs * 3.6, true, context))
+
 @Composable
 fun HeadwindDirection(
     baseBitmap: Bitmap, bearing: Int, fontSize: Int,
@@ -114,9 +131,21 @@ fun HeadwindDirection(
     arrowStyle: ArrowStyle = ArrowStyle.SOLID,
     /** STALE data: arrow drawn grey (SPEC 5). */
     grey: Boolean = false,
+    /** Arrow colour (e.g. [headwindArrowColor]); null = plain black/white. */
+    arrowColor: androidx.glance.unit.ColorProvider? = null,
+    /** Corner status badge ([FieldStatus.badge]). */
+    badge: String? = null,
+    /** Arrow size in the split layouts ([arrowSizeDp]); null = the old fixed size. */
+    arrowSize: Int? = null,
 ) {
     val baseModifier = GlanceModifier.fillMaxSize().padding(5.dp).background(dayColor, nightColor).cornerRadius(10.dp)
-    val arrowTint = if (grey) ColorProvider(Color.Gray, Color.Gray) else ColorProvider(Color.Black, Color.White)
+    val arrowTint = when {
+        grey -> ColorProvider(Color.Gray, Color.Gray)
+        arrowColor != null -> arrowColor
+        else -> ColorProvider(Color.Black, Color.White)
+    }
+    val textColor = ColorProvider(Color.Black, Color.White)
+    val subSize = maxOf(0.4 * fontSize, 13.0)
 
     Box(
         modifier = if (!preview) baseModifier.clickable(actionStartActivity<MainActivity>()) else baseModifier,
@@ -138,50 +167,48 @@ fun HeadwindDirection(
                 Text(
                     overlayText,
                     maxLines = 1,
-                    style = TextStyle(color = ColorProvider(Color.Black, Color.White), fontSize = (0.6 * fontSize).sp, fontFamily = FontFamily.Monospace),
+                    style = TextStyle(color = textColor, fontSize = (0.6 * fontSize).sp, fontWeight = FontWeight.Bold),
                     modifier = GlanceModifier.padding(1.dp)
                 )
             } else {
                 if (wideMode){
                     Row(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalAlignment = Alignment.CenterHorizontally) {
                         Column(modifier = GlanceModifier.defaultWeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = GlanceModifier.size(50.dp)) {
+                            Column(modifier = GlanceModifier.size((arrowSize ?: 50).dp)) {
                                 Image(
                                     provider = ImageProvider(getArrowBitmapByBearing(baseBitmap, bearing)),
                                     contentDescription = "Relative wind direction indicator",
                                     contentScale = ContentScale.Fit,
-                                    colorFilter = ColorFilter.tint(ColorProvider(Color.Black, Color.White))
+                                    colorFilter = ColorFilter.tint(arrowTint)
                                 )
                             }
 
                             Text(
                                 overlaySubText,
                                 maxLines = 1,
-                                style = TextStyle(color = ColorProvider(Color.Black, Color.White), fontSize = (0.25 * fontSize).sp, fontFamily = FontFamily.Monospace),
+                                style = TextStyle(color = textColor, fontSize = subSize.sp, fontWeight = FontWeight.Medium),
                                 modifier = GlanceModifier.padding(1.dp)
                             )
                         }
-
-                        // Spacer(modifier = GlanceModifier.width(10.dp))
 
                         Column(modifier = GlanceModifier.defaultWeight().fillMaxHeight(), verticalAlignment = Alignment.CenterVertically, horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 overlayText,
                                 maxLines = 1,
                                 modifier = GlanceModifier.padding(5.dp),
-                                style = TextStyle(color = ColorProvider(Color.Black, Color.White), fontSize = (0.6 * fontSize).sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                                style = TextStyle(color = textColor, fontSize = (0.6 * fontSize).sp, fontWeight = FontWeight.Bold)
                             )
                         }
                     }
                 } else {
                     Row(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = GlanceModifier.size(40.dp)) {
+                            Column(modifier = GlanceModifier.size((arrowSize ?: 40).dp)) {
                                 Image(
                                     provider = ImageProvider(getArrowBitmapByBearing(baseBitmap, bearing)),
                                     contentDescription = "Relative wind direction indicator",
                                     contentScale = ContentScale.Fit,
-                                    colorFilter = ColorFilter.tint(ColorProvider(Color.Black, Color.White))
+                                    colorFilter = ColorFilter.tint(arrowTint)
                                 )
                             }
                         }
@@ -190,7 +217,7 @@ fun HeadwindDirection(
                             Text(
                                 overlayText,
                                 maxLines = 1,
-                                style = TextStyle(color = ColorProvider(Color.Black, Color.White), fontSize = (0.65 * fontSize).sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold),
+                                style = TextStyle(color = textColor, fontSize = (0.65 * fontSize).sp, fontWeight = FontWeight.Bold),
                                 modifier = GlanceModifier.padding(1.dp)
                             )
 
@@ -198,7 +225,7 @@ fun HeadwindDirection(
                                 Text(
                                     overlaySubText,
                                     maxLines = 1,
-                                    style = TextStyle(color = ColorProvider(Color.Black, Color.White), fontSize = (0.4 * fontSize).sp, fontFamily = FontFamily.Monospace),
+                                    style = TextStyle(color = textColor, fontSize = subSize.sp, fontWeight = FontWeight.Medium),
                                     modifier = GlanceModifier.padding(1.dp)
                                 )
                             }
@@ -207,5 +234,6 @@ fun HeadwindDirection(
                 }
             }
         }
+        StatusBadge(badge)
     }
 }
