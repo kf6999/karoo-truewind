@@ -173,7 +173,7 @@ fun WeatherScreen(onFinish: () -> Unit) {
         if (karooConnected == true && currentWeatherData != null) {
             WeatherWidget(
                 baseBitmap = baseBitmap,
-                current = WeatherInterpretation.fromWeatherCode(currentWeatherData?.weatherCode),
+                current = WeatherInterpretation.of(currentWeatherData),
                 windBearing = currentWeatherData?.windDirection?.roundToInt() ?: 0,
                 windSpeed = msInWindUnit(currentWeatherData?.windSpeed ?: 0.0, windUnit).roundToInt(),
                 windGusts = msInWindUnit(currentWeatherData?.windGusts ?: 0.0, windUnit).roundToInt(),
@@ -279,7 +279,7 @@ fun WeatherScreen(onFinish: () -> Unit) {
             }
 
             val weatherData = data?.forecasts?.getOrNull(index)
-            val interpretation = WeatherInterpretation.fromWeatherCode(weatherData?.weatherCode ?: 0)
+            val interpretation = WeatherInterpretation.of(weatherData)
             val unixTime = weatherData?.time ?: 0
             val formattedForecastTime = getTimeFormatter(ctx).format(Instant.ofEpochSecond(unixTime).atZone(ZoneId.systemDefault()).toLocalTime())
             val formattedForecastDate = getShortDateFormatter().format(Instant.ofEpochSecond(unixTime))

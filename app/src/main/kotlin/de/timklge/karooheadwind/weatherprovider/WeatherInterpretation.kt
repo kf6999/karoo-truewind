@@ -17,21 +17,50 @@
 package de.timklge.karooheadwind.weatherprovider
 
 enum class WeatherInterpretation {
-    CLEAR, CLOUDY, RAINY, SNOWY, DRIZZLE, THUNDERSTORM, UNKNOWN;
+    CLEAR, PARTLY_CLOUDY, CLOUDY, FOG, RAINY, SNOWY, DRIZZLE, THUNDERSTORM, UNKNOWN;
 
     companion object {
         // WMO weather interpretation codes (WW)
         fun fromWeatherCode(code: Int?): WeatherInterpretation {
             return when(code){
-                0 -> CLEAR
-                1, 2, 3 -> CLOUDY
-                45, 48, 61, 63, 65, 66, 67, 80, 81, 82 -> RAINY
+                0, 1 -> CLEAR               // clear, mainly clear
+                2 -> PARTLY_CLOUDY
+                3 -> CLOUDY                 // overcast
+                45, 48 -> FOG
+                51, 53, 55, 56, 57, 61, 80 -> DRIZZLE   // drizzle, slight rain, slight showers (light-rain icon)
+                63, 65, 66, 67, 81, 82 -> RAINY
                 71, 73, 75, 77, 85, 86 -> SNOWY
-                51, 53, 55, 56, 57 -> DRIZZLE
                 95, 96, 99 -> THUNDERSTORM
                 else -> UNKNOWN
             }
         }
+
+        /**
+         * The icon for the conditions actually reported. The weather code can come from a single
+         * model while cloud cover and precipitation are blended, so for a dry-sky code the measured
+         * cloud cover picks clear / partly cloudy / overcast, and measurable precipitation always shows.
+         */
+        fun of(code: Int?, cloudCoverPct: Double?, precipitationMm: Double?, temperatureC: Double? = null): WeatherInterpretation {
+            val base = fromWeatherCode(code)
+            if (base != CLEAR && base != PARTLY_CLOUDY && base != CLOUDY) return base
+            if (precipitationMm != null && precipitationMm >= 0.1) {
+                return when {
+                    temperatureC != null && temperatureC <= 0.0 -> SNOWY
+                    precipitationMm >= 1.0 -> RAINY
+                    else -> DRIZZLE
+                }
+            }
+            // 0 % under an "overcast" code means the cloud cover is missing, not a clear sky.
+            if (cloudCoverPct == null || !cloudCoverPct.isFinite() || (cloudCoverPct == 0.0 && code == 3)) return base
+            return when {
+                cloudCoverPct < 25.0 -> CLEAR
+                cloudCoverPct < 70.0 -> PARTLY_CLOUDY
+                else -> CLOUDY
+            }
+        }
+
+        fun of(w: WeatherData?): WeatherInterpretation =
+            if (w == null) UNKNOWN else of(w.weatherCode, w.cloudCover, w.precipitation, w.temperature)
 
         fun getKnownWeatherCodes(): Set<Int> = setOf(0, 1, 2, 3, 45, 48, 61, 63, 65, 66, 67, 80, 81, 82, 71, 73, 75, 77, 85, 86, 51, 53, 55, 56, 57, 95, 96, 99)
     }

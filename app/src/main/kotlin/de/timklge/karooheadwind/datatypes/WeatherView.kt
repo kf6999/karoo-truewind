@@ -60,7 +60,9 @@ fun getShortDateFormatter(): DateTimeFormatter =
 fun getWeatherIcon(interpretation: WeatherInterpretation, isNight: Boolean): Int {
     return when (interpretation){
         WeatherInterpretation.CLEAR -> if (isNight) R.drawable.crescent_moon else R.drawable.sun
+        WeatherInterpretation.PARTLY_CLOUDY -> if (isNight) R.drawable.partly_cloudy_night else R.drawable.partly_cloudy_day
         WeatherInterpretation.CLOUDY -> R.drawable.cloud
+        WeatherInterpretation.FOG -> R.drawable.fog
         WeatherInterpretation.RAINY -> R.drawable.cloud_with_rain
         WeatherInterpretation.SNOWY -> R.drawable.cloud_with_snow
         WeatherInterpretation.DRIZZLE -> R.drawable.cloud_with_light_rain

@@ -331,7 +331,7 @@ abstract class ForecastDataType(private val windRepository: WindRepository, type
 
                             if (isCurrent && data?.current != null) {
                                 val windUnit = settingsAndProfile.settings.getWindUnit(settingsAndProfile.isImperial)
-                                val interpretation = WeatherInterpretation.fromWeatherCode(data.current.weatherCode)
+                                val interpretation = WeatherInterpretation.of(data.current)
                                 val unixTime = data.current.time
                                 val formattedTime = getTimeFormatter(context).format(Instant.ofEpochSecond(unixTime).atZone(ZoneId.systemDefault()).toLocalTime())
                                 val formattedDate = getShortDateFormatter().format(Instant.ofEpochSecond(unixTime).atZone(ZoneId.systemDefault()))
@@ -360,7 +360,7 @@ abstract class ForecastDataType(private val windRepository: WindRepository, type
                             } else {
                                 val windUnit = settingsAndProfile.settings.getWindUnit(settingsAndProfile.isImperial)
                                 val weatherData = data?.forecasts?.getOrNull(baseIndex)
-                                val interpretation = WeatherInterpretation.fromWeatherCode(weatherData?.weatherCode ?: 0)
+                                val interpretation = WeatherInterpretation.of(weatherData)
                                 val unixTime = data?.forecasts?.getOrNull(baseIndex)?.time ?: 0
                                 val formattedTime = getTimeFormatter(context).format(Instant.ofEpochSecond(unixTime).atZone(ZoneId.systemDefault()).toLocalTime())
                                 val formattedDate = getShortDateFormatter().format(Instant.ofEpochSecond(unixTime))
