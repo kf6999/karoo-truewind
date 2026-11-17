@@ -295,7 +295,8 @@ abstract class LineGraphForecastDataType(private val windRepository: WindReposit
 
                     when (pointData) {
                         is LineGraphForecastData.LineData -> {
-                            val bitmap = LineGraphBuilder(context).drawLineGraph(config.viewSize.first, config.viewSize.second, config.gridSize.first, config.gridSize.second, pointData.data) { x ->
+                            val bitmap = LineGraphBuilder(context).drawLineGraph(config.viewSize.first, config.viewSize.second, config.gridSize.first, config.gridSize.second, pointData.data,
+                                nowX = data.firstOrNull()?.time?.let { java.time.Duration.between(it, java.time.Instant.now()).toMinutes() / 60f }) { x ->
                                 val startTime = data.firstOrNull()?.time
                                 val time = startTime?.plus(floor(x).toLong(), ChronoUnit.HOURS)
                                 val timeLabel = getTimeFormatter(context).format(time?.atZone(ZoneId.systemDefault())?.toLocalTime())

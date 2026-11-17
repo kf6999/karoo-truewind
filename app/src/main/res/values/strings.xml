@@ -17,9 +17,9 @@
 <resources>
     <string name="app_name">TrueWind</string>
     <string name="extension_name">truewind</string>
-    <string name="headwind">Headwind</string>
+    <string name="headwind">Wind arrow</string>
     <string name="headwind_description">Current headwind direction and headwind speed</string>
-    <string name="tailwind_and_speed">Speed and tailwind</string>
+    <string name="tailwind_and_speed">Ride speed + tailwind</string>
     <string name="tailwind_and_speed_description">Current rider speed and tailwind</string>
     <string name="relativeHumidity">Humidity</string>
     <string name="relativeHumidity_description">Relative humidity in percent</string>
@@ -35,19 +35,19 @@
     <string name="precipitation_description">Current precipitation (rainfall / snowfall)</string>
     <string name="surfacePressure">Surface pressure</string>
     <string name="surfacePressure_description">Atmospheric pressure at surface in configured unit</string>
-    <string name="sealevelPressure">Sealevel pressure</string>
+    <string name="sealevelPressure">Sea-level pressure</string>
     <string name="sealevelPressure_description">Atmospheric pressure at sea level in configured unit</string>
-    <string name="weather_forecast">Weather Forecast</string>
+    <string name="weather_forecast">Weather forecast</string>
     <string name="uvi">UV Index</string>
     <string name="uvi_description">Current UV Index at current location</string>
     <string name="weather_forecast_description">Current hourly weather forecast</string>
-    <string name="temperature_forecast">Temperature Forecast</string>
+    <string name="temperature_forecast">Temperature graph</string>
     <string name="temperature_forecast_description">Current hourly temperature forecast</string>
-    <string name="wind_forecast">Wind Forecast</string>
+    <string name="wind_forecast">Wind graph</string>
     <string name="wind_forecast_description">Current hourly wind forecast</string>
-    <string name="headwind_forecast">Headwind Forecast</string>
+    <string name="headwind_forecast">Headwind graph</string>
     <string name="headwind_forecast_description">Current hourly headwind forecast for loaded route</string>
-    <string name="precipitation_forecast">Precipitation Forecast</string>
+    <string name="precipitation_forecast">Rain graph</string>
     <string name="precipitation_forecast_description">Current hourly precipitation forecast</string>
     <string name="temperature">Temperature</string>
     <string name="temperature_description">Current temperature in configured unit</string>
@@ -55,17 +55,17 @@
     <string name="headwind_speed_description">Current headwind speed</string>
     <string name="headwind_time">Headwind time</string>
     <string name="headwind_time_description">Accumulated time spent riding into a headwind of at least 1 m/s</string>
-    <string name="headwind_time_distribution">Headwind time distribution</string>
+    <string name="headwind_time_distribution">Headwind time chart</string>
     <string name="headwind_time_distribution_description">Distribution of headwind speed and gusts during the current ride (minutes spent at each speed)</string>
     <string name="userwind_speed_description">Current headwind or wind speed based on user setting</string>
     <string name="userwind_speed">Set wind speed</string>
-    <string name="relativeGrade">Relative Grade</string>
+    <string name="relativeGrade">Relative grade</string>
     <string name="relativeGrade_description">Perceived grade in percent</string>
-    <string name="relativeElevationGain">Relative Elevation Gain</string>
+    <string name="relativeElevationGain">Relative elevation gain</string>
     <string name="relativeElevationGain_description">Perceived elevation gain in meters</string>
-    <string name="windDirectionAndSpeed">Wind direction, speed</string>
+    <string name="windDirectionAndSpeed">Wind arrow + speed</string>
     <string name="windDirectionAndSpeed_description">Current wind direction and wind speed</string>
-    <string name="windDirectionAndSpeedCircle">Wind direction, speed (Circle)</string>
+    <string name="windDirectionAndSpeedCircle">Wind arrow + speed (circle)</string>
     <string name="windDirectionAndSpeedCircle_description">Current wind direction and wind speed (Circle graphics)</string>
     <string name="forces">Resistance forces</string>
     <string name="forces_description">Current resistance forces (air, rolling, gradient)</string>
@@ -113,4 +113,6 @@
     <string name="solarRadiation_description">Shortwave solar radiation, W/m2</string>
     <string name="windChill">Wind chill</string>
     <string name="windChill_description">Wind chill from air temperature and your air speed (below 10 C)</string>
+    <string name="rideWeather">Ride weather</string>
+    <string name="rideWeather_description">Wind arrow coloured head/tail with speed, temperature and feels-like, and minutes until rain, in one field</string>
 </resources>

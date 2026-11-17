@@ -174,6 +174,7 @@ class KarooHeadwindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_
             ResistanceForcesDataType(windRepository),
             CompassDataType(windRepository, applicationContext),
             WindSourceDataType(windRepository),
+            de.timklge.karooheadwind.datatypes.RideWeatherDataType(windRepository),
         ) + TrueWindFields.numeric(windRepository)
           + de.timklge.karooheadwind.datatypes.ParityFields.all(windRepository) { de.timklge.karooheadwind.pipeline.ParityRuntime.hub }).map { de.timklge.karooheadwind.datatypes.ActiveFields.track(it) }
     }

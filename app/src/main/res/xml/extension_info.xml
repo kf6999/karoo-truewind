@@ -23,13 +23,6 @@
     fitFile="true">
 
     <DataType
-        description="@string/tailwind_and_speed_description"
-        displayName="@string/tailwind_and_speed"
-        graphical="true"
-        icon="@drawable/wind"
-        typeId="tailwind-and-ride-speed" />
-
-    <DataType
         description="@string/headwind_description"
         displayName="@string/headwind"
         graphical="true"
@@ -51,39 +44,18 @@
         typeId="windDirectionAndSpeedCircle" />
 
     <DataType
-        description="@string/weather_forecast_description"
-        displayName="@string/weather_forecast"
+        description="@string/tailwind_and_speed_description"
+        displayName="@string/tailwind_and_speed"
         graphical="true"
         icon="@drawable/wind"
-        typeId="weatherForecast" />
+        typeId="tailwind-and-ride-speed" />
 
     <DataType
-        description="@string/temperature_forecast_description"
-        displayName="@string/temperature_forecast"
+        description="@string/rideWeather_description"
+        displayName="@string/rideWeather"
         graphical="true"
         icon="@drawable/wind"
-        typeId="temperatureForecast" />
-
-    <DataType
-        description="@string/precipitation_forecast_description"
-        displayName="@string/precipitation_forecast"
-        graphical="true"
-        icon="@drawable/wind"
-        typeId="precipitationForecast" />
-
-    <DataType
-        description="@string/wind_forecast_description"
-        displayName="@string/wind_forecast"
-        graphical="true"
-        icon="@drawable/wind"
-        typeId="windForecast" />
-
-    <DataType
-        description="@string/headwind_forecast_description"
-        displayName="@string/headwind_forecast"
-        graphical="true"
-        icon="@drawable/wind"
-        typeId="headwindForecast" />
+        typeId="rideWeather" />
 
     <DataType
         description="@string/headwind_speed_description"
@@ -93,32 +65,11 @@
         typeId="headwindSpeed" />
 
     <DataType
-        description="@string/headwind_time_description"
-        displayName="@string/headwind_time"
+        description="@string/crosswind_description"
+        displayName="@string/crosswind"
         graphical="false"
         icon="@drawable/wind"
-        typeId="headwindTime" />
-
-    <DataType
-        description="@string/headwind_time_distribution_description"
-        displayName="@string/headwind_time_distribution"
-        graphical="true"
-        icon="@drawable/wind"
-        typeId="headwindTimeDistribution" />
-
-    <DataType
-        description="@string/relativeHumidity_description"
-        displayName="@string/relativeHumidity"
-        graphical="false"
-        icon="@drawable/ic_water"
-        typeId="relativeHumidity" />
-
-    <DataType
-        description="@string/cloudCover_description"
-        displayName="@string/cloudCover"
-        graphical="false"
-        icon="@drawable/ic_cloud"
-        typeId="cloudCover" />
+        typeId="crosswind" />
 
     <DataType
         description="@string/windSpeed_description"
@@ -142,25 +93,18 @@
         typeId="windDirection" />
 
     <DataType
-        description="@string/precipitation_description"
-        displayName="@string/precipitation"
-        graphical="false"
-        icon="@drawable/ic_water"
-        typeId="precipitation" />
+        description="@string/rainBar_description"
+        displayName="@string/rainBar"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="rainBar" />
 
     <DataType
-        description="@string/surfacePressure_description"
-        displayName="@string/surfacePressure"
+        description="@string/rainIn_description"
+        displayName="@string/rainIn"
         graphical="false"
-        icon="@drawable/ic_cloud"
-        typeId="surfacePressure" />
-
-    <DataType
-        description="@string/sealevelPressure_description"
-        displayName="@string/sealevelPressure"
-        graphical="false"
-        icon="@drawable/ic_cloud"
-        typeId="sealevelPressure" />
+        icon="@drawable/wind"
+        typeId="rainIn" />
 
     <DataType
         description="@string/temperature_description"
@@ -170,11 +114,88 @@
         typeId="temperature" />
 
     <DataType
-            description="@string/uvi_description"
-            displayName="@string/uvi"
-            graphical="false"
-            icon="@drawable/wind"
-            typeId="uvi" />
+        description="@string/feelsLike_description"
+        displayName="@string/feelsLike"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="feelsLike" />
+
+    <DataType
+        description="@string/weather_forecast_description"
+        displayName="@string/weather_forecast"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="weatherForecast" />
+
+    <DataType
+        description="@string/radar_description"
+        displayName="@string/radar"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="radar" />
+
+    <DataType
+        description="@string/wind_forecast_description"
+        displayName="@string/wind_forecast"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="windForecast" />
+
+    <DataType
+        description="@string/headwind_forecast_description"
+        displayName="@string/headwind_forecast"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="headwindForecast" />
+
+    <DataType
+        description="@string/temperature_forecast_description"
+        displayName="@string/temperature_forecast"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="temperatureForecast" />
+
+    <DataType
+        description="@string/precipitation_forecast_description"
+        displayName="@string/precipitation_forecast"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="precipitationForecast" />
+
+    <DataType
+        description="@string/headwind_time_description"
+        displayName="@string/headwind_time"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="headwindTime" />
+
+    <DataType
+        description="@string/headwind_time_distribution_description"
+        displayName="@string/headwind_time_distribution"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="headwindTimeDistribution" />
+
+    <DataType
+        description="@string/maxWindRide_description"
+        displayName="@string/maxWindRide"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="maxWindRide" />
+
+    <DataType
+        description="@string/forces_description"
+        displayName="@string/forces"
+        graphical="true"
+        icon="@drawable/wind"
+        typeId="forces" />
+
+    <DataType
+        description="@string/compass_description"
+        displayName="@string/compass"
+        graphical="true"
+        icon="@drawable/arrow"
+        typeId="compass" />
 
     <DataType
         description="@string/relativeGrade_description"
@@ -191,35 +212,6 @@
         typeId="relativeElevationGain" />
 
     <DataType
-        description="@string/forces_description"
-        displayName="@string/forces"
-        graphical="true"
-        icon="@drawable/wind"
-        typeId="forces" />
-
-    <DataType
-        description="@string/compass_description"
-        displayName="@string/compass"
-        graphical="true"
-        icon="@drawable/arrow"
-        typeId="compass" />
-
-    <!-- TrueWind fields (SPEC 5) -->
-    <DataType
-        description="@string/crosswind_description"
-        displayName="@string/crosswind"
-        graphical="false"
-        icon="@drawable/wind"
-        typeId="crosswind" />
-
-    <DataType
-        description="@string/windConfidence_description"
-        displayName="@string/windConfidence"
-        graphical="false"
-        icon="@drawable/wind"
-        typeId="windConfidence" />
-
-    <DataType
         description="@string/windSource_description"
         displayName="@string/windSource"
         graphical="true"
@@ -227,32 +219,11 @@
         typeId="windSource" />
 
     <DataType
-        description="@string/measuredHeadwind_description"
-        displayName="@string/measuredHeadwind"
+        description="@string/windConfidence_description"
+        displayName="@string/windConfidence"
         graphical="false"
         icon="@drawable/wind"
-        typeId="measuredHeadwind" />
-
-    <DataType
-        description="@string/airDensity_description"
-        displayName="@string/airDensity"
-        graphical="false"
-        icon="@drawable/wind"
-        typeId="airDensity" />
-
-    <DataType
-        description="@string/feelsLike_description"
-        displayName="@string/feelsLike"
-        graphical="false"
-        icon="@drawable/wind"
-        typeId="feelsLike" />
-
-    <DataType
-        description="@string/rainIn_description"
-        displayName="@string/rainIn"
-        graphical="false"
-        icon="@drawable/wind"
-        typeId="rainIn" />
+        typeId="windConfidence" />
 
     <DataType
         description="@string/lastUpdate_description"
@@ -276,32 +247,11 @@
         typeId="stationDistance" />
 
     <DataType
-        description="@string/maxWindRide_description"
-        displayName="@string/maxWindRide"
-        graphical="false"
-        icon="@drawable/wind"
-        typeId="maxWindRide" />
-
-    <DataType
-        description="@string/radar_description"
-        displayName="@string/radar"
-        graphical="true"
-        icon="@drawable/wind"
-        typeId="radar" />
-
-    <DataType
         description="@string/stormDistance_description"
         displayName="@string/stormDistance"
         graphical="false"
         icon="@drawable/wind"
         typeId="stormDistance" />
-
-    <DataType
-        description="@string/rainBar_description"
-        displayName="@string/rainBar"
-        graphical="true"
-        icon="@drawable/wind"
-        typeId="rainBar" />
 
     <DataType
         description="@string/aqi_description"
@@ -311,18 +261,39 @@
         typeId="aqi" />
 
     <DataType
-        description="@string/pm25_description"
-        displayName="@string/pm25"
-        graphical="false"
-        icon="@drawable/wind"
-        typeId="pm25" />
+            description="@string/uvi_description"
+            displayName="@string/uvi"
+            graphical="false"
+            icon="@drawable/wind"
+            typeId="uvi" />
 
     <DataType
-        description="@string/ozone_description"
-        displayName="@string/ozone"
+        description="@string/relativeHumidity_description"
+        displayName="@string/relativeHumidity"
+        graphical="false"
+        icon="@drawable/ic_water"
+        typeId="relativeHumidity" />
+
+    <DataType
+        description="@string/cloudCover_description"
+        displayName="@string/cloudCover"
+        graphical="false"
+        icon="@drawable/ic_cloud"
+        typeId="cloudCover" />
+
+    <DataType
+        description="@string/precipitation_description"
+        displayName="@string/precipitation"
+        graphical="false"
+        icon="@drawable/ic_water"
+        typeId="precipitation" />
+
+    <DataType
+        description="@string/windChill_description"
+        displayName="@string/windChill"
         graphical="false"
         icon="@drawable/wind"
-        typeId="ozone" />
+        typeId="windChill" />
 
     <DataType
         description="@string/dewPoint_description"
@@ -339,16 +310,51 @@
         typeId="visibility" />
 
     <DataType
+        description="@string/measuredHeadwind_description"
+        displayName="@string/measuredHeadwind"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="measuredHeadwind" />
+
+    <DataType
+        description="@string/airDensity_description"
+        displayName="@string/airDensity"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="airDensity" />
+
+    <DataType
+        description="@string/surfacePressure_description"
+        displayName="@string/surfacePressure"
+        graphical="false"
+        icon="@drawable/ic_cloud"
+        typeId="surfacePressure" />
+
+    <DataType
+        description="@string/sealevelPressure_description"
+        displayName="@string/sealevelPressure"
+        graphical="false"
+        icon="@drawable/ic_cloud"
+        typeId="sealevelPressure" />
+
+    <DataType
+        description="@string/pm25_description"
+        displayName="@string/pm25"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="pm25" />
+
+    <DataType
+        description="@string/ozone_description"
+        displayName="@string/ozone"
+        graphical="false"
+        icon="@drawable/wind"
+        typeId="ozone" />
+
+    <DataType
         description="@string/solarRadiation_description"
         displayName="@string/solarRadiation"
         graphical="false"
         icon="@drawable/wind"
         typeId="solarRadiation" />
-
-    <DataType
-        description="@string/windChill_description"
-        displayName="@string/windChill"
-        graphical="false"
-        icon="@drawable/wind"
-        typeId="windChill" />
 </ExtensionInfo>

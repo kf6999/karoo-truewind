@@ -64,3 +64,35 @@ class FieldStatusTest {
         assertNull(rainLabel(0.0, null, true))
     }
 }
+
+class RideWeatherModelTest {
+    private fun snap(heading: Double, windFrom: Double, speed: Double = 5.0, rain: Int? = 25, tempC: Double? = 18.0, feels: Double? = 14.0) = WindSnapshot(
+        WindState(
+            timeMs = 0L, model10m = WindVector.fromSpeedDirection(speed, windFrom), rider = WindVector.fromSpeedDirection(speed, windFrom),
+            gustRider = null, headwind = null, crosswind = null, relativeDirectionDeg = null, confidence = 80, sources = SourceSummary(),
+            ageMs = 0L, airDensity = 1.2,
+            weather = tempC?.let { io.github.kf6999.truewind.core.model.WeatherNow(0, it, 50, 0.0, null, 0.0, 1013.0, 1000.0, speed, windFrom, speed, 0, false, false, 0.0) },
+            status = Status.OK, riderHeadingDeg = heading,
+        ),
+        WindExtras(upstreamMode = false, rainInMin = rain, feelsLikeC = feels),
+    )
+
+    @Test
+    fun headTailCross() {
+        assertEquals("18 head", RideWeatherDataType.model(snap(0.0, 0.0), de.timklge.karooheadwind.WindUnit.KILOMETERS_PER_HOUR, false)!!.windText)
+        assertEquals("11 tail", RideWeatherDataType.model(snap(180.0, 0.0), de.timklge.karooheadwind.WindUnit.MILES_PER_HOUR, false)!!.windText)
+        assertEquals("5 cross", RideWeatherDataType.model(snap(90.0, 0.0), de.timklge.karooheadwind.WindUnit.METERS_PER_SECOND, false)!!.windText)
+    }
+
+    @Test
+    fun temperatureFeelsAndRain() {
+        val m = RideWeatherDataType.model(snap(0.0, 0.0), de.timklge.karooheadwind.WindUnit.MILES_PER_HOUR, true)!!
+        assertEquals("64°F", m.tempText)
+        assertEquals("feels 57°", m.feelsText)
+        assertEquals("Rain in 25 min", m.rainText)
+        assertNull(RideWeatherDataType.model(snap(0.0, 0.0, feels = 17.0), de.timklge.karooheadwind.WindUnit.MILES_PER_HOUR, true)!!.feelsText)
+        assertEquals("Dry 2 h", RideWeatherDataType.rainText(null))
+        assertNull(RideWeatherDataType.rainText(WindExtras.RAIN_UNKNOWN))
+        assertEquals("Rain now", RideWeatherDataType.rainText(0))
+    }
+}

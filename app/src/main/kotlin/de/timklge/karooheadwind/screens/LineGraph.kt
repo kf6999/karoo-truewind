@@ -60,6 +60,8 @@ class LineGraphBuilder(val context: Context) {
         lines: Set<Line>,
         leftYLabelProvider: ((Float) -> String) = { it.roundToInt().toString() },
         histogram: Boolean = false, // Draw each data point as a distinct bar (bin) instead of a line/area
+        /** X value of "now"; draws a dashed vertical marker when it falls inside the data. */
+        nowX: Float? = null,
         labelProvider: ((Float) -> String)
     ): Bitmap {
         val bitmap = createBitmap(width, height)
@@ -155,13 +157,6 @@ class LineGraphBuilder(val context: Context) {
         val graphRight = width - marginRight // Define graphRight for clarity
 
 
-        // Legend properties
-        val legendTextSize = 25f
-        val legendTextColor = primaryTextColor
-        val legendPadding = 5f
-        val legendEntryHeight = 30f
-        val legendColorBoxSize = 24f
-        val legendTextMargin = 5f
 
         var effectiveMinX = dataMinX
         var effectiveMaxX = dataMaxX
@@ -314,7 +309,7 @@ class LineGraphBuilder(val context: Context) {
         }
 
         val linePaint = Paint().apply {
-            strokeWidth = 6f
+            strokeWidth = 9f
             style = Paint.Style.STROKE
             isAntiAlias = true
             strokeCap = Paint.Cap.ROUND
@@ -598,78 +593,44 @@ class LineGraphBuilder(val context: Context) {
         textPaint.textAlign = Align.CENTER
         textPaint.color = primaryTextColor // Ensure textPaint color is reset before drawing legend
 
-        // Draw Legend
-        val legendPaint = Paint().apply {
-            textSize = legendTextSize
-            color = legendTextColor
-            isAntiAlias = true
-            textAlign = Align.LEFT // Important for measuring text width correctly
-        }
-        val legendColorPaint = Paint().apply {
-            style = Paint.Style.FILL
-            isAntiAlias = true
-        }
-
-        val legendItems = lines.filter { it.label != null }
-        if (legendItems.isNotEmpty()) {
-            var maxLegendLabelWidth = 0f
-            for (item in legendItems) {
-                maxLegendLabelWidth =
-                    kotlin.math.max(maxLegendLabelWidth, legendPaint.measureText(item.label!!))
+        // "Now" marker: dashed vertical line so the rider sees where the present sits on the curve.
+        if (nowX != null && !histogram && nowX > dataMinX && nowX <= dataMaxX) {
+            val x = mapX(nowX)
+            val nowPaint = Paint().apply {
+                color = primaryTextColor
+                strokeWidth = 3f
+                style = Paint.Style.STROKE
+                pathEffect = android.graphics.DashPathEffect(floatArrayOf(10f, 8f), 0f)
             }
-
-            val legendContentActualLeft =
-                (width - marginRight - legendPadding - legendColorBoxSize - legendTextMargin - maxLegendLabelWidth)
-            val legendContentActualRight =
-                (width - marginRight - legendPadding) // Right edge of the color box
-
-            val legendContentActualTop = graphTop + legendPadding // Top edge of the first color box
-            val legendContentActualBottom =
-                legendContentActualTop + (legendItems.size - 1) * legendEntryHeight + legendColorBoxSize // Bottom edge of the last color box
-
-            val legendBgPaint = Paint().apply {
-                color = if (isNightMode) {
-                    Color.argb(210, 0, 0, 0)
-                } else {
-                    Color.argb(210, 255, 255, 255)
-                }
-                style = Paint.Style.FILL
-                isAntiAlias = true
-            }
-            canvas.drawRoundRect(
-                legendContentActualLeft,
-                legendContentActualTop,
-                legendContentActualRight,
-                legendContentActualBottom,
-                5f,
-                5f,
-                legendBgPaint
-            )
+            canvas.drawLine(x, graphTop, x, graphBottom, nowPaint)
         }
 
-        var currentLegendY = graphTop + legendPadding
-
-        for (line in legendItems) {
-            // Draw color box
-            legendColorPaint.color = line.color
-            canvas.drawRect(
-                width - marginRight - legendPadding - legendColorBoxSize, // left
-                currentLegendY, // top
-                width - marginRight - legendPadding, // right
-                currentLegendY + legendColorBoxSize, // bottom
-                legendColorPaint
-            )
-
-            // Draw label text
-            canvas.drawText(
-                line.label!!,
-                width - marginRight - legendPadding - legendColorBoxSize - legendTextMargin - legendPaint.measureText(
-                    line.label
-                ), // x: Align text to the left of the color box
-                currentLegendY + legendColorBoxSize / 2 + legendTextSize / 3, // y: Vertically center text with color box
-                legendPaint
-            )
-            currentLegendY += legendEntryHeight
+        // Direct labels: each line's name in its own colour at its right end, instead of a legend box.
+        val labelPaint = Paint().apply {
+            textSize = 34f
+            isAntiAlias = true
+            isFakeBoldText = true
+            textAlign = Align.RIGHT
+        }
+        val haloPaint = Paint(labelPaint).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = 8f
+            color = backgroundColor
+        }
+        val labelled = lines.filter { it.label != null && it.dataPoints.isNotEmpty() }.map { line ->
+            val last = line.dataPoints.maxBy { it.x }
+            val y = (if (line.yAxis == YAxis.LEFT) mapYLeft(last.y) else mapYRight(last.y)) - 14f
+            Triple(line, y, line.colorFunc?.invoke(last.y) ?: line.color)
+        }.sortedBy { it.second }
+        var minY = graphTop + labelPaint.textSize
+        for ((line, rawY, color) in labelled) {
+            // Keep labels inside the plot and at least one text line apart.
+            val y = rawY.coerceIn(minY, graphBottom - 6f)
+            minY = y + labelPaint.textSize
+            val x = graphRight - 8f
+            canvas.drawText(line.label!!, x, y, haloPaint)
+            labelPaint.color = color
+            canvas.drawText(line.label, x, y, labelPaint)
         }
 
         return bitmap
